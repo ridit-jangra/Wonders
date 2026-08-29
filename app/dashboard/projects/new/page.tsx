@@ -112,13 +112,13 @@ export default async function NewProjectPage({
         <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:justify-end">
           <button
             type="submit"
-            className="w-full rounded-md bg-[#F2B3AD] px-4 py-2 font-finger-paint text-lg text-black/40 transition hover:scale-105 sm:w-48"
+            className="w-full rounded-md bg-[#F2B3AD] px-4 py-2 font-finger-paint text-lg text-black/40 transition hover:zoom-110 sm:w-48"
           >
             Cancel :(
           </button>
           <button
             type="submit"
-            className="w-full rounded-md bg-[#D1E4B5] px-4 py-2 font-finger-paint text-lg text-black/40 transition hover:scale-105 sm:w-48"
+            className="w-full rounded-md bg-[#D1E4B5] px-4 py-2 font-finger-paint text-lg text-black/40 transition hover:zoom-100 sm:w-48"
           >
             Create it :3
           </button>

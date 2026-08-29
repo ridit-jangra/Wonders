@@ -148,11 +148,11 @@ export default async function EditProjectPage({
           <DeleteProjectButton
             action={deleteProjectAction}
             label="Delete it :("
-            className="w-full rounded-md bg-[#F2B3AD] px-4 py-2 font-finger-paint text-lg text-black/40 transition hover:scale-105 sm:w-48"
+            className="w-full rounded-md bg-[#F2B3AD] px-4 py-2 font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-48"
           />
           <button
             type="submit"
-            className="w-full rounded-md bg-[#D1E4B5] px-4 py-2 font-finger-paint text-lg text-black/40 transition hover:scale-105 sm:w-48"
+            className="w-full rounded-md bg-[#D1E4B5] px-4 py-2 font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-48"
           >
             Save it :3
           </button>

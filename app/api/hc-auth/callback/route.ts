@@ -6,6 +6,7 @@ import {
   SESSION_COOKIE,
   createSessionCookie,
 } from "@/lib/hc-auth";
+import { inviteToChannel } from "@/lib/slack";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -81,6 +82,13 @@ export async function GET(request: NextRequest) {
   }
 
   const session = createSessionCookie({ email, name, slackId });
+
+  if (slackId) {
+    inviteToChannel(slackId).catch((err) =>
+      console.error("Failed to invite user to Slack channel:", err),
+    );
+  }
+
   const response = NextResponse.redirect(new URL("/dashboard", request.url));
   response.cookies.set(SESSION_COOKIE, session.value, {
     httpOnly: true,

@@ -21,10 +21,10 @@ interface Player {
   projects: Project[];
 }
 
-type Tab = "projects" | "players";
+type Tab = "wonders" | "players";
 
 export default function ExplorePage() {
-  const [tab, setTab] = useState<Tab>("projects");
+  const [tab, setTab] = useState<Tab>("wonders");
   const [projects, setProjects] = useState<Project[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,11 +32,11 @@ export default function ExplorePage() {
   useEffect(() => {
     setLoading(true);
     const url =
-      tab === "projects" ? "/api/public/projects" : "/api/public/players";
+      tab === "wonders" ? "/api/public/projects" : "/api/public/players";
     fetch(url)
       .then((r) => r.json())
       .then((data) => {
-        if (tab === "projects") setProjects(data.projects ?? []);
+        if (tab === "wonders") setProjects(data.projects ?? []);
         else setPlayers(data.players ?? []);
       })
       .catch(console.error)
@@ -56,14 +56,14 @@ export default function ExplorePage() {
 
         <div className="mt-6 flex gap-3">
           <button
-            onClick={() => setTab("projects")}
+            onClick={() => setTab("wonders")}
             className={`rounded-full px-5 py-2 cursor-pointer font-finger-paint text-lg transition-colors ${
-              tab === "projects"
+              tab === "wonders"
                 ? "bg-[#F0E27D] text-[#16213E]"
                 : "bg-[#D1E4B5]/60 text-[#5C4A2E] hover:bg-[#D1E4B5]/80"
             }`}
           >
-            Projects
+            Wonders
           </button>
           <button
             onClick={() => setTab("players")}
@@ -84,7 +84,7 @@ export default function ExplorePage() {
             </div>
           )}
 
-          {!loading && tab === "projects" && (
+          {!loading && tab === "wonders" && (
             <div className="mt-2 flex flex-col items-start gap-3">
               {projects.map((p, i) => (
                 <ExploreProjectCard

@@ -32,7 +32,7 @@ export default function ExplorePage() {
   useEffect(() => {
     setLoading(true);
     const url =
-      tab === "wonders" ? "/api/public/projects" : "/api/public/players";
+      tab === "wonders" ? "/api/public/wonders" : "/api/public/players";
     fetch(url)
       .then((r) => r.json())
       .then((data) => {

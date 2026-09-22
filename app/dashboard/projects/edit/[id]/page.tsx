@@ -5,6 +5,9 @@ import { revalidatePath } from "next/cache";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
 import { getProfile } from "@/lib/profiles";
 import { deleteProject, getProject, updateProject } from "@/lib/projects";
+import { uploadThumbnail } from "@/lib/storage";
+import ThumbnailPicker from "@/app/dashboard/components/ThumbnailPicker";
+import SubmitButton from "@/app/dashboard/components/SubmitButton";
 import DeleteProjectButton from "@/app/dashboard/components/DeleteProjectButton";
 
 export default async function EditProjectPage({
@@ -53,8 +56,15 @@ export default async function EditProjectPage({
     const description = String(formData.get("description") ?? "").trim();
     const githubUrl = String(formData.get("github-repo-url") ?? "").trim();
     const demoUrl = String(formData.get("demo-url") ?? "").trim();
-    if (!title || !description || !githubUrl || !demoUrl) {
+    const thumbnail = formData.get("thumbnail");
+    const removeThumbnail = formData.get("remove-thumbnail") === "1";
+    if (!title || !description) {
       return;
+    }
+
+    let imageUrl = removeThumbnail ? null : existing.image_url;
+    if (thumbnail instanceof File && thumbnail.size > 0) {
+      imageUrl = await uploadThumbnail(thumbnail, currentProfile.id);
     }
 
     await updateProject(id, currentProfile.id, {
@@ -62,6 +72,7 @@ export default async function EditProjectPage({
       description,
       link_url: demoUrl,
       github_url: githubUrl,
+      image_url: imageUrl,
     });
     redirect("/wonders");
   }
@@ -120,6 +131,10 @@ export default async function EditProjectPage({
           rows={5}
           className="w-full font-finger-paint resize-none border border-[#8C8368]/30 bg-[#E7E2C9] px-4 py-3 text-base text-[#5C4A2E] placeholder:text-[#8C8368] focus:border-[#8C8368] focus:outline-none md:border-0"
         />
+        <p className="font-finger-paint text-[#5C4A2E]/70">
+          Give your wonder a thumbnail :3
+        </p>
+        <ThumbnailPicker defaultUrl={project.image_url} />
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <span className="flex w-full flex-col gap-2">
             <p className="font-finger-paint text-[#5C4A2E]/70">
@@ -127,7 +142,6 @@ export default async function EditProjectPage({
             </p>
             <input
               name="github-repo-url"
-              required
               defaultValue={project.github_url ?? ""}
               placeholder="https://"
               className="w-full border border-[#8C8368]/30 bg-[#E7E2C9] px-4 py-3 font-finger-paint text-base text-[#5C4A2E] placeholder:text-[#8C8368] focus:border-[#8C8368] focus:outline-none md:border-0"
@@ -137,7 +151,6 @@ export default async function EditProjectPage({
             <p className="font-finger-paint text-[#5C4A2E]/70">Demo url :D</p>
             <input
               name="demo-url"
-              required
               defaultValue={project.link_url ?? ""}
               placeholder="https://"
               className="w-full border border-[#8C8368]/30 bg-[#E7E2C9] px-4 py-3 font-finger-paint text-base text-[#5C4A2E] placeholder:text-[#8C8368] focus:border-[#8C8368] focus:outline-none md:border-0"
@@ -150,12 +163,12 @@ export default async function EditProjectPage({
             label="Delete it :("
             className="w-full rounded-md bg-[#F2B3AD] px-4 py-2 font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-48"
           />
-          <button
-            type="submit"
+          <SubmitButton
+            pendingLabel="saving it... :3"
             className="w-full rounded-md bg-[#D1E4B5] px-4 py-2 font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-48"
           >
             Save it :3
-          </button>
+          </SubmitButton>
         </div>
       </form>
     </div>

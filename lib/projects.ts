@@ -39,6 +39,7 @@ export async function createProject(
     description: string;
     link_url?: string;
     github_url?: string;
+    image_url?: string | null;
   },
 ): Promise<Project> {
   const { data: project, error } = await supabase
@@ -49,6 +50,7 @@ export async function createProject(
       description: data.description,
       link_url: data.link_url || null,
       github_url: data.github_url || null,
+      image_url: data.image_url ?? null,
     })
     .select(
       "id, profile_id, title, description, image_url, link_url, github_url, status, reviewer_note, reward, created_at",
@@ -84,6 +86,7 @@ export async function updateProject(
     description: string;
     link_url?: string;
     github_url?: string;
+    image_url?: string | null;
   },
 ) {
   const { error } = await supabase
@@ -93,6 +96,7 @@ export async function updateProject(
       description: data.description,
       link_url: data.link_url || null,
       github_url: data.github_url || null,
+      ...(data.image_url !== undefined ? { image_url: data.image_url } : {}),
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)

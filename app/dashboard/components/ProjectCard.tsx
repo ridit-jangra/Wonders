@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import type { Project } from "@/lib/projects";
+import LinkPending from "./LinkPending";
 
 const STATUS_LABEL: Record<Project["status"], string> = {
   building: "building :)",
@@ -29,7 +30,7 @@ export default function ProjectCard({
       <img
         src={project.image_url || "/project-image-fallback.png"}
         alt=""
-        className="absolute top-[6%] left-[8%] right-[8%] h-[40%] rounded-md object-cover"
+        className="absolute top-[6%] left-[12%] right-[8%] h-[40%] rounded-md object-cover w-[80%]"
       />
       <div className="absolute top-[51%] left-[14%] right-[6%] h-[11%] flex items-center overflow-hidden">
         <h3 className="truncate font-finger-paint text-lg text-[#5C4A2E]">
@@ -42,6 +43,7 @@ export default function ProjectCard({
       <span className="absolute bottom-[5%] right-[9%] font-finger-paint text-[10px] text-[#7A6B4A]">
         {STATUS_LABEL[project.status]}
       </span>
+      <LinkPending />
     </Link>
   );
 }

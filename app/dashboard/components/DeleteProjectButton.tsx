@@ -39,8 +39,14 @@ export default function DeleteProjectButton({
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className={className}>
-        {label}
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        disabled={pending}
+        aria-busy={pending}
+        className={`${className} disabled:cursor-not-allowed disabled:opacity-60`}
+      >
+        {pending ? "deleting... :(" : label}
       </button>
       <AnimatePresence>
         {open && (

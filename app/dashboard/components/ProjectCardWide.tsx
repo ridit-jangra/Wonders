@@ -7,6 +7,7 @@ import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
 import { getProfile } from "@/lib/profiles";
 import { deleteProject, type Project } from "@/lib/projects";
 import DeleteProjectButton from "./DeleteProjectButton";
+import LinkPending from "./LinkPending";
 
 const STATUS_LABEL: Record<Project["status"], string> = {
   building: "building :)",
@@ -70,6 +71,11 @@ export default function ProjectCardWide({
         className="absolute bottom-[22%] right-[0%] w-[28%] py-1 text-center cursor-pointer hover:zoom-110 transition-all font-finger-paint text-xl bg-[#D0E4B4] text-black/45 rounded-lg"
       >
         Edit :3
+        <LinkPending className="rounded-lg bg-[#D0E4B4]">
+          <span className="font-finger-paint text-xl text-black/45">
+            opening...
+          </span>
+        </LinkPending>
       </Link>
       <span className="absolute bottom-[18%] right-[2%] font-finger-paint text-[10px] text-[#7A6B4A]">
         {STATUS_LABEL[project.status]}

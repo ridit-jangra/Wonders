@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
 import { getProfile, saveInterest } from "@/lib/profiles";
+import SubmitButton from "@/app/dashboard/components/SubmitButton";
 
 export default async function OnboardingPage() {
   const cookieStore = await cookies();
@@ -61,12 +62,12 @@ export default async function OnboardingPage() {
             className="absolute max-h-95 inset-0 h-full w-full resize-none bg-transparent text-lg p-18 pr-22 font-finger-paint text-[#C4BE9D] placeholder:text-[#D9D3AF] focus:outline-none"
           />
         </div>
-        <button
-          type="submit"
+        <SubmitButton
+          pendingLabel="hold on... :3"
           className="rounded-md bg-[#F2B3AD] px-4 py-2 font-finger-paint text-lg text-white transition hover:zoom-110 transition-all"
         >
           Continue
-        </button>
+        </SubmitButton>
       </form>
     </div>
   );

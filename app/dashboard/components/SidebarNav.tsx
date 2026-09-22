@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+import LinkPending from "./LinkPending";
 
 const links = [
   { href: "/dashboard", label: "Dashboard :)", src: "/button-template-1.png" },
@@ -31,6 +32,11 @@ export default function SidebarNav({
           <span className="absolute inset-0 flex items-center justify-center font-finger-paint text-3xl tracking-wide text-[#16213E]">
             {link.label}
           </span>
+          <LinkPending className="bg-[#F0EBD1]/80">
+            <span className="font-finger-paint text-2xl text-[#16213E]">
+              one sec :3
+            </span>
+          </LinkPending>
         </Link>
       ))}
       <a

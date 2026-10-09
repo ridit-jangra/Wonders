@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/preset.css";
 
 :root {
   --background: #ffffff;
@@ -27,4 +29,44 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
   overflow-x: hidden;
+}
+
+:root {
+  --color-fd-background: #f9f6e8;
+  --color-fd-foreground: #16213e;
+  --color-fd-muted: #efe9d0;
+  --color-fd-muted-foreground: #6e6a50;
+  --color-fd-popover: #fbf8ee;
+  --color-fd-popover-foreground: #16213e;
+  --color-fd-card: #f3eed8;
+  --color-fd-card-foreground: #16213e;
+  --color-fd-border: #e0d8b4;
+  --color-fd-primary: #3c8c8c;
+  --color-fd-primary-foreground: #f9f6e8;
+  --color-fd-secondary: #efe9d0;
+  --color-fd-secondary-foreground: #16213e;
+  --color-fd-accent: #e8e0bd;
+  --color-fd-accent-foreground: #16213e;
+  --color-fd-ring: #5aa8a8;
+  --color-fd-overlay: rgba(22, 33, 62, 0.25);
+}
+
+.wonders-docs {
+  background: var(--color-fd-background);
+  color: var(--color-fd-foreground);
+}
+
+.wonders-docs #nd-sidebar,
+#nd-sidebar-mobile {
+  --color-fd-card: #5aa8a8;
+  --color-fd-background: #5aa8a8;
+  --color-fd-foreground: #16213e;
+  --color-fd-muted: #4e9898;
+  --color-fd-muted-foreground: #16213e;
+  --color-fd-accent: rgba(249, 246, 232, 0.35);
+  --color-fd-accent-foreground: #16213e;
+  --color-fd-primary: #16213e;
+  --color-fd-border: rgba(22, 33, 62, 0.15);
+  --color-fd-secondary: #4e9898;
+  font-family: var(--font-finger-paint);
 }

@@ -1,0 +1,125 @@
+@font-face {
+  font-family: "Phantom Sans";
+  src:
+    url("https://assets.hackclub.com/fonts/Phantom_Sans_0.7/Regular.woff2") format("woff2"),
+    url("https://assets.hackclub.com/fonts/Phantom_Sans_0.7/Regular.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Phantom Sans";
+  src:
+    url("https://assets.hackclub.com/fonts/Phantom_Sans_0.7/Italic.woff2") format("woff2"),
+    url("https://assets.hackclub.com/fonts/Phantom_Sans_0.7/Italic.woff") format("woff");
+  font-weight: normal;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Phantom Sans";
+  src:
+    url("https://assets.hackclub.com/fonts/Phantom_Sans_0.7/Bold.woff2") format("woff2"),
+    url("https://assets.hackclub.com/fonts/Phantom_Sans_0.7/Bold.woff") format("woff");
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+.wonders-docs {
+  --hc-black: #1f2d3d;
+  --hc-steel: #273444;
+  --hc-muted: #8492a6;
+  --hc-smoke: #e0e6ed;
+  --hc-red: #ec3750;
+  --hc-blue: #338eda;
+  --hc-radii-small: 4px;
+  --hc-radii-default: 8px;
+  --hc-radii-extra: 12px;
+  --hc-shadow-card: 0 4px 8px rgba(0, 0, 0, 0.125);
+  --hc-letter-spacing-title: -0.009em;
+
+  font-family: "Phantom Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.wonders-docs .wonders-docs-title {
+  font-family: var(--font-finger-paint);
+  font-weight: 400;
+}
+
+.wonders-docs .prose h1,
+.wonders-docs .prose h2,
+.wonders-docs .prose h3,
+.wonders-docs .prose h4 {
+  font-weight: bold;
+  line-height: 1.125;
+  letter-spacing: var(--hc-letter-spacing-title);
+}
+
+.wonders-docs .prose a:not([data-card]) {
+  color: var(--hc-red);
+  font-weight: normal;
+  text-decoration: underline;
+  text-underline-position: under;
+}
+
+.wonders-docs .prose a:not([data-card]):hover,
+.wonders-docs .prose a:not([data-card]):focus {
+  text-decoration-style: wavy;
+  text-decoration-skip-ink: none;
+}
+
+.wonders-docs .prose :not(pre) > code {
+  color: var(--hc-blue);
+  background: var(--hc-smoke);
+  border: 0;
+  border-radius: var(--hc-radii-small);
+}
+
+.wonders-docs .prose figure,
+.wonders-docs .prose pre {
+  border-radius: var(--hc-radii-default);
+}
+
+.wonders-docs .prose table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.wonders-docs .prose th {
+  border-bottom: 2px solid var(--hc-smoke);
+}
+
+.wonders-docs [data-card] {
+  border: 0;
+  border-radius: var(--hc-radii-extra);
+  background: var(--color-fd-card);
+  box-shadow: var(--hc-shadow-card);
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.125s ease-in-out;
+}
+
+.wonders-docs a[data-card]:hover,
+.wonders-docs a[data-card]:focus {
+  background: var(--color-fd-muted);
+}
+
+.wonders-docs [role="alert"],
+.wonders-docs .prose [data-callout] {
+  border-radius: var(--hc-radii-extra);
+}
+
+html:has(.wonders-docs) {
+  scrollbar-gutter: stable;
+}
+
+html > body[data-scroll-locked] {
+  margin-right: 0px !important;
+  --removed-body-scroll-bar-size: 0px !important;
+}

@@ -39,10 +39,17 @@ export default function SidebarNav({
           </LinkPending>
         </Link>
       ))}
+      <Link
+        href="/docs"
+        onClick={onNavigateAction}
+        className="mt-auto ml-6 self-start font-finger-paint text-xl text-[#16213E] underline decoration-[#16213E]/40 underline-offset-4 hover:decoration-[#16213E]"
+      >
+        need help? read the docs :3
+      </Link>
       <a
         href="/api/hc-auth/logout"
         onClick={onNavigateAction}
-        className="relative mt-auto block self-start group"
+        className="relative block self-start group"
       >
         <img
           src="/logout-button-template.png"

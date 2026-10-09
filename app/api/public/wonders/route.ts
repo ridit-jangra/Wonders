@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 export async function GET() {
   const { data, error } = await supabase
     .from("projects")
-    .select("title, description, github_url, link_url");
+    .select("title, description, github_url, link_url")
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -4,7 +4,8 @@ import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
 import { getProfile } from "@/lib/profiles";
-import { deleteProject, getProject, updateProject } from "@/lib/projects";
+import { deleteProject, getProject, shipProject, updateProject } from "@/lib/projects";
+import { recordProjectHistory } from "@/lib/project-history";
 import { uploadThumbnail } from "@/lib/storage";
 import ThumbnailPicker from "@/app/dashboard/components/ThumbnailPicker";
 import SubmitButton from "@/app/dashboard/components/SubmitButton";
@@ -32,6 +33,12 @@ export default async function EditProjectPage({
   if (!project || project.profile_id !== profile.id) {
     redirect("/wonders");
   }
+
+  const missingForShip = [
+    !project.image_url && "a thumbnail",
+    !project.link_url && "a demo url",
+    !project.github_url && "a github url",
+  ].filter((v): v is string => Boolean(v));
 
   async function submitProject(formData: FormData) {
     "use server";
@@ -74,6 +81,46 @@ export default async function EditProjectPage({
       github_url: githubUrl,
       image_url: imageUrl,
     });
+    redirect("/wonders");
+  }
+
+  async function shipProjectAction() {
+    "use server";
+
+    const store = await cookies();
+    const current = verifySessionCookie(store.get(SESSION_COOKIE)?.value);
+    if (!current) {
+      redirect("/login");
+    }
+
+    const currentProfile = await getProfile(current.slackId);
+    if (!currentProfile) {
+      redirect("/onboarding");
+    }
+
+    const existing = await getProject(id);
+    if (!existing || existing.profile_id !== currentProfile.id) {
+      redirect("/wonders");
+    }
+    if (!existing.image_url || !existing.link_url || !existing.github_url) {
+      return;
+    }
+
+    const shipped = await shipProject(id, currentProfile.id);
+    if (shipped) {
+      await recordProjectHistory({
+        projectId: id,
+        profileId: currentProfile.id,
+        fromStatus: existing.status,
+        toStatus: "in_review",
+        reviewerNote: null,
+        reward: null,
+        reviewedBy: current.slackId,
+      });
+    }
+
+    revalidatePath("/dashboard");
+    revalidatePath("/wonders");
     redirect("/wonders");
   }
 
@@ -171,6 +218,40 @@ export default async function EditProjectPage({
           </SubmitButton>
         </div>
       </form>
+      {project.status === "rejected" && (
+        <div className="w-full rounded-md bg-[#F2B3AD]/30 p-4 md:max-w-[84%]">
+          <p className="font-finger-paint text-[#5C4A2E]">
+            this wasn&apos;t approved — fix it up and ship it again :3
+          </p>
+          {project.reviewer_note && (
+            <p className="mt-2 font-finger-paint text-sm text-[#5C4A2E]/70">
+              &quot;{project.reviewer_note}&quot;
+            </p>
+          )}
+        </div>
+      )}
+      {(project.status === "building" || project.status === "rejected") && (
+        <form
+          action={shipProjectAction}
+          className="flex w-full flex-col gap-2 md:max-w-[84%]"
+        >
+          <p className="font-finger-paint text-[#5C4A2E]/70">
+            done building? ship it for review :3
+          </p>
+          {missingForShip.length > 0 && (
+            <p className="font-finger-paint text-sm text-[#F2B3AD]">
+              add {missingForShip.join(", ")} before you can ship it
+            </p>
+          )}
+          <SubmitButton
+            pendingLabel="shipping it... :3"
+            disabled={missingForShip.length > 0}
+            className="w-full rounded-md bg-[#A8C7E0] px-4 py-2 font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-48"
+          >
+            Ship it :D
+          </SubmitButton>
+        </form>
+      )}
     </div>
   );
 }

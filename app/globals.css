@@ -11,7 +11,8 @@
   --font-sans: var(--font-geist-sans);
   --font-poppins: var(--font-poppins);
   --font-finger-paint: var(--font-finger-paint);
-  --font-mono: var(--font-geist-mono);
+  --font-inter: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
 }
 
 @media (prefers-color-scheme: dark) {

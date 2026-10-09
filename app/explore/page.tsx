@@ -14,30 +14,21 @@ interface Project {
   demo_url: string | null;
 }
 
-interface Player {
-  slack_name: string;
-  slack_id: string;
-  email: string;
-  projects: Project[];
-}
-
-type Tab = "wonders" | "players";
+type Tab = "wonders";
 
 export default function ExplorePage() {
   const [tab, setTab] = useState<Tab>("wonders");
   const [projects, setProjects] = useState<Project[]>([]);
-  const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
     const url =
-      tab === "wonders" ? "/api/public/wonders" : "/api/public/players";
+      tab === "wonders" ? "/api/public/wonders" : "";
     fetch(url)
       .then((r) => r.json())
       .then((data) => {
         if (tab === "wonders") setProjects(data.projects ?? []);
-        else setPlayers(data.players ?? []);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -65,16 +56,6 @@ export default function ExplorePage() {
           >
             Wonders
           </button>
-          <button
-            onClick={() => setTab("players")}
-            className={`rounded-full px-5 py-2 cursor-pointer font-finger-paint text-lg transition-colors ${
-              tab === "players"
-                ? "bg-[#F0E27D] text-[#16213E]"
-                : "bg-[#D1E4B5]/60 text-[#5C4A2E] hover:bg-[#D1E4B5]/80"
-            }`}
-          >
-            Players
-          </button>
         </div>
 
         <div className="mt-8">
@@ -97,17 +78,6 @@ export default function ExplorePage() {
                 <p className="font-poppins text-[#BFD8A8]/60">
                   no projects yet
                 </p>
-              )}
-            </div>
-          )}
-
-          {!loading && tab === "players" && (
-            <div className="grid grid-cols-1 gap-[48vh] sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-              {players.map((p) => (
-                <ExplorePlayerCard key={p.slack_id} player={p} />
-              ))}
-              {players.length === 0 && (
-                <p className="font-poppins text-[#BFD8A8]/60">no players yet</p>
               )}
             </div>
           )}

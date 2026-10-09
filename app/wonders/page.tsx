@@ -19,7 +19,7 @@ export default async function ProjectsPage() {
   }
 
   const profile = await getProfile(session.slackId);
-  if (!profile) {
+  if (!profile?.interest) {
     redirect("/onboarding");
   }
 

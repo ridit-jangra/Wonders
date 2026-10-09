@@ -14,7 +14,10 @@ export default async function OnboardingPage() {
   }
 
   const profile = await getProfile(session.slackId);
-  if (profile?.interest) {
+  if (!profile) {
+    redirect("/api/hc-auth/login");
+  }
+  if (profile.interest) {
     redirect("/dashboard");
   }
 
@@ -25,6 +28,11 @@ export default async function OnboardingPage() {
     const current = verifySessionCookie(store.get(SESSION_COOKIE)?.value);
     if (!current) {
       redirect("/login");
+    }
+
+    const currentProfile = await getProfile(current.slackId);
+    if (!currentProfile) {
+      redirect("/api/hc-auth/login");
     }
 
     const interest = String(formData.get("interest") ?? "").trim();

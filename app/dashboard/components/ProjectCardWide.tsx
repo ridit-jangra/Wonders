@@ -11,9 +11,13 @@ import LinkPending from "./LinkPending";
 
 const STATUS_LABEL: Record<Project["status"], string> = {
   building: "building :)",
-  shipped: "shipped :D",
   in_review: "in review :3",
-  reviewed: "reviewed :3c",
+  second_pass: "in review :3",
+  rejected: "needs a fix :c",
+  approved: "approved :D",
+  shipped: "shipped :D",
+  fulfillment_started: "reward incoming :3c",
+  fulfilled: "wonder complete :3c",
 };
 
 export default function ProjectCardWide({

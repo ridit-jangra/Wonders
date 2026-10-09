@@ -32,3 +32,37 @@ export async function inviteToChannel(slackUserId: string): Promise<void> {
     console.error("Slack invite failed:", data.error);
   }
 }
+
+export async function fetchSlackProfile(
+  slackUserId: string,
+): Promise<{ displayName: string | null; avatarUrl: string | null }> {
+  const empty = { displayName: null, avatarUrl: null };
+  const token = process.env.SLACK_BOT_TOKEN;
+  if (!token || !slackUserId) return empty;
+
+  try {
+    const res = await fetch(
+      `${SLACK_API_BASE}/users.info?user=${encodeURIComponent(slackUserId)}`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    const data = (await res.json()) as {
+      ok?: boolean;
+      error?: string;
+      user?: {
+        name?: string;
+        profile?: { display_name?: string; image_512?: string; image_192?: string };
+      };
+    };
+    if (!data.ok) {
+      console.error("Slack users.info failed:", data.error);
+      return empty;
+    }
+    return {
+      displayName: data.user?.profile?.display_name || data.user?.name || null,
+      avatarUrl: data.user?.profile?.image_512 || data.user?.profile?.image_192 || null,
+    };
+  } catch (err) {
+    console.error("Slack users.info failed:", err);
+    return empty;
+  }
+}

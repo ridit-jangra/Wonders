@@ -8,10 +8,12 @@ interface ExploreProject {
 }
 
 interface Player {
-  slack_name: string;
   slack_id: string;
-  email: string;
-  projects: ExploreProject[];
+  slack_name: string | null;
+  avatar_url: string | null;
+  joined_at: string;
+  wonder_count: number;
+  wonders: ExploreProject[];
 }
 
 export default function ExplorePlayerCard({ player }: { player: Player }) {
@@ -22,16 +24,11 @@ export default function ExplorePlayerCard({ player }: { player: Player }) {
         alt=""
         className="absolute inset-0 h-full w-full"
       />
-      {/* <div className="absolute top-[31%] left-[14%] right-[6%] h-[11%] flex items-center overflow-hidden">
-        <h3 className="truncate font-finger-paint text-lg text-[#5C4A2E]">
-          {player.slack_name}
-        </h3>
-      </div> */}
       <p className="absolute top-[54%] left-[14%] right-[6%] h-[10%] overflow-hidden font-poppins text-xs text-[#5C4A2E]">
-        {player.email}
+        {player.slack_name ?? player.slack_id} · {player.wonder_count} wonders
       </p>
       <div className="absolute bottom-[28%] left-[14%] right-[6%] flex flex-wrap gap-1">
-        {player.projects.map((proj, i) => (
+        {player.wonders.map((proj, i) => (
           <span
             key={i}
             className="rounded-full bg-[#5C4A2E]/10 px-2 py-0.5 font-poppins text-[10px] text-[#5C4A2E] w-[95%]"
@@ -39,7 +36,7 @@ export default function ExplorePlayerCard({ player }: { player: Player }) {
             {proj.name}
           </span>
         ))}
-        {player.projects.length === 0 && (
+        {player.wonders.length === 0 && (
           <span className="font-poppins text-[10px] text-[#5C4A2E]/50">
             no projects yet
           </span>

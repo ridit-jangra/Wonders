@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Finger_Paint, Geist, Geist_Mono, Poppins } from "next/font/google";
+import { Finger_Paint, Geist, Inter, JetBrains_Mono, Poppins } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -7,8 +7,8 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
   subsets: ["latin"],
 });
 
@@ -24,6 +24,11 @@ const fingerPaint = Finger_Paint({
   weight: "400",
 });
 
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
   title: "Wonders",
   description: "Just ship it.",
@@ -33,7 +38,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} ${fingerPaint.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${jetbrainsMono.variable} ${poppins.variable} ${fingerPaint.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

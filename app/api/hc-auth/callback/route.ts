@@ -5,8 +5,11 @@ import {
   STATE_COOKIE,
   SESSION_COOKIE,
   createSessionCookie,
+  hcaFullName,
+  type HcaIdentity,
 } from "@/lib/hc-auth";
-import { inviteToChannel } from "@/lib/slack";
+import { syncHcaIdentity } from "@/lib/profiles";
+import { fetchSlackProfile, inviteToChannel } from "@/lib/slack";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -68,14 +71,22 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const meData = (await meRes.json()) as {
-    identity?: { primary_email?: string; name?: string; slack_id?: string };
-  };
-  const email = meData.identity?.primary_email;
-  const name = meData.identity?.name ?? "";
-  const slackId = meData.identity?.slack_id ?? "";
+  const meData = (await meRes.json()) as { identity?: HcaIdentity };
+  const identity = meData.identity;
+  const email = identity?.primary_email;
+  const slackId = identity?.slack_id ?? "";
 
-  if (!email) {
+  if (!identity || !email) {
+    return NextResponse.redirect(
+      new URL("/login?error=profile", request.url),
+    );
+  }
+  const name = hcaFullName(identity);
+
+  try {
+    await syncHcaIdentity(identity, await fetchSlackProfile(slackId));
+  } catch (err) {
+    console.error("Failed to sync HCA identity:", err);
     return NextResponse.redirect(
       new URL("/login?error=profile", request.url),
     );

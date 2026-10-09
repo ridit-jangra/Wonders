@@ -4,7 +4,7 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/admin";
 import { countProjectsByStatus } from "@/lib/projects";
 import TopNav from "./components/TopNav";
-import { ButtonLink, Mono } from "./components/ui";
+import { Button, ButtonLink, Mono } from "./components/ui";
 
 export default async function AdminLayout({
   children,
@@ -52,9 +52,11 @@ export default async function AdminLayout({
             <ButtonLink href="/dashboard" variant="cream" size="sm">
               Back to app
             </ButtonLink>
-            <ButtonLink href="/api/admin-auth/logout" variant="ghost" size="sm" icon="door-leave">
-              Log out
-            </ButtonLink>
+            <form action="/api/admin-auth/logout" method="post">
+              <Button type="submit" variant="ghost" size="sm" icon="door-leave">
+                Log out
+              </Button>
+            </form>
           </div>
         </div>
       </header>

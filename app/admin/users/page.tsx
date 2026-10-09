@@ -11,6 +11,7 @@ import {
   Table,
   TextLink,
 } from "../components/ui";
+import { requireAdmin } from "@/lib/admin";
 
 const PER_PAGE = 25;
 
@@ -19,6 +20,7 @@ export default async function AdminUsersPage({
 }: {
   searchParams: Promise<{ q?: string; page?: string }>;
 }) {
+  await requireAdmin();
   const { q, page } = await searchParams;
   const currentPage = Math.max(1, parseInt(page ?? "1", 10) || 1);
   const { profiles, total } = await listAllProfiles({

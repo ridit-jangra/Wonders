@@ -15,8 +15,10 @@ import {
   StatusBadge,
   TextLink,
 } from "./components/ui";
+import { requireAdmin } from "@/lib/admin";
 
 export default async function AdminOverviewPage() {
+  await requireAdmin();
   const [stats, reviewQueue, recent] = await Promise.all([
     getOverviewStats(),
     listAllProjects({ status: ["in_review", "second_pass"], limit: 6, offset: 0 }),

@@ -14,6 +14,7 @@ import {
   TextLink,
 } from "../components/ui";
 import Select from "../components/Select";
+import { requireAdmin } from "@/lib/admin";
 
 const PER_PAGE = 25;
 
@@ -32,6 +33,7 @@ export default async function AdminWondersPage({
 }: {
   searchParams: Promise<{ q?: string; status?: string; page?: string }>;
 }) {
+  await requireAdmin();
   const { q, status, page } = await searchParams;
   const currentPage = Math.max(1, parseInt(page ?? "1", 10) || 1);
 

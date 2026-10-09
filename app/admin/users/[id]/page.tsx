@@ -16,12 +16,14 @@ import {
   StatusBadge,
   TextLink,
 } from "../../components/ui";
+import { requireAdmin } from "@/lib/admin";
 
 export default async function AdminUserDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireAdmin();
   const { id } = await params;
   const profile = await getProfileByIdAdmin(id);
   if (!profile) notFound();

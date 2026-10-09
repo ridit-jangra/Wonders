@@ -12,6 +12,7 @@ import {
   Table,
   TextLink,
 } from "../components/ui";
+import { requireAdmin } from "@/lib/admin";
 
 const PER_PAGE = 25;
 
@@ -20,6 +21,7 @@ export default async function AdminReviewQueuePage({
 }: {
   searchParams: Promise<{ page?: string; pass?: string }>;
 }) {
+  await requireAdmin();
   const { page, pass } = await searchParams;
   const currentPage = Math.max(1, parseInt(page ?? "1", 10) || 1);
 

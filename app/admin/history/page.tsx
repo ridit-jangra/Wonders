@@ -1,5 +1,6 @@
 import { listRecentHistory } from "@/lib/project-history";
 import { Card, HistoryTimeline, PageHeader, Pagination } from "../components/ui";
+import { requireAdmin } from "@/lib/admin";
 
 const PER_PAGE = 50;
 
@@ -8,6 +9,7 @@ export default async function AdminHistoryPage({
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
+  await requireAdmin();
   const { page } = await searchParams;
   const currentPage = Math.max(1, parseInt(page ?? "1", 10) || 1);
   const { entries, total } = await listRecentHistory({

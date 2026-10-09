@@ -6,7 +6,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { FullSearchTrigger } from "fumadocs-ui/layouts/shared/slots/search-trigger";
-import LinkPending from "@/app/dashboard/components/LinkPending";
 import { DOCS_SIDEBAR_COOKIE } from "./sidebar-cookie";
 
 export interface DocsSidebarPage {
@@ -43,9 +42,6 @@ function DocsSidebarNav({
                   className="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors"
                 >
                   {page.title}
-                  <LinkPending className="rounded-lg bg-[#F0EBD1]/80">
-                    <span className="text-sm text-[#16213E]">one sec :3</span>
-                  </LinkPending>
                 </Link>
               );
             })}

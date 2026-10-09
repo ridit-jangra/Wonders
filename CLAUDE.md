@@ -109,7 +109,7 @@ The file rides in a Server Action FormData, so `next.config.ts` raises `experime
 Double-clicking a submit button used to fire the Server Action twice and create duplicate rows, so nothing in the dashboard submits or navigates without feedback:
 
 - `SubmitButton.tsx` wraps `useFormStatus` (react-dom) and disables itself while its form's action runs. The hook reads the *nearest parent form*, so it must stay its own client component — inlining it into a page would always report `pending: false`. Used by the create, edit, and onboarding forms.
-- `LinkPending.tsx` wraps `useLinkStatus` (next/link) and covers its link while the navigation is in flight. Same rule: it has to render *inside* the `<Link>`, and that link must be positioned for `inset-0` to land. Defaults to the `/loader.gif` overlay the explore page uses; pass children for a text label on small links.
+- `LinkPending.tsx` wraps `useLinkStatus` (next/link) and covers its link while the navigation is in flight. Same rule: it has to render *inside* the `<Link>`, and that link must be positioned for `inset-0` to land. Defaults to the `/loader.gif` overlay the explore page uses; pass children for a text label on small links. Deliberately **not** used on the sidebar links (`SidebarNav.tsx` and the docs `DocsSidebar.tsx`): the "one sec :3" overlay on those was removed at the user's request.
 - `DeleteProjectButton.tsx` predates both and rolls its own `useTransition` pending state.
 
 Any new Server Action form or dashboard link should reuse these rather than a bare `<button type="submit">`.

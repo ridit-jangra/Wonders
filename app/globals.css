@@ -55,18 +55,3 @@ body {
   background: var(--color-fd-background);
   color: var(--color-fd-foreground);
 }
-
-.wonders-docs #nd-sidebar,
-#nd-sidebar-mobile {
-  --color-fd-card: #5aa8a8;
-  --color-fd-background: #5aa8a8;
-  --color-fd-foreground: #16213e;
-  --color-fd-muted: #4e9898;
-  --color-fd-muted-foreground: #16213e;
-  --color-fd-accent: rgba(249, 246, 232, 0.35);
-  --color-fd-accent-foreground: #16213e;
-  --color-fd-primary: #16213e;
-  --color-fd-border: rgba(22, 33, 62, 0.15);
-  --color-fd-secondary: #4e9898;
-  font-family: var(--font-finger-paint);
-}

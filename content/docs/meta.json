@@ -1,4 +1,11 @@
 {
   "title": "Wonders",
-  "pages": ["index", "getting-started", "what-counts", "making-a-wonder", "review", "rewards"]
+  "pages": [
+    "index",
+    "getting-started",
+    "what-counts",
+    "making-a-wonder",
+    "review",
+    "rewards"
+  ]
 }

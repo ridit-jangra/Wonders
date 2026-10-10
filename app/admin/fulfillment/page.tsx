@@ -5,11 +5,15 @@ import {
   getProjectWithOwner,
   startFulfillment,
   fulfillProject,
+  markRewardOrdered,
+  markRewardSent,
   setProjectReward,
 } from "@/lib/projects";
 import { recordProjectHistory } from "@/lib/project-history";
+import { notifyPlayer } from "@/lib/notifications";
 import {
   ActionButton,
+  Badge,
   ButtonLink,
   Card,
   EmptyState,
@@ -76,6 +80,43 @@ export default async function AdminFulfillmentPage({
         reward: existing.reward,
         reviewedBy: admin.slackId,
       });
+      notifyPlayer(existing.profile?.slack_id, "fulfillment_started", { title: existing.title });
+    }
+
+    revalidatePath("/admin/fulfillment");
+  }
+
+  async function markOrdered(formData: FormData) {
+    "use server";
+
+    await requireAdmin();
+    const id = String(formData.get("id") ?? "");
+    if (!id) return;
+
+    const existing = await getProjectWithOwner(id);
+    if (!existing) return;
+
+    const ordered = await markRewardOrdered(id);
+    if (ordered) {
+      notifyPlayer(existing.profile?.slack_id, "reward_ordered", { title: existing.title });
+    }
+
+    revalidatePath("/admin/fulfillment");
+  }
+
+  async function markSent(formData: FormData) {
+    "use server";
+
+    await requireAdmin();
+    const id = String(formData.get("id") ?? "");
+    if (!id) return;
+
+    const existing = await getProjectWithOwner(id);
+    if (!existing) return;
+
+    const sent = await markRewardSent(id);
+    if (sent) {
+      notifyPlayer(existing.profile?.slack_id, "reward_sent", { title: existing.title });
     }
 
     revalidatePath("/admin/fulfillment");
@@ -102,6 +143,7 @@ export default async function AdminFulfillmentPage({
         reward: existing.reward,
         reviewedBy: admin.slackId,
       });
+      notifyPlayer(existing.profile?.slack_id, "fulfilled", { title: existing.title });
     }
 
     revalidatePath("/admin/fulfillment");
@@ -125,6 +167,12 @@ export default async function AdminFulfillmentPage({
                     {project.title}
                   </TextLink>
                   <StatusBadge status={project.status} />
+                  {project.status === "fulfillment_started" && project.reward_sent_at && (
+                    <Badge tone="info">On its way</Badge>
+                  )}
+                  {project.status === "fulfillment_started" &&
+                    project.reward_ordered_at &&
+                    !project.reward_sent_at && <Badge tone="info">Ordered</Badge>}
                 </div>
                 <p className="hc-caption mt-1 text-sm">
                   <TextLink href={`/admin/users/${project.profile_id}`}>
@@ -172,6 +220,26 @@ export default async function AdminFulfillmentPage({
                   </ActionButton>
                 </form>
               )}
+
+              {project.status === "fulfillment_started" && !project.reward_ordered_at && (
+                <form action={markOrdered}>
+                  <input type="hidden" name="id" value={project.id} />
+                  <ActionButton pendingLabel="Marking…" variant="outline" icon="package">
+                    Mark ordered
+                  </ActionButton>
+                </form>
+              )}
+
+              {project.status === "fulfillment_started" &&
+                project.reward_ordered_at &&
+                !project.reward_sent_at && (
+                  <form action={markSent}>
+                    <input type="hidden" name="id" value={project.id} />
+                    <ActionButton pendingLabel="Marking…" variant="outline" icon="send">
+                      Mark on its way
+                    </ActionButton>
+                  </form>
+                )}
 
               {project.status === "fulfillment_started" && (
                 <form action={markFulfilled}>

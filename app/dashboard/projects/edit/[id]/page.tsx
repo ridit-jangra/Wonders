@@ -6,6 +6,7 @@ import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
 import { getProfile } from "@/lib/profiles";
 import { deleteProject, getProject, shipProject, updateProject } from "@/lib/projects";
 import { recordProjectHistory } from "@/lib/project-history";
+import { notifyPlayer } from "@/lib/notifications";
 import { uploadThumbnail } from "@/lib/storage";
 import ThumbnailPicker from "@/app/dashboard/components/ThumbnailPicker";
 import SubmitButton from "@/app/dashboard/components/SubmitButton";
@@ -33,6 +34,12 @@ export default async function EditProjectPage({
   if (!project || project.profile_id !== profile.id) {
     redirect("/wonders");
   }
+
+  const editable = project.status === "building" || project.status === "rejected";
+  const lockedLabel =
+    project.status === "in_review" || project.status === "second_pass"
+      ? "in review :3"
+      : "shipped :D";
 
   const missingForShip = [
     !project.image_url && "a thumbnail",
@@ -117,6 +124,7 @@ export default async function EditProjectPage({
         reward: null,
         reviewedBy: current.slackId,
       });
+      notifyPlayer(current.slackId, "in_review", { title: existing.title });
     }
 
     revalidatePath("/dashboard");
@@ -155,68 +163,92 @@ export default async function EditProjectPage({
       </h1>
       <form
         action={submitProject}
-        className="flex w-full flex-col gap-4 md:max-w-[84%]"
+        className="w-full md:max-w-[84%]"
       >
-        <p className="font-finger-paint text-[#5C4A2E]/70">
-          Give your wonder a name :3
-        </p>
-        <input
-          name="title"
-          required
-          defaultValue={project.title}
-          placeholder="give it a name"
-          className="w-full border border-[#8C8368]/30 bg-[#E7E2C9] px-4 py-3 font-finger-paint text-base text-[#5C4A2E] placeholder:text-[#8C8368] focus:border-[#8C8368] focus:outline-none md:border-0"
-        />
-        <p className="font-finger-paint text-[#5C4A2E]/70">
-          Give your wonder a description :3
-        </p>
-        <textarea
-          name="description"
-          required
-          defaultValue={project.description}
-          placeholder="what is it? why does it feel like you?"
-          rows={5}
-          className="w-full font-finger-paint resize-none border border-[#8C8368]/30 bg-[#E7E2C9] px-4 py-3 text-base text-[#5C4A2E] placeholder:text-[#8C8368] focus:border-[#8C8368] focus:outline-none md:border-0"
-        />
-        <p className="font-finger-paint text-[#5C4A2E]/70">
-          Give your wonder a thumbnail :3
-        </p>
-        <ThumbnailPicker defaultUrl={project.image_url} />
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <span className="flex w-full flex-col gap-2">
-            <p className="font-finger-paint text-[#5C4A2E]/70">
-              Github repo url :D
-            </p>
-            <input
-              name="github-repo-url"
-              defaultValue={project.github_url ?? ""}
-              placeholder="https://"
-              className="w-full border border-[#8C8368]/30 bg-[#E7E2C9] px-4 py-3 font-finger-paint text-base text-[#5C4A2E] placeholder:text-[#8C8368] focus:border-[#8C8368] focus:outline-none md:border-0"
-            />
-          </span>
-          <span className="flex w-full flex-col gap-2">
-            <p className="font-finger-paint text-[#5C4A2E]/70">Demo url :D</p>
-            <input
-              name="demo-url"
-              defaultValue={project.link_url ?? ""}
-              placeholder="https://"
-              className="w-full border border-[#8C8368]/30 bg-[#E7E2C9] px-4 py-3 font-finger-paint text-base text-[#5C4A2E] placeholder:text-[#8C8368] focus:border-[#8C8368] focus:outline-none md:border-0"
-            />
-          </span>
-        </div>
-        <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:justify-end">
-          <DeleteProjectButton
-            action={deleteProjectAction}
-            label="Delete it :("
-            className="w-full rounded-md bg-[#F2B3AD] px-4 py-2 font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-48"
+        <fieldset
+          disabled={!editable}
+          className="flex w-full flex-col gap-4 disabled:opacity-70"
+        >
+          <p className="font-finger-paint text-[#5C4A2E]/70">
+            Give your wonder a name :3
+          </p>
+          <input
+            name="title"
+            required
+            defaultValue={project.title}
+            placeholder="give it a name"
+            className="w-full border border-[#8C8368]/30 bg-[#E7E2C9] px-4 py-3 font-finger-paint text-base text-[#5C4A2E] placeholder:text-[#8C8368] focus:border-[#8C8368] focus:outline-none md:border-0"
           />
-          <SubmitButton
-            pendingLabel="saving it... :3"
-            className="w-full rounded-md bg-[#D1E4B5] px-4 py-2 font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-48"
-          >
-            Save it :3
-          </SubmitButton>
-        </div>
+          <p className="font-finger-paint text-[#5C4A2E]/70">
+            Give your wonder a description :3
+          </p>
+          <textarea
+            name="description"
+            required
+            defaultValue={project.description}
+            placeholder="what is it? why does it feel like you?"
+            rows={5}
+            className="w-full font-finger-paint resize-none border border-[#8C8368]/30 bg-[#E7E2C9] px-4 py-3 text-base text-[#5C4A2E] placeholder:text-[#8C8368] focus:border-[#8C8368] focus:outline-none md:border-0"
+          />
+          <p className="font-finger-paint text-[#5C4A2E]/70">
+            Give your wonder a thumbnail :3
+          </p>
+          <ThumbnailPicker defaultUrl={project.image_url} />
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <span className="flex w-full flex-col gap-2">
+              <p className="font-finger-paint text-[#5C4A2E]/70">
+                Github repo url :D
+              </p>
+              <input
+                name="github-repo-url"
+                defaultValue={project.github_url ?? ""}
+                placeholder="https://"
+                className="w-full border border-[#8C8368]/30 bg-[#E7E2C9] px-4 py-3 font-finger-paint text-base text-[#5C4A2E] placeholder:text-[#8C8368] focus:border-[#8C8368] focus:outline-none md:border-0"
+              />
+            </span>
+            <span className="flex w-full flex-col gap-2">
+              <p className="font-finger-paint text-[#5C4A2E]/70">Demo url :D</p>
+              <input
+                name="demo-url"
+                defaultValue={project.link_url ?? ""}
+                placeholder="https://"
+                className="w-full border border-[#8C8368]/30 bg-[#E7E2C9] px-4 py-3 font-finger-paint text-base text-[#5C4A2E] placeholder:text-[#8C8368] focus:border-[#8C8368] focus:outline-none md:border-0"
+              />
+            </span>
+          </div>
+        </fieldset>
+        {editable ? (
+          <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-end">
+            <DeleteProjectButton
+              action={deleteProjectAction}
+              label="Delete it :("
+              className="w-full rounded-md bg-[#F2B3AD] px-4 py-2 font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-48"
+            />
+            <SubmitButton
+              pendingLabel="saving it... :3"
+              className="w-full rounded-md bg-[#D1E4B5] px-4 py-2 font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-48"
+            >
+              Save it :3
+            </SubmitButton>
+          </div>
+        ) : (
+          <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              disabled
+              className="w-full cursor-not-allowed rounded-md bg-[#F2B3AD] px-4 py-2 font-finger-paint text-lg text-black/40 opacity-60 sm:w-48"
+            >
+              {lockedLabel}
+            </button>
+            <button
+              type="button"
+              disabled
+              className="w-full cursor-not-allowed rounded-md bg-[#D1E4B5] px-4 py-2 font-finger-paint text-lg text-black/40 opacity-60 sm:w-48"
+            >
+              {lockedLabel}
+            </button>
+          </div>
+        )}
       </form>
       {project.status === "rejected" && (
         <div className="w-full rounded-md bg-[#F2B3AD]/30 p-4 md:max-w-[84%]">

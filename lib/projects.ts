@@ -110,7 +110,8 @@ export async function updateProject(
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)
-    .eq("profile_id", profileId);
+    .eq("profile_id", profileId)
+    .in("status", ["building", "rejected"]);
 
   if (error) {
     throw error;
@@ -141,7 +142,8 @@ export async function deleteProject(id: ProjectId, profileId: string) {
     .from("projects")
     .delete()
     .eq("id", id)
-    .eq("profile_id", profileId);
+    .eq("profile_id", profileId)
+    .in("status", ["building", "rejected"]);
 
   if (error) {
     throw error;
@@ -160,13 +162,15 @@ export interface ProjectOwner {
 export interface ProjectWithOwner extends Project {
   fulfilled_at: string | null;
   fulfilled_by: string | null;
+  reward_ordered_at: string | null;
+  reward_sent_at: string | null;
   on_hold: boolean;
   hold_reason: string | null;
   profile: ProjectOwner;
 }
 
 const ADMIN_COLUMNS =
-  "id, profile_id, title, description, image_url, link_url, github_url, status, reviewer_note, reward, created_at, fulfilled_at, fulfilled_by, on_hold, hold_reason, profile:profiles(name, slack_id, email, slack_display_name, slack_avatar_url)";
+  "id, profile_id, title, description, image_url, link_url, github_url, status, reviewer_note, reward, created_at, fulfilled_at, fulfilled_by, reward_ordered_at, reward_sent_at, on_hold, hold_reason, profile:profiles(name, slack_id, email, slack_display_name, slack_avatar_url)";
 
 export async function listAllProjects(opts: {
   status?: ProjectStatus | ProjectStatus[];
@@ -344,6 +348,39 @@ export async function startFulfillment(id: ProjectId): Promise<boolean> {
     .update({ status: "fulfillment_started", updated_at: new Date().toISOString() })
     .eq("id", id)
     .eq("status", "shipped")
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+  return data !== null;
+}
+
+export async function markRewardOrdered(id: ProjectId): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("projects")
+    .update({ reward_ordered_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .eq("status", "fulfillment_started")
+    .is("reward_ordered_at", null)
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+  return data !== null;
+}
+
+export async function markRewardSent(id: ProjectId): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("projects")
+    .update({ reward_sent_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .eq("status", "fulfillment_started")
+    .not("reward_ordered_at", "is", null)
+    .is("reward_sent_at", null)
     .select("id")
     .maybeSingle();
 

@@ -12,6 +12,7 @@ import {
   setProjectHold,
 } from "@/lib/projects";
 import { getProjectHistory, recordProjectHistory } from "@/lib/project-history";
+import { notifyPlayer } from "@/lib/notifications";
 import {
   deleteReviewDraft,
   getProjectReviews,
@@ -214,6 +215,14 @@ export default async function AdminReviewPanelPage({
         reward: existing.reward,
         reviewedBy: admin.slackId,
       });
+
+      let event: "first_pass_approved" | "second_pass_approved" | "changes_requested" = "changes_requested";
+      if (toStatus === "second_pass") {
+        event = "first_pass_approved";
+      } else if (toStatus === "shipped") {
+        event = "second_pass_approved";
+      }
+      notifyPlayer(existing.profile?.slack_id, event, { title: existing.title, note: feedback });
     }
 
     revalidateReview(id);
@@ -403,8 +412,8 @@ export default async function AdminReviewPanelPage({
         {project.on_hold ? (
           <form action={releaseHold} className="flex flex-col gap-3">
             <Callout tone="warning">&ldquo;{project.hold_reason}&rdquo;</Callout>
-            <div>
-              <ActionButton pendingLabel="Releasing…" variant="outline" size="sm">
+            <div className="[&>button]:w-full">
+              <ActionButton pendingLabel="Releasing…">
                 Release hold
               </ActionButton>
             </div>
@@ -415,8 +424,8 @@ export default async function AdminReviewPanelPage({
               Parks this wonder so other reviewers know to leave it alone. It stays in the queue with an On hold tag.
             </p>
             <Textarea name="hold_reason" rows={3} placeholder="Why is this on hold? Other reviewers will see it." />
-            <div>
-              <ActionButton pendingLabel="Holding…" variant="outline" size="sm">
+            <div className="[&>button]:w-full">
+              <ActionButton pendingLabel="Holding…">
                 Put on hold
               </ActionButton>
             </div>
@@ -517,6 +526,7 @@ export default async function AdminReviewPanelPage({
 
         <Card padding="flush">
           <Tabs
+            sticky
             tabs={[
               {
                 key: "commits",
@@ -600,8 +610,8 @@ function EditSubmissionForm({
       <Field label="Demo URL">
         <Input name="link_url" type="url" defaultValue={project.link_url ?? ""} />
       </Field>
-      <div>
-        <ActionButton pendingLabel="Saving…" variant="outline" size="sm">
+      <div className="[&>button]:w-full">
+        <ActionButton pendingLabel="Saving…">
           Save submission
         </ActionButton>
       </div>

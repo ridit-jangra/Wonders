@@ -13,7 +13,9 @@ export interface YswsEntry {
 
 export interface YswsMatch {
   entry: YswsEntry;
-  reason: string;
+  name: string;
+  repoMatches: boolean;
+  demoMatches: boolean;
 }
 
 const CACHE_MS = 5 * 60 * 1000;
@@ -66,13 +68,14 @@ function normalizeUrl(url: string | null | undefined): string {
   return value;
 }
 
-function githubOwner(url: string | null | undefined): string {
-  const normalized = normalizeUrl(url);
-  if (!normalized.startsWith("github.com/")) {
-    return "";
+function projectName(entry: YswsEntry): string {
+  const code = (entry.code_url ?? "").trim().replace(/\.git$/, "").replace(/\/+$/, "");
+  const fromCode = code.split("/").pop() ?? "";
+  if (fromCode) {
+    return fromCode;
   }
-  const parts = normalized.split("/");
-  return parts[1] ?? "";
+  const demo = (entry.demo_url ?? "").trim().replace(/^https?:\/\//, "").replace(/\/+$/, "");
+  return demo || "Untitled";
 }
 
 export async function findOtherYswsEntries(project: {
@@ -86,19 +89,13 @@ export async function findOtherYswsEntries(project: {
 
   const repo = normalizeUrl(project.githubUrl);
   const demo = normalizeUrl(project.demoUrl);
-  const owner = githubOwner(project.githubUrl);
 
   const matches: YswsMatch[] = [];
   for (const entry of entries) {
-    const entryCode = normalizeUrl(entry.code_url);
-    const entryDemo = normalizeUrl(entry.demo_url);
-
-    if (repo && entryCode === repo) {
-      matches.push({ entry, reason: "Same repo" });
-    } else if (demo && entryDemo === demo) {
-      matches.push({ entry, reason: "Same demo" });
-    } else if (owner && entry.github_username && entry.github_username.toLowerCase() === owner) {
-      matches.push({ entry, reason: "Same GitHub user" });
+    const repoMatches = repo !== "" && normalizeUrl(entry.code_url) === repo;
+    const demoMatches = demo !== "" && normalizeUrl(entry.demo_url) === demo;
+    if (repoMatches || demoMatches) {
+      matches.push({ entry, name: projectName(entry), repoMatches, demoMatches });
     }
   }
 

@@ -66,3 +66,23 @@ export async function fetchSlackProfile(
     return empty;
   }
 }
+
+export async function sendDirectMessage(slackUserId: string, text: string): Promise<void> {
+  const res = await fetch(`${SLACK_API_BASE}/chat.postMessage`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${getBotToken()}`,
+      "Content-Type": "application/json; charset=utf-8",
+    },
+    body: JSON.stringify({
+      channel: slackUserId,
+      text,
+      unfurl_links: false,
+    }),
+  });
+
+  const data = await res.json();
+  if (!data.ok) {
+    console.error("Slack DM failed:", data.error);
+  }
+}

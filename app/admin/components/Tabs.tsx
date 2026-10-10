@@ -11,15 +11,20 @@ export interface TabItem {
 export default function Tabs({
   tabs,
   variant = "underline",
+  sticky = false,
 }: {
   tabs: TabItem[];
   variant?: "underline" | "segmented";
+  sticky?: boolean;
 }) {
   const [active, setActive] = useState(tabs[0]?.key ?? "");
 
   return (
     <div>
-      <div className={variant === "segmented" ? "hc-segmented" : "hc-tabs"} role="tablist">
+      <div
+        className={`${variant === "segmented" ? "hc-segmented" : "hc-tabs"} ${sticky ? "hc-tabs-sticky" : ""}`}
+        role="tablist"
+      >
         {tabs.map((tab) => (
           <button
             key={tab.key}

@@ -215,7 +215,7 @@
 
 .hc-card[data-density="flush"] {
   padding: 0;
-  overflow: hidden;
+  overflow: clip;
 }
 
 .hc-card[data-variant="sunken"] {
@@ -322,7 +322,7 @@
 
 .hc-btn-success {
   background: var(--hc-green);
-  color: #0b2a21;
+  color: var(--hc-white);
 }
 
 .hc-btn-danger {
@@ -751,6 +751,14 @@
 
 .hc-tabs::-webkit-scrollbar {
   display: none;
+}
+
+.hc-tabs-sticky {
+  position: sticky;
+  top: 57px;
+  z-index: 5;
+  background: var(--surface);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 
 .hc-tab {

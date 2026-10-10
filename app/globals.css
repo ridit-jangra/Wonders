@@ -2,6 +2,16 @@
 @import "fumadocs-ui/css/neutral.css";
 @import "fumadocs-ui/css/preset.css";
 
+@font-face {
+  font-family: "Phantom Sans";
+  src:
+    url("https://assets.hackclub.com/fonts/Phantom_Sans_0.7/Regular.woff2") format("woff2"),
+    url("https://assets.hackclub.com/fonts/Phantom_Sans_0.7/Regular.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -15,6 +25,7 @@
   --font-finger-paint: var(--font-finger-paint);
   --font-inter: var(--font-inter);
   --font-mono: var(--font-jetbrains-mono);
+  --font-phantom: "Phantom Sans", system-ui, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {

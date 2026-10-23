@@ -79,10 +79,14 @@ export async function HackatimePanel({
   slackId,
   projectTitle,
   githubUrl,
+  linkedProjects,
+  shippedSeconds,
 }: {
   slackId: string | null;
   projectTitle: string;
   githubUrl: string | null;
+  linkedProjects: string[];
+  shippedSeconds: number | null;
 }) {
   const report = await fetchHackatimeReport(slackId);
 
@@ -98,7 +102,10 @@ export async function HackatimePanel({
   const titleName = matchKey(projectTitle);
   const matching = report.projects.filter((project) => {
     const name = matchKey(project.name);
-    return name !== "" && (name === repoName || name === titleName);
+    return (
+      linkedProjects.includes(project.name) ||
+      (name !== "" && (name === repoName || name === titleName))
+    );
   });
 
   return (
@@ -109,9 +116,18 @@ export async function HackatimePanel({
         </TextLink>{" "}
         · <Mono>{report.totalText}</Mono> total across {report.projects.length} projects
       </p>
+      <p className="hc-caption border-b border-[var(--border)] px-4 py-3 text-sm">
+        Linked by the player:{" "}
+        {linkedProjects.length > 0 ? <Mono>{linkedProjects.join(", ")}</Mono> : <Muted>none</Muted>}
+        {shippedSeconds !== null && (
+          <>
+            {" "}· <Mono>{(shippedSeconds / 3600).toFixed(1)}h</Mono> recorded at ship
+          </>
+        )}
+      </p>
       {matching.length === 0 ? (
         <EmptyState title="No matching Hackatime project" icon="clock">
-          None of this user&apos;s Hackatime projects are named like the repo or the wonder&apos;s title.
+          None of this user&apos;s Hackatime projects are linked to this wonder or named like the repo or the wonder&apos;s title.
         </EmptyState>
       ) : (
         <PaginatedTable

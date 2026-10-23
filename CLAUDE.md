@@ -106,6 +106,14 @@ There is no object storage. Optional wonder thumbnails go through `lib/storage.t
 
 The file rides in a Server Action FormData, so `next.config.ts` raises `experimental.serverActions.bodySizeLimit` to `6mb`; the 1MB default would reject a 5MB image. `ThumbnailPicker.tsx` is a client component purely for the object-URL preview, and posts two fields into the surrounding form: `thumbnail` (the file) and `remove-thumbnail` (a flag the edit action reads to null the column).
 
+### Hackatime is connected per player and linked per wonder
+
+Shipping needs Hackatime: the unified YSWS database records hours for every project. Players connect on the wonder edit page via Hackatime OAuth (`/api/hackatime/connect?wonder=<id>` → `/api/hackatime/callback`, scopes `profile read`, `HACKATIME_CLIENT_ID`/`HACKATIME_CLIENT_SECRET`, optional `HACKATIME_REDIRECT_URI` defaulting to `<origin>/api/hackatime/callback`, state in the `wonders_hackatime_state` cookie). The callback only stores the token when `/api/v1/authenticated/me` reports the same `slack_id` as the player's session, so a forwarded consent link can't attach someone else's account; otherwise it returns `?hackatime=mismatch`. The token is stored encrypted (`encryptPII`) in `profiles.hackatime_token` with `hackatime_connected_at`, read back only through `getHackatimeToken`.
+
+The player then ticks which of their Hackatime projects the wonder is (`projects.hackatime_projects`, saved with the rest of the edit form; the hidden `hackatime-picker` field marks that the picker was rendered so a save without it leaves the links alone). Both "your hackatime" and "a hackatime project" sit in `missingForShip`, and `shipProjectAction` re-checks them. At ship, the linked projects' total seconds are summed from `/api/v1/authenticated/projects` and stored in `projects.hackatime_seconds` (null if Hackatime was unreachable). Reviewers see the linked projects and recorded hours in the review page's Hackatime tab.
+
+The player-facing copy deliberately never shows hours or treats them as a target ("There's no hour minimum: your wonder is judged on what you built"), so the picker lists project names only. Keep hours out of every player-facing view, the same way as `reward`.
+
 ### Every mutation and navigation shows a pending state
 
 Double-clicking a submit button used to fire the Server Action twice and create duplicate rows, so nothing in the dashboard submits or navigates without feedback:

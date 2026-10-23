@@ -19,6 +19,8 @@ create table if not exists profiles (
   address_postal text,
   hca_verification_status text,
   hca_ysws_eligible boolean,
+  hackatime_token text,
+  hackatime_connected_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -44,6 +46,8 @@ create table if not exists projects (
   reward_sent_at timestamptz,
   fulfilled_at timestamptz,
   fulfilled_by text,
+  hackatime_projects text[] not null default '{}',
+  hackatime_seconds integer,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

@@ -546,6 +546,8 @@ export default async function AdminReviewPanelPage({
                       slackId={owner?.slack_id ?? null}
                       projectTitle={project.title}
                       githubUrl={project.github_url}
+                      linkedProjects={project.hackatime_projects}
+                      shippedSeconds={project.hackatime_seconds}
                     />
                   </Suspense>
                 ),

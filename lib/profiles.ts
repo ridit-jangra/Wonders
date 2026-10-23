@@ -15,6 +15,7 @@ export interface Profile {
   email: string;
   name: string;
   interest: string | null;
+  hackatime_connected_at: string | null;
 }
 
 export interface ProfileIdentity {
@@ -44,10 +45,37 @@ export interface ProfileWithStats extends Profile {
 
 export async function getProfile(slackId: string): Promise<Profile | null> {
   const [profile] = await sql<Profile[]>`
-    select id, slack_id, email, name, interest
+    select id, slack_id, email, name, interest, hackatime_connected_at
     from profiles where slack_id = ${slackId}
   `;
   return profile ?? null;
+}
+
+export async function setHackatimeToken(profileId: string, token: string) {
+  await sql`
+    update profiles set
+      hackatime_token = ${encryptPII(token)},
+      hackatime_connected_at = now(),
+      updated_at = now()
+    where id = ${profileId}
+  `;
+}
+
+export async function getHackatimeToken(profileId: string): Promise<string | null> {
+  const [row] = await sql<{ hackatime_token: string | null }[]>`
+    select hackatime_token from profiles where id = ${profileId}
+  `;
+  return decryptPII(row?.hackatime_token) || null;
+}
+
+export async function clearHackatimeToken(profileId: string) {
+  await sql`
+    update profiles set
+      hackatime_token = null,
+      hackatime_connected_at = null,
+      updated_at = now()
+    where id = ${profileId}
+  `;
 }
 
 export async function saveInterest(session: {
@@ -125,7 +153,8 @@ export async function listAllProfiles(opts: {
   const [profiles, [{ total }]] = await Promise.all([
     sql<ProfileWithStats[]>`
       select
-        pr.id, pr.slack_id, pr.email, pr.name, pr.interest, pr.created_at,
+        pr.id, pr.slack_id, pr.email, pr.name, pr.interest,
+        pr.hackatime_connected_at, pr.created_at,
         (select count(*)::int from projects p where p.profile_id = pr.id) as wonder_count
       from profiles pr
       ${where}
@@ -144,7 +173,7 @@ export async function getProfileByIdAdmin(
   id: string,
 ): Promise<(Profile & { created_at: string }) | null> {
   const [profile] = await sql<(Profile & { created_at: string })[]>`
-    select id, slack_id, email, name, interest, created_at
+    select id, slack_id, email, name, interest, hackatime_connected_at, created_at
     from profiles where id = ${id}
   `;
   return profile ?? null;

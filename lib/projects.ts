@@ -24,12 +24,15 @@ export interface Project {
   status: ProjectStatus;
   reviewer_note: string | null;
   reward: string | null;
+  hackatime_projects: string[];
+  hackatime_seconds: number | null;
   created_at: string;
 }
 
 const COLUMNS = () => sql`
   id, profile_id, title, description, image_url, link_url, github_url,
-  status, reviewer_note, reward, created_at
+  status, reviewer_note, reward, hackatime_projects, hackatime_seconds,
+  created_at
 `;
 
 export async function getProjects(profileId: string): Promise<Project[]> {
@@ -81,6 +84,7 @@ export async function updateProject(
     link_url?: string;
     github_url?: string;
     image_url?: string | null;
+    hackatime_projects?: string[];
   },
 ) {
   await sql`
@@ -90,6 +94,7 @@ export async function updateProject(
       link_url = ${data.link_url || null},
       github_url = ${data.github_url || null},
       ${data.image_url !== undefined ? sql`image_url = ${data.image_url},` : sql``}
+      ${data.hackatime_projects !== undefined ? sql`hackatime_projects = ${data.hackatime_projects},` : sql``}
       updated_at = now()
     where id = ${id}
       and profile_id = ${profileId}
@@ -100,9 +105,13 @@ export async function updateProject(
 export async function shipProject(
   id: ProjectId,
   profileId: string,
+  hackatimeSeconds: number | null,
 ): Promise<boolean> {
   const rows = await sql`
-    update projects set status = 'in_review', updated_at = now()
+    update projects set
+      status = 'in_review',
+      hackatime_seconds = ${hackatimeSeconds},
+      updated_at = now()
     where id = ${id}
       and profile_id = ${profileId}
       and status in ('building', 'rejected')
@@ -141,7 +150,8 @@ export interface ProjectWithOwner extends Project {
 
 const ADMIN_COLUMNS = () => sql`
   p.id, p.profile_id, p.title, p.description, p.image_url, p.link_url,
-  p.github_url, p.status, p.reviewer_note, p.reward, p.created_at,
+  p.github_url, p.status, p.reviewer_note, p.reward, p.hackatime_projects,
+  p.hackatime_seconds, p.created_at,
   p.fulfilled_at, p.fulfilled_by, p.reward_ordered_at, p.reward_sent_at,
   p.on_hold, p.hold_reason,
   json_build_object(

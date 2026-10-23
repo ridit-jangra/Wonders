@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
-import { getProfile } from "@/lib/profiles";
+import { getHackatimeToken, getProfile } from "@/lib/profiles";
+import { fetchHackatimeProjects } from "@/lib/hackatime";
 import { deleteProject, getProject, shipProject, updateProject } from "@/lib/projects";
 import { recordProjectHistory } from "@/lib/project-history";
 import { notifyPlayer } from "@/lib/notifications";
@@ -12,12 +13,22 @@ import ThumbnailPicker from "@/app/dashboard/components/ThumbnailPicker";
 import SubmitButton from "@/app/dashboard/components/SubmitButton";
 import DeleteProjectButton from "@/app/dashboard/components/DeleteProjectButton";
 
+const HACKATIME_NOTICE: Record<string, string> = {
+  connected: "hackatime connected :D",
+  failed: "couldn't connect hackatime, try again :(",
+  mismatch:
+    "that hackatime account isn't the one linked to your slack, log into your own hackatime and try again :(",
+};
+
 export default async function EditProjectPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ hackatime?: string }>;
 }) {
   const { id } = await params;
+  const { hackatime: hackatimeOutcome } = await searchParams;
 
   const cookieStore = await cookies();
   const session = verifySessionCookie(cookieStore.get(SESSION_COOKIE)?.value);
@@ -41,10 +52,27 @@ export default async function EditProjectPage({
       ? "in review :3"
       : "shipped :D";
 
+  const hackatimeConnected = Boolean(profile.hackatime_connected_at);
+  const hackatimeToken =
+    editable && hackatimeConnected ? await getHackatimeToken(profile.id) : null;
+  const hackatimeProjects = hackatimeToken
+    ? await fetchHackatimeProjects(hackatimeToken)
+    : null;
+  const hackatimeChoices = [
+    ...new Set([
+      ...project.hackatime_projects,
+      ...(hackatimeProjects ?? []).map((p) => p.name),
+    ]),
+  ];
+
   const missingForShip = [
     !project.image_url && "a thumbnail",
     !project.link_url && "a demo url",
     !project.github_url && "a github url",
+    !hackatimeConnected && "your hackatime",
+    hackatimeConnected &&
+      project.hackatime_projects.length === 0 &&
+      "a hackatime project",
   ].filter((v): v is string => Boolean(v));
 
   async function submitProject(formData: FormData) {
@@ -72,6 +100,17 @@ export default async function EditProjectPage({
     const demoUrl = String(formData.get("demo-url") ?? "").trim();
     const thumbnail = formData.get("thumbnail");
     const removeThumbnail = formData.get("remove-thumbnail") === "1";
+    const hackatimeLinks =
+      formData.get("hackatime-picker") === "1"
+        ? [
+            ...new Set(
+              formData
+                .getAll("hackatime-projects")
+                .map((v) => String(v).trim())
+                .filter((v) => v.length > 0 && v.length <= 200),
+            ),
+          ].slice(0, 20)
+        : undefined;
     if (!title || !description) {
       return;
     }
@@ -87,6 +126,7 @@ export default async function EditProjectPage({
       link_url: demoUrl,
       github_url: githubUrl,
       image_url: imageUrl,
+      hackatime_projects: hackatimeLinks,
     });
     redirect("/wonders");
   }
@@ -109,11 +149,25 @@ export default async function EditProjectPage({
     if (!existing || existing.profile_id !== currentProfile.id) {
       redirect("/wonders");
     }
-    if (!existing.image_url || !existing.link_url || !existing.github_url) {
+    if (
+      !existing.image_url ||
+      !existing.link_url ||
+      !existing.github_url ||
+      !currentProfile.hackatime_connected_at ||
+      existing.hackatime_projects.length === 0
+    ) {
       return;
     }
 
-    const shipped = await shipProject(id, currentProfile.id);
+    const token = await getHackatimeToken(currentProfile.id);
+    const tracked = token ? await fetchHackatimeProjects(token) : null;
+    const hackatimeSeconds = tracked
+      ? tracked
+          .filter((p) => existing.hackatime_projects.includes(p.name))
+          .reduce((sum, p) => sum + p.seconds, 0)
+      : null;
+
+    const shipped = await shipProject(id, currentProfile.id, hackatimeSeconds);
     if (shipped) {
       await recordProjectHistory({
         projectId: id,
@@ -215,6 +269,61 @@ export default async function EditProjectPage({
                 className="w-full border border-[#8C8368]/30 bg-[#E7E2C9] px-4 py-3 font-finger-paint text-base text-[#5C4A2E] placeholder:text-[#8C8368] focus:border-[#8C8368] focus:outline-none md:border-0"
               />
             </span>
+          </div>
+          <div className="flex flex-col gap-2 border border-[#8C8368]/30 bg-[#E7E2C9] px-4 py-4 md:border-0">
+            <p className="font-finger-paint text-lg text-[#5C4A2E]">
+              Connect Hackatime
+            </p>
+            <p className="font-finger-paint text-sm text-[#5C4A2E]/70">
+              Hack Club logs every YSWS project in one shared record, and
+              Hackatime is how it knows a project is yours. There&apos;s no
+              hour minimum: your wonder is judged on what you built.
+            </p>
+            {hackatimeOutcome && HACKATIME_NOTICE[hackatimeOutcome] && (
+              <p className="font-finger-paint text-sm text-[#5C4A2E]">
+                {HACKATIME_NOTICE[hackatimeOutcome]}
+              </p>
+            )}
+            {!hackatimeConnected || (editable && !hackatimeProjects) ? (
+              editable && (
+                <a
+                  href={`/api/hackatime/connect?wonder=${project.id}`}
+                  className="mt-1 w-full rounded-md bg-[#A8C7E0] px-4 py-2 text-center font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-56"
+                >
+                  {hackatimeConnected ? "Reconnect Hackatime" : "Connect Hackatime"}
+                </a>
+              )
+            ) : (
+              <>
+                <p className="font-finger-paint text-[#5C4A2E]/70">
+                  which hackatime project is this wonder? :3
+                </p>
+                {editable && <input type="hidden" name="hackatime-picker" value="1" />}
+                {(editable ? hackatimeChoices : project.hackatime_projects).length === 0 ? (
+                  <p className="font-finger-paint text-sm text-[#5C4A2E]/70">
+                    no hackatime projects yet, code a bit with hackatime running and they&apos;ll show up here
+                  </p>
+                ) : (
+                  <div className="flex flex-col gap-1">
+                    {(editable ? hackatimeChoices : project.hackatime_projects).map((name) => (
+                      <label
+                        key={name}
+                        className="flex items-center gap-3 font-finger-paint text-[#5C4A2E]"
+                      >
+                        <input
+                          type="checkbox"
+                          name="hackatime-projects"
+                          value={name}
+                          defaultChecked={project.hackatime_projects.includes(name)}
+                          className="h-4 w-4 accent-[#5C4A2E]"
+                        />
+                        {name}
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </fieldset>
         {editable ? (

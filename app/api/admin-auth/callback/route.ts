@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { HC_AUTH_ME_URL, HC_AUTH_TOKEN_URL, hcaFullName, type HcaIdentity } from "@/lib/hc-auth";
+import { appUrl, HC_AUTH_ME_URL, HC_AUTH_TOKEN_URL, hcaFullName, type HcaIdentity } from "@/lib/hc-auth";
 import {
   ADMIN_SESSION_COOKIE,
   ADMIN_STATE_COOKIE,
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
 
   const redirectUri =
     process.env.ADMIN_HC_AUTH_REDIRECT_URI ??
-    new URL("/api/admin-auth/callback", request.url).toString();
+    appUrl("/api/admin-auth/callback", request).toString();
 
   const tokenRes = await fetch(HC_AUTH_TOKEN_URL, {
     method: "POST",
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
     email: identity.primary_email ?? "",
   });
 
-  const response = NextResponse.redirect(new URL("/admin", request.url));
+  const response = NextResponse.redirect(appUrl("/admin", request));
   response.cookies.set(ADMIN_SESSION_COOKIE, session.value, {
     httpOnly: true,
     secure: true,

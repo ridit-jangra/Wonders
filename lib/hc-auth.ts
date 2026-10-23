@@ -159,3 +159,14 @@ export function extractPhone(identity: HcaIdentity): string | null {
   const phone = identity.phone_number ?? primaryAddress(identity)?.phone_number;
   return phone?.trim() || null;
 }
+
+export function appUrl(path: string, request: Request): URL {
+  const first = (value: string | null) => value?.split(",")[0].trim() || null;
+  const host =
+    first(request.headers.get("x-forwarded-host")) ?? first(request.headers.get("host"));
+  if (!host) return new URL(path, request.url);
+  const proto =
+    first(request.headers.get("x-forwarded-proto")) ??
+    (/^(localhost|127\.0\.0\.1)(:|$)/.test(host) ? "http" : "https");
+  return new URL(path, `${proto}://${host}`);
+}

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
-import { HC_AUTH_AUTHORIZE_URL, HC_AUTH_SCOPE, STATE_COOKIE } from "@/lib/hc-auth";
+import { appUrl, HC_AUTH_AUTHORIZE_URL, HC_AUTH_SCOPE, STATE_COOKIE } from "@/lib/hc-auth";
 
 export async function GET(request: NextRequest) {
   const clientId = process.env.HC_AUTH_CLIENT_ID;
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
 
   const redirectUri =
     process.env.HC_AUTH_REDIRECT_URI ??
-    new URL("/api/hc-auth/callback", request.url).toString();
+    appUrl("/api/hc-auth/callback", request).toString();
 
   const state = crypto.randomBytes(16).toString("hex");
 

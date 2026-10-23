@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
+  appUrl,
   HC_AUTH_ME_URL,
   HC_AUTH_TOKEN_URL,
   STATE_COOKIE,
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
 
   if (!code || !state || !expectedState || state !== expectedState) {
     return NextResponse.redirect(
-      new URL("/login?error=state", request.url),
+      appUrl("/login?error=state", request),
     );
   }
 
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
 
   const redirectUri =
     process.env.HC_AUTH_REDIRECT_URI ??
-    new URL("/api/hc-auth/callback", request.url).toString();
+    appUrl("/api/hc-auth/callback", request).toString();
 
   const tokenRes = await fetch(HC_AUTH_TOKEN_URL, {
     method: "POST",
@@ -50,14 +51,14 @@ export async function GET(request: NextRequest) {
 
   if (!tokenRes.ok) {
     return NextResponse.redirect(
-      new URL("/login?error=token", request.url),
+      appUrl("/login?error=token", request),
     );
   }
 
   const tokenData = (await tokenRes.json()) as { access_token?: string };
   if (!tokenData.access_token) {
     return NextResponse.redirect(
-      new URL("/login?error=token", request.url),
+      appUrl("/login?error=token", request),
     );
   }
 
@@ -67,7 +68,7 @@ export async function GET(request: NextRequest) {
 
   if (!meRes.ok) {
     return NextResponse.redirect(
-      new URL("/login?error=profile", request.url),
+      appUrl("/login?error=profile", request),
     );
   }
 
@@ -78,7 +79,7 @@ export async function GET(request: NextRequest) {
 
   if (!identity || !email) {
     return NextResponse.redirect(
-      new URL("/login?error=profile", request.url),
+      appUrl("/login?error=profile", request),
     );
   }
   const name = hcaFullName(identity);
@@ -88,7 +89,7 @@ export async function GET(request: NextRequest) {
   } catch (err) {
     console.error("Failed to sync HCA identity:", err);
     return NextResponse.redirect(
-      new URL("/login?error=profile", request.url),
+      appUrl("/login?error=profile", request),
     );
   }
 
@@ -100,7 +101,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const response = NextResponse.redirect(new URL("/dashboard", request.url));
+  const response = NextResponse.redirect(appUrl("/dashboard", request));
   response.cookies.set(SESSION_COOKIE, session.value, {
     httpOnly: true,
     secure: true,

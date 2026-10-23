@@ -18,6 +18,8 @@ export interface Profile {
   interest: string | null;
   hackatime_connected_at: string | null;
   slack_avatar_url: string | null;
+  slack_display_name: string | null;
+  created_at: string;
 }
 
 export interface ProfileIdentity {
@@ -41,13 +43,13 @@ export interface ProfileIdentity {
 }
 
 export interface ProfileWithStats extends Profile {
-  created_at: string;
   wonder_count: number;
 }
 
 export async function getProfile(slackId: string): Promise<Profile | null> {
   const [profile] = await sql<Profile[]>`
-    select id, slack_id, email, name, interest, hackatime_connected_at, slack_avatar_url
+    select id, slack_id, email, name, interest, hackatime_connected_at, slack_avatar_url,
+      slack_display_name, created_at
     from profiles where slack_id = ${slackId}
   `;
   return profile ?? null;
@@ -116,6 +118,13 @@ export async function saveInterest(session: {
       name = excluded.name,
       interest = excluded.interest,
       updated_at = now()
+  `;
+}
+
+export async function updateInterest(profileId: string, interest: string) {
+  await sql`
+    update profiles set interest = ${interest}, updated_at = now()
+    where id = ${profileId}
   `;
 }
 

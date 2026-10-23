@@ -1,13 +1,23 @@
 /* eslint-disable @next/next/no-img-element */
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { cookies, headers } from "next/headers";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
 import {
   getProfileAddress,
   getSessionProfile,
   revokeSessions,
+  updateInterest,
 } from "@/lib/profiles";
+import { getProjects, type ProjectStatus } from "@/lib/projects";
 import SubmitButton from "../components/SubmitButton";
+
+const STAT_GROUPS: { label: string; statuses: ProjectStatus[] }[] = [
+  { label: "building :)", statuses: ["building"] },
+  { label: "in review :3", statuses: ["in_review", "second_pass", "approved"] },
+  { label: "needs a fix :c", statuses: ["rejected"] },
+  { label: "shipped :D", statuses: ["shipped", "fulfillment_started", "fulfilled"] },
+];
 
 function Section({
   title,
@@ -46,6 +56,27 @@ export default async function ProfilePage() {
   const address = await getProfileAddress(profile.id);
   const userAgent = (await headers()).get("user-agent") ?? "unknown device";
   const hackatimeConnected = Boolean(profile.hackatime_connected_at);
+  const projects = await getProjects(profile.id);
+  const joined = new Date(profile.created_at).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  async function saveInterestAction(formData: FormData) {
+    "use server";
+
+    const current = verifySessionCookie((await cookies()).get(SESSION_COOKIE)?.value);
+    if (!current) redirect("/login");
+    const currentProfile = await getSessionProfile(current);
+    if (!currentProfile) redirect("/onboarding");
+
+    const interest = String(formData.get("interest") ?? "").trim();
+    if (!interest) return;
+
+    await updateInterest(currentProfile.id, interest);
+    revalidatePath("/dashboard/profile");
+  }
 
   async function logoutEverywhereAction() {
     "use server";
@@ -76,8 +107,12 @@ export default async function ProfilePage() {
         <div className="flex flex-col-reverse gap-6 sm:flex-row sm:justify-between">
           <div className="flex flex-col gap-4">
             <Field label="name">{profile.name}</Field>
+            {profile.slack_display_name && (
+              <Field label="slack name">{profile.slack_display_name}</Field>
+            )}
             <Field label="email">{profile.email}</Field>
             <Field label="slack">{profile.slack_id}</Field>
+            <Field label="joined">{joined}</Field>
             <Field label="hackatime">
               {hackatimeConnected ? "connected :D" : "not connected :("}{" "}
               <a
@@ -102,6 +137,48 @@ export default async function ProfilePage() {
             </p>
           </div>
         </div>
+      </Section>
+
+      <Section title="Your wonders :D">
+        {projects.length === 0 ? (
+          <p className="font-finger-paint text-base text-[#5C4A2E]/70">
+            no wonders yet, go make one :3
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {STAT_GROUPS.map((group) => (
+              <div key={group.label} className="flex flex-col">
+                <p className="font-finger-paint text-3xl text-[#5C4A2E]">
+                  {projects.filter((p) => group.statuses.includes(p.status)).length}
+                </p>
+                <p className="font-finger-paint text-sm text-[#5C4A2E]/70">
+                  {group.label}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </Section>
+
+      <Section title="What you're into :3">
+        <form action={saveInterestAction} className="flex flex-col gap-3">
+          <textarea
+            name="interest"
+            required
+            rows={4}
+            defaultValue={profile.interest ?? ""}
+            placeholder="anything :3, hobbies, obsessions, weird niches..."
+            className="w-full resize-none border border-[#8C8368]/30 bg-[#F0EBD1] px-4 py-3 font-finger-paint text-base text-[#5C4A2E] placeholder:text-[#8C8368] focus:border-[#8C8368] focus:outline-none md:border-0"
+          />
+          <div className="flex sm:justify-end">
+            <SubmitButton
+              pendingLabel="saving... :3"
+              className="w-full rounded-md bg-[#D1E4B5] px-4 py-2 font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-48"
+            >
+              Save :3
+            </SubmitButton>
+          </div>
+        </form>
       </Section>
 
       <Section title="Shipping :D">

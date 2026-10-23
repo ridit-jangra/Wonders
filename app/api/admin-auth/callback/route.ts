@@ -28,8 +28,8 @@ export async function GET(request: NextRequest) {
     return deny("Admin login failed: invalid state. Try again.", 400);
   }
 
-  const clientId = process.env.ADMIN_HC_AUTH_CLIENT_ID;
-  const clientSecret = process.env.ADMIN_HC_AUTH_CLIENT_SECRET;
+  const clientId = process.env.HC_AUTH_CLIENT_ID;
+  const clientSecret = process.env.HC_AUTH_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
     return deny("Admin Hack Club Auth is not configured.", 500);
   }

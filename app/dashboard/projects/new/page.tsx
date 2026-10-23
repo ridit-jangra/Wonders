@@ -66,18 +66,20 @@ export default async function NewProjectPage({
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col gap-6 bg-[#F0EBD1] px-6 pt-24 pb-10 sm:px-10 md:bg-transparent md:px-14 md:py-16 lg:py-28">
-      <img
-        src="/new-or-edit-projects-template.png"
-        alt=""
-        className="fixed top-0 right-[12%] bottom-[14%] left-[7.5%] -z-10 hidden h-full w-full object-contain md:block"
-      />
+    <div className="relative flex min-h-screen flex-col gap-6 bg-[#F0EBD1] px-6 pt-24 pb-10 sm:px-10 md:bg-transparent md:pr-14 md:pl-4 md:py-16 lg:py-28">
+      <div className="pointer-events-none fixed top-0 right-[2%] bottom-0 left-0 -z-10 hidden md:block md:left-[calc(100vh*554/1080-10vh)]">
+        <img
+          src="/new-or-edit-projects-template.png"
+          alt=""
+          className="h-full w-full object-fill"
+        />
+      </div>
       <h1 className="font-finger-paint text-3xl text-[#5C4A2E] sm:text-4xl lg:text-5xl">
         Create your Wonder
       </h1>
       <form
         action={submitProject}
-        className="flex w-full flex-col gap-4 md:max-w-[84%]"
+        className="flex w-full flex-col gap-4 md:max-w-[90%]"
       >
         <p className="font-finger-paint text-[#5C4A2E]/70">
           Give your wonder a name :3

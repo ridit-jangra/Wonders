@@ -4,10 +4,10 @@ import { appUrl, HC_AUTH_AUTHORIZE_URL } from "@/lib/hc-auth";
 import { ADMIN_HC_AUTH_SCOPE, ADMIN_STATE_COOKIE } from "@/lib/admin";
 
 export async function GET(request: NextRequest) {
-  const clientId = process.env.ADMIN_HC_AUTH_CLIENT_ID;
+  const clientId = process.env.HC_AUTH_CLIENT_ID;
   if (!clientId) {
     return NextResponse.json(
-      { error: "ADMIN_HC_AUTH_CLIENT_ID is not configured" },
+      { error: "HC_AUTH_CLIENT_ID is not configured" },
       { status: 500 },
     );
   }

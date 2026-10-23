@@ -5,7 +5,7 @@ import {
   HACKATIME_STATE_COOKIE,
   HACKATIME_TOKEN_URL,
 } from "@/lib/hackatime";
-import { getProfile, setHackatimeToken } from "@/lib/profiles";
+import { getSessionProfile, setHackatimeToken } from "@/lib/profiles";
 
 export async function GET(request: NextRequest) {
   const session = verifySessionCookie(request.cookies.get(SESSION_COOKIE)?.value);
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
     return back("mismatch");
   }
 
-  const profile = await getProfile(session.slackId);
+  const profile = await getSessionProfile(session);
   if (!profile) {
     return NextResponse.redirect(appUrl("/onboarding", request));
   }

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
-import { getHackatimeToken, getProfile } from "@/lib/profiles";
+import { getHackatimeToken, getSessionProfile } from "@/lib/profiles";
 import { fetchHackatimeProjects } from "@/lib/hackatime";
 import { deleteProject, getProject, shipProject, updateProject } from "@/lib/projects";
 import { recordProjectHistory } from "@/lib/project-history";
@@ -37,7 +37,7 @@ export default async function EditProjectPage({
     redirect("/login");
   }
 
-  const profile = await getProfile(session.slackId);
+  const profile = await getSessionProfile(session);
   if (!profile) {
     redirect("/onboarding");
   }
@@ -85,7 +85,7 @@ export default async function EditProjectPage({
       redirect("/login");
     }
 
-    const currentProfile = await getProfile(current.slackId);
+    const currentProfile = await getSessionProfile(current);
     if (!currentProfile) {
       redirect("/onboarding");
     }
@@ -141,7 +141,7 @@ export default async function EditProjectPage({
       redirect("/login");
     }
 
-    const currentProfile = await getProfile(current.slackId);
+    const currentProfile = await getSessionProfile(current);
     if (!currentProfile) {
       redirect("/onboarding");
     }
@@ -196,7 +196,7 @@ export default async function EditProjectPage({
       redirect("/login");
     }
 
-    const currentProfile = await getProfile(current.slackId);
+    const currentProfile = await getSessionProfile(current);
     if (!currentProfile) {
       redirect("/onboarding");
     }

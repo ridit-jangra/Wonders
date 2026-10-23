@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
-import { getProfile } from "@/lib/profiles";
+import { getSessionProfile } from "@/lib/profiles";
 import { getProjects } from "@/lib/projects";
 import ProjectCard from "./components/ProjectCard";
 import AddProjectCard from "./components/AddProjectCard";
@@ -16,7 +16,7 @@ export default async function DashPage() {
     redirect("/login");
   }
 
-  const profile = await getProfile(session.slackId);
+  const profile = await getSessionProfile(session);
   if (!profile) {
     redirect("/onboarding");
   }

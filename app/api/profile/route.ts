@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
-import { getProfile, saveInterest } from "@/lib/profiles";
+import { getSessionProfile, saveInterest } from "@/lib/profiles";
 
 export async function GET(request: NextRequest) {
   const session = verifySessionCookie(request.cookies.get(SESSION_COOKIE)?.value);
@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const profile = await getProfile(session.slackId);
+  const profile = await getSessionProfile(session);
   return NextResponse.json({ profile });
 }
 

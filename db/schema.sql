@@ -21,6 +21,7 @@ create table if not exists profiles (
   hca_ysws_eligible boolean,
   hackatime_token text,
   hackatime_connected_at timestamptz,
+  sessions_valid_after timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

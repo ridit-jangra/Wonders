@@ -18,6 +18,7 @@ interface SessionPayload {
   email: string;
   name: string;
   slackId: string;
+  iat?: number;
   exp: number;
 }
 
@@ -45,6 +46,7 @@ export function createSessionCookie(data: {
     email: data.email,
     name: data.name,
     slackId: data.slackId,
+    iat: Date.now(),
     exp: Date.now() + SESSION_MAX_AGE * 1000,
   };
   const encoded = Buffer.from(JSON.stringify(payload)).toString("base64url");

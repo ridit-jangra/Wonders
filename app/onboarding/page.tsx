@@ -2,7 +2,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
-import { getProfile, saveInterest } from "@/lib/profiles";
+import { getSessionProfile, saveInterest } from "@/lib/profiles";
 import SubmitButton from "@/app/dashboard/components/SubmitButton";
 
 export default async function OnboardingPage() {
@@ -13,7 +13,7 @@ export default async function OnboardingPage() {
     redirect("/login");
   }
 
-  const profile = await getProfile(session.slackId);
+  const profile = await getSessionProfile(session);
   if (!profile) {
     redirect("/api/hc-auth/login");
   }
@@ -30,7 +30,7 @@ export default async function OnboardingPage() {
       redirect("/login");
     }
 
-    const currentProfile = await getProfile(current.slackId);
+    const currentProfile = await getSessionProfile(current);
     if (!currentProfile) {
       redirect("/api/hc-auth/login");
     }

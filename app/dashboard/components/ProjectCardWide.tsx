@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
-import { getProfile } from "@/lib/profiles";
+import { getSessionProfile } from "@/lib/profiles";
 import { deleteProject, type Project } from "@/lib/projects";
 import DeleteProjectButton from "./DeleteProjectButton";
 import LinkPending from "./LinkPending";
@@ -42,7 +42,7 @@ export default function ProjectCardWide({
       redirect("/login");
     }
 
-    const profile = await getProfile(session.slackId);
+    const profile = await getSessionProfile(session);
     if (!profile) {
       redirect("/onboarding");
     }

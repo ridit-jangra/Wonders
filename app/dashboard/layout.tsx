@@ -3,8 +3,9 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
-import { getProfile } from "@/lib/profiles";
+import { getSessionProfile } from "@/lib/profiles";
 import Sidebar from "./components/Sidebar";
+import { Profile } from "./components/Profile";
 
 export default async function DashLayout({
   children,
@@ -18,7 +19,7 @@ export default async function DashLayout({
     redirect("/login");
   }
 
-  const profile = await getProfile(session.slackId);
+  const profile = await getSessionProfile(session);
   if (!profile?.interest) {
     redirect("/onboarding");
   }
@@ -32,6 +33,7 @@ export default async function DashLayout({
       />
       <Sidebar />
       <main className="relative min-w-0 flex-1">{children}</main>
+      <Profile />
     </div>
   );
 }

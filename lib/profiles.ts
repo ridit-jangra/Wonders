@@ -1,4 +1,5 @@
 import "server-only";
+import { redirect } from "next/navigation";
 import { sql } from "@/lib/db";
 import { decryptPII, encryptPII } from "@/lib/crypto";
 import {
@@ -16,6 +17,7 @@ export interface Profile {
   name: string;
   interest: string | null;
   hackatime_connected_at: string | null;
+  slack_avatar_url: string | null;
 }
 
 export interface ProfileIdentity {
@@ -45,10 +47,33 @@ export interface ProfileWithStats extends Profile {
 
 export async function getProfile(slackId: string): Promise<Profile | null> {
   const [profile] = await sql<Profile[]>`
-    select id, slack_id, email, name, interest, hackatime_connected_at
+    select id, slack_id, email, name, interest, hackatime_connected_at, slack_avatar_url
     from profiles where slack_id = ${slackId}
   `;
   return profile ?? null;
+}
+
+export async function getSessionProfile(session: {
+  slackId: string;
+  iat?: number;
+}): Promise<Profile | null> {
+  const [row] = await sql<{ sessions_valid_after: string | null }[]>`
+    select sessions_valid_after from profiles where slack_id = ${session.slackId}
+  `;
+  if (
+    row?.sessions_valid_after &&
+    (session.iat ?? 0) < Date.parse(row.sessions_valid_after)
+  ) {
+    redirect("/api/hc-auth/logout");
+  }
+  return getProfile(session.slackId);
+}
+
+export async function revokeSessions(profileId: string) {
+  await sql`
+    update profiles set sessions_valid_after = ${new Date().toISOString()}
+    where id = ${profileId}
+  `;
 }
 
 export async function setHackatimeToken(profileId: string, token: string) {
@@ -177,6 +202,25 @@ export async function getProfileByIdAdmin(
     from profiles where id = ${id}
   `;
   return profile ?? null;
+}
+
+export async function getProfileAddress(
+  profileId: string,
+): Promise<ProfileIdentity["address"] | null> {
+  const [data] = await sql`
+    select address_line1, address_line2, address_city, address_state,
+      address_country, address_postal
+    from profiles where id = ${profileId}
+  `;
+  if (!data?.address_line1) return null;
+  return {
+    line1: decryptPII(data.address_line1),
+    line2: decryptPII(data.address_line2),
+    city: decryptPII(data.address_city),
+    state: decryptPII(data.address_state),
+    country: decryptPII(data.address_country),
+    postal: decryptPII(data.address_postal),
+  };
 }
 
 export async function getProfileIdentityAdmin(

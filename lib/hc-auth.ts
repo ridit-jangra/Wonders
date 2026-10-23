@@ -4,8 +4,10 @@ export const HC_AUTH_SITE = "https://auth.hackclub.com";
 export const HC_AUTH_AUTHORIZE_URL = `${HC_AUTH_SITE}/oauth/authorize`;
 export const HC_AUTH_TOKEN_URL = `${HC_AUTH_SITE}/oauth/token`;
 export const HC_AUTH_ME_URL = `${HC_AUTH_SITE}/api/v1/me`;
+// export const HC_AUTH_SCOPE =
+//   "openid profile slack_id phone birthdate address basic_info";
 export const HC_AUTH_SCOPE =
-  "openid profile slack_id phone birthdate address basic_info";
+  "openid profile email name slack_id";
 
 export const SESSION_COOKIE = "wonders_session";
 export const STATE_COOKIE = "wonders_hc_auth_state";

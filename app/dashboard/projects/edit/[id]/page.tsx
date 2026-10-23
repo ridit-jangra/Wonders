@@ -10,6 +10,7 @@ import { recordProjectHistory } from "@/lib/project-history";
 import { notifyPlayer } from "@/lib/notifications";
 import { uploadThumbnail } from "@/lib/storage";
 import ThumbnailPicker from "@/app/dashboard/components/ThumbnailPicker";
+import HackatimeProjectSelect from "@/app/dashboard/components/HackatimeProjectSelect";
 import SubmitButton from "@/app/dashboard/components/SubmitButton";
 import DeleteProjectButton from "@/app/dashboard/components/DeleteProjectButton";
 
@@ -304,23 +305,11 @@ export default async function EditProjectPage({
                     no hackatime projects yet, code a bit with hackatime running and they&apos;ll show up here
                   </p>
                 ) : (
-                  <div className="flex flex-col gap-1">
-                    {(editable ? hackatimeChoices : project.hackatime_projects).map((name) => (
-                      <label
-                        key={name}
-                        className="flex items-center gap-3 font-finger-paint text-[#5C4A2E]"
-                      >
-                        <input
-                          type="checkbox"
-                          name="hackatime-projects"
-                          value={name}
-                          defaultChecked={project.hackatime_projects.includes(name)}
-                          className="h-4 w-4 accent-[#5C4A2E]"
-                        />
-                        {name}
-                      </label>
-                    ))}
-                  </div>
+                  <HackatimeProjectSelect
+                    options={editable ? hackatimeChoices : project.hackatime_projects}
+                    defaultSelected={project.hackatime_projects}
+                    disabled={!editable}
+                  />
                 )}
               </>
             )}

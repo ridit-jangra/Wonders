@@ -1,0 +1,47 @@
+.admin-shell[data-font="system"] {
+  --font-body: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.admin-shell[data-font="inter"] {
+  --font-body: var(--font-inter), system-ui, sans-serif;
+}
+.admin-shell[data-font="geist"] {
+  --font-body: var(--font-geist-sans), system-ui, sans-serif;
+}
+.admin-shell[data-font="ibm-plex-sans"] {
+  --font-body: var(--font-plex-sans), system-ui, sans-serif;
+}
+.admin-shell[data-font="atkinson"] {
+  --font-body: var(--font-atkinson), system-ui, sans-serif;
+}
+
+.admin-shell[data-mono-font="geist-mono"] {
+  --font-monospace: var(--font-geist-mono), ui-monospace, Menlo, Consolas, monospace;
+}
+.admin-shell[data-mono-font="fira-code"] {
+  --font-monospace: var(--font-fira-code), ui-monospace, Menlo, Consolas, monospace;
+}
+.admin-shell[data-mono-font="ibm-plex-mono"] {
+  --font-monospace: var(--font-plex-mono), ui-monospace, Menlo, Consolas, monospace;
+}
+.admin-shell[data-mono-font="source-code-pro"] {
+  --font-monospace: var(--font-source-code-pro), ui-monospace, Menlo, Consolas, monospace;
+}
+.admin-shell[data-mono-font="system-mono"] {
+  --font-monospace: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.hc-font-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.hc-font-sample {
+  display: block;
+  padding: 6px 4px 2px;
+  font-size: 20px;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

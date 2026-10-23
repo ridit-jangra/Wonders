@@ -1,7 +1,11 @@
 /* eslint-disable @next/next/no-img-element */
 import "./admin.css";
+import "./themes.css";
+import "./fonts.css";
 import Link from "next/link";
-import { requireAdmin } from "@/lib/admin";
+import { getStaffSettings, requireAdmin } from "@/lib/admin";
+import { staffSettingsAttributes } from "@/lib/staff-settings";
+import { adminFontVariables } from "./fonts";
 import { countProjectsByStatus } from "@/lib/projects";
 import TopNav from "./components/TopNav";
 import { Button, ButtonLink, Mono } from "./components/ui";
@@ -12,7 +16,10 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const admin = await requireAdmin();
-  const byStatus = await countProjectsByStatus();
+  const [byStatus, settings] = await Promise.all([
+    countProjectsByStatus(),
+    getStaffSettings(admin.slackId),
+  ]);
 
   const navCounts: Record<string, number> = {
     "/admin/review": byStatus.in_review + byStatus.second_pass,
@@ -27,7 +34,7 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="admin-shell">
+    <div className={`admin-shell ${adminFontVariables}`} {...staffSettingsAttributes(settings)}>
       <header className="hc-topbar sticky top-0 z-10">
         <div className="hc-topbar-inner mx-auto flex h-14 max-w-[1440px] items-center gap-6 px-6">
           <Link href="/admin" className="flex shrink-0 items-center gap-2">

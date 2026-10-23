@@ -7,6 +7,7 @@ export const NAV: { href: string; label: string; glyph: GlyphName }[] = [
   { href: "/admin/users", label: "Users", glyph: "people-3" },
   { href: "/admin/wonders", label: "Wonders", glyph: "rep" },
   { href: "/admin/history", label: "History", glyph: "history" },
+  { href: "/admin/settings", label: "Settings", glyph: "settings" },
 ];
 
 export function isNavActive(pathname: string, href: string) {

@@ -2,6 +2,12 @@ import "server-only";
 import crypto from "node:crypto";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import { sql } from "@/lib/db";
+import {
+  DEFAULT_STAFF_SETTINGS,
+  parseStaffSettings,
+  type StaffSettings,
+} from "@/lib/staff-settings";
 
 export const ADMIN_SESSION_COOKIE = "wonders_admin_session";
 export const ADMIN_STATE_COOKIE = "wonders_admin_auth_state";
@@ -93,4 +99,32 @@ export async function requireAdmin(): Promise<AdminSession> {
     redirect("/api/admin-auth/login");
   }
   return session;
+}
+
+export async function getStaffSettings(slackId: string): Promise<StaffSettings> {
+  try {
+    const [row] = await sql<{ settings: unknown }[]>`
+      select settings from staff_settings where slack_id = ${slackId}
+    `;
+    return parseStaffSettings(row?.settings);
+  } catch (error) {
+    console.error("getStaffSettings", (error as Error).message);
+    return DEFAULT_STAFF_SETTINGS;
+  }
+}
+
+export async function saveStaffSettings(slackId: string, settings: StaffSettings): Promise<boolean> {
+  try {
+    await sql`
+      insert into staff_settings (slack_id, settings, updated_at)
+      values (${slackId}, ${sql.json({ ...settings })}, now())
+      on conflict (slack_id) do update set
+        settings = excluded.settings,
+        updated_at = now()
+    `;
+    return true;
+  } catch (error) {
+    console.error("saveStaffSettings", (error as Error).message);
+    return false;
+  }
 }

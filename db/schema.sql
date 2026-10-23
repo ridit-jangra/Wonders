@@ -104,3 +104,9 @@ create table if not exists thumbnails (
   data bytea not null,
   created_at timestamptz not null default now()
 );
+
+create table if not exists staff_settings (
+  slack_id text primary key,
+  settings jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);

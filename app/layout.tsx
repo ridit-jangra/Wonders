@@ -30,6 +30,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://wonders.hackclub.com"),
   title: "Wonders",
   description: "Just ship it.",
 };

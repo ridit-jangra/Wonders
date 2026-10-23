@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import Icon from "@hackclub/icons";
 
 export default function HackatimeProjectSelect({
   name = "hackatime-projects",
@@ -95,12 +96,12 @@ export default function HackatimeProjectSelect({
             ))
           )}
         </span>
-        <span
+        <Icon
+          glyph="down-caret"
+          size={28}
           aria-hidden
-          className={`text-[#8C8368] transition-transform ${open ? "rotate-180" : ""}`}
-        >
-          ▾
-        </span>
+          className={`shrink-0 text-[#8C8368] transition-transform ${open ? "rotate-180" : ""}`}
+        />
       </button>
 
       {open && !disabled && (
@@ -147,11 +148,11 @@ export default function HackatimeProjectSelect({
                   >
                     <span
                       aria-hidden
-                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-sm border border-[#8C8368]/60 text-sm ${
+                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-sm border border-[#8C8368]/60 text-[#5C4A2E] ${
                         isSelected ? "bg-[#D1E4B5]" : "bg-[#F6F2DE]"
                       }`}
                     >
-                      {isSelected ? "✓" : ""}
+                      {isSelected && <Icon glyph="checkmark" size={20} aria-hidden />}
                     </span>
                     <span className="truncate">{option}</span>
                   </li>

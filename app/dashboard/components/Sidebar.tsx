@@ -50,19 +50,19 @@ export default function Sidebar() {
               exit={{ x: "-100%" }}
               transition={{ type: "spring", stiffness: 320, damping: 32 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative h-full"
+              className="relative h-full w-max max-w-[82vw] overflow-hidden"
             >
-              <img className="h-full w-auto" src="/sidebar.png" alt="" />
+              <img className="h-full w-auto max-w-none" src="/sidebar.png" alt="" />
               <SidebarNav onNavigateAction={() => setOpen(false)} />
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                aria-label="close menu"
-                className="absolute top-6 right-6 h-14 w-14"
-              >
-                <img src="/close.png" alt="" className="h-full w-full" />
-              </button>
             </motion.div>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              aria-label="close menu"
+              className="absolute top-4 right-2 h-11 w-11"
+            >
+              <img src="/close.png" alt="" className="h-full w-full" />
+            </button>
           </motion.div>
         )}
       </AnimatePresence>

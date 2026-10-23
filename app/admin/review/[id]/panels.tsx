@@ -191,7 +191,7 @@ export function PastReviewsPanel({ reviews }: { reviews: ProjectReview[] }) {
             <div className="flex flex-wrap gap-1">
               {SECOND_PASS_CHECKS.map((check) =>
                 review.checks.includes(check.key) ? (
-                  <Badge key={check.key} tone="success">✓ {check.label}</Badge>
+                  <Badge key={check.key} tone="success" icon="checkmark">{check.label}</Badge>
                 ) : (
                   <Badge key={check.key} tone="neutral">✗ {check.label}</Badge>
                 ),

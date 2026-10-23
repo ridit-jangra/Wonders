@@ -1,5 +1,5 @@
 import "server-only";
-import { supabase } from "@/lib/supabase";
+import { sql } from "@/lib/db";
 import type { ProjectId, ProjectStatus } from "@/lib/projects";
 
 export type ProjectEvent = ProjectStatus;
@@ -16,8 +16,10 @@ export interface ProjectHistoryEntry {
   created_at: string;
 }
 
-const COLUMNS =
-  "id, project_id, profile_id, from_status, to_status, reviewer_note, reward, reviewed_by, created_at";
+const COLUMNS = () => sql`
+  id, project_id, profile_id, from_status, to_status, reviewer_note, reward,
+  reviewed_by, created_at
+`;
 
 export async function recordProjectHistory(entry: {
   projectId: ProjectId;
@@ -28,63 +30,55 @@ export async function recordProjectHistory(entry: {
   reward: string | null;
   reviewedBy: string;
 }) {
-  const { error } = await supabase.from("project_history").insert({
-    project_id: Number(entry.projectId),
-    profile_id: entry.profileId,
-    from_status: entry.fromStatus,
-    to_status: entry.toStatus,
-    reviewer_note: entry.reviewerNote,
-    reward: entry.reward,
-    reviewed_by: entry.reviewedBy,
-  });
-
-  if (error) {
-    throw error;
-  }
+  await sql`
+    insert into project_history (
+      project_id, profile_id, from_status, to_status, reviewer_note,
+      reward, reviewed_by
+    ) values (
+      ${Number(entry.projectId)},
+      ${entry.profileId},
+      ${entry.fromStatus},
+      ${entry.toStatus},
+      ${entry.reviewerNote},
+      ${entry.reward},
+      ${entry.reviewedBy}
+    )
+  `;
 }
 
 export async function getProjectHistory(
   projectId: ProjectId,
 ): Promise<ProjectHistoryEntry[]> {
-  const { data, error } = await supabase
-    .from("project_history")
-    .select(COLUMNS)
-    .eq("project_id", projectId)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    throw error;
-  }
-  return data;
+  return sql<ProjectHistoryEntry[]>`
+    select ${COLUMNS()} from project_history
+    where project_id = ${projectId}
+    order by created_at desc
+  `;
 }
 
 export async function getProfileHistory(
   profileId: string,
 ): Promise<ProjectHistoryEntry[]> {
-  const { data, error } = await supabase
-    .from("project_history")
-    .select(COLUMNS)
-    .eq("profile_id", profileId)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    throw error;
-  }
-  return data;
+  return sql<ProjectHistoryEntry[]>`
+    select ${COLUMNS()} from project_history
+    where profile_id = ${profileId}
+    order by created_at desc
+  `;
 }
 
 export async function listRecentHistory(opts: {
   limit: number;
   offset: number;
 }): Promise<{ entries: ProjectHistoryEntry[]; total: number }> {
-  const { data, error, count } = await supabase
-    .from("project_history")
-    .select(COLUMNS, { count: "exact" })
-    .order("created_at", { ascending: false })
-    .range(opts.offset, opts.offset + opts.limit - 1);
-
-  if (error) {
-    throw error;
-  }
-  return { entries: data, total: count ?? 0 };
+  const [entries, [{ total }]] = await Promise.all([
+    sql<ProjectHistoryEntry[]>`
+      select ${COLUMNS()} from project_history
+      order by created_at desc
+      limit ${opts.limit} offset ${opts.offset}
+    `,
+    sql<{ total: number }[]>`
+      select count(*)::int as total from project_history
+    `,
+  ]);
+  return { entries, total };
 }

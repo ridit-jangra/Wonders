@@ -18,7 +18,7 @@ bun run lint     # eslint (flat config, eslint-config-next)
 
 There is no test framework, test script, or test files in this repo. `bun run lint` plus `bun run build` (which typechecks) are the only automated checks.
 
-The landing page renders with zero configuration. Env vars are only needed once you touch auth, the dashboard, or anything reading Supabase.
+The landing page renders with zero configuration. Env vars are only needed once you touch auth, the dashboard, or anything reading the database.
 
 ## Stack notes
 
@@ -31,7 +31,7 @@ Tailwind v4 has **no `tailwind.config`**. Theme tokens live in the `@theme inlin
 
 ## Architecture
 
-### Auth is hand-rolled — Supabase Auth is NOT used
+### Auth is hand-rolled
 
 The whole auth stack is in `lib/hc-auth.ts` plus `app/api/hc-auth/*`:
 
@@ -60,19 +60,21 @@ if (!profile) redirect("/onboarding");
 
 Inline `"use server"` actions never trust the session captured in the enclosing page's closure. They re-read cookies, re-verify, re-fetch the profile, and re-fetch the target row to confirm ownership before mutating. Follow this pattern for any new action — see `submitProject` and `deleteProjectAction` in the edit page.
 
-### Supabase uses the service role key, so ownership is enforced in application code
+### The database is Orchard Postgres, queried with raw SQL; ownership is enforced in application code
 
-`lib/supabase.ts` builds a single server client with `SUPABASE_SERVICE_ROLE_KEY`. **This bypasses RLS entirely.** The safety property comes from every mutation in `lib/projects.ts` taking a `profileId` and chaining `.eq("profile_id", profileId)` alongside `.eq("id", id)`. Preserve that — a query scoped only by `id` is a cross-tenant write.
+The database is the `wonders-db` Postgres on Orchard (Hack Club's hosting, project "wonders ysws"). `lib/db.ts` exports one `sql` tagged-template client from the `postgres` package, built from `DATABASE_URL` (one pool, kept on `globalThis` across `next dev` reloads; `timestamptz` is parsed to ISO strings so every `*_at` field stays a `string`). There is no ORM and no row-level security: the app connects as the database owner. The safety property comes from every player-facing mutation in `lib/projects.ts` taking a `profileId` and filtering `where id = ${id} and profile_id = ${profileId}`. Preserve that — a query scoped only by `id` is a cross-tenant write. Always interpolate values through `${}` (parameterized); never build SQL by string concatenation.
 
-`lib/supabase.ts`, `lib/profiles.ts`, `lib/projects.ts`, and `lib/slack.ts` all start with `import "server-only"` so the service key can never be pulled into a client bundle. Keep that import on any new module touching Supabase or secrets.
+`lib/db.ts`, `lib/profiles.ts`, `lib/projects.ts`, and `lib/slack.ts` all start with `import "server-only"` so `DATABASE_URL` can never be pulled into a client bundle. Keep that import on any new module touching the database or secrets.
 
-### Database schema lives only in Supabase
+The database is only reachable inside the Orchard cluster (`pg-wonders-db-rw.ysws-wonders-ysws.svc.cluster.local`) unless public access is enabled on it in Orchard; local dev needs a `DATABASE_URL` that reaches it (public access, or your own local Postgres with `db/schema.sql` applied).
 
-There are no migrations or SQL files in the repo. The `Profile` and `Project` TypeScript interfaces in `lib/profiles.ts` and `lib/projects.ts` are the de-facto in-repo schema documentation — update them when the remote schema changes. Two tables: `profiles` (one row per person, keyed by `slack_id`) and `projects` (linked by `profile_id`). Both have an `updated_at` the app writes but the interfaces omit.
+### Database schema lives in `db/schema.sql`
 
-**`projects.id` is a plain auto-incrementing integer (`generated always as identity`), not a uuid** — the one exception to every other id in this schema (`profiles.id`, `project_history.id`). `lib/projects.ts` exports a `ProjectId = string | number` type and every function taking a project id accepts either, since callers sometimes have a route-param string (`await params`) and sometimes a `Project`'s already-numeric `.id`. `recordProjectHistory` normalizes it to a number before inserting — an INSERT body isn't cast from a string the way a URL filter is.
+`db/schema.sql` is the whole schema, idempotent (`create table if not exists`), applied with `psql "$DATABASE_URL" -f db/schema.sql`. There's no migration tool: for a change, edit `schema.sql` so a fresh database comes out right, and run the matching `alter table` by hand against Orchard. The `Profile` and `Project` TypeScript interfaces in `lib/profiles.ts` and `lib/projects.ts` mirror it — keep them in sync. Tables: `profiles` (one row per person, keyed by `slack_id`), `projects` (linked by `profile_id`), `project_history`, `project_reviews`, `review_drafts`, `thumbnails`. `profiles`/`projects` have an `updated_at` the app writes but the interfaces omit.
 
-`status` is the wonder's full lifecycle, enforced by the `projects_status_check` constraint in Supabase and by `lib/projects.ts` (there is no generic "set status to anything" function — every transition is its own function scoped to the status it leaves from):
+**`projects.id` is a plain auto-incrementing integer (`generated always as identity`), not a uuid** — the one exception to every other id in this schema (`profiles.id`, `project_history.id`). `lib/projects.ts` exports a `ProjectId = string | number` type and every function taking a project id accepts either, since callers sometimes have a route-param string (`await params`) and sometimes a `Project`'s already-numeric `.id`. `recordProjectHistory`/`recordReview`/`saveReviewDraft` normalize it to a number before inserting.
+
+`status` is the wonder's full lifecycle, enforced by the `projects_status_check` constraint in `db/schema.sql` and by `lib/projects.ts` (there is no generic "set status to anything" function — every transition is its own function scoped to the status it leaves from):
 
 ```
 building -> in_review (first pass) -> second_pass -> shipped -> fulfillment_started -> fulfilled
@@ -98,9 +100,9 @@ Gated by `requireAdmin()` in `lib/admin.ts`, which uses its **own** Hack Club Au
 - `/admin/fulfillment` lists `shipped` and `fulfillment_started` projects — published wonders still working through the reward order. "Start fulfillment" (`shipped -> fulfillment_started`) and "Mark fulfilled" (`fulfillment_started -> fulfilled`, which also stamps `fulfilled_at`/`fulfilled_by`) are separate buttons; the reward itself is set here via `setProjectReward`, scoped to those same two statuses, and "Mark fulfilled" is blocked until a reward's been chosen. In between, "Mark ordered" and then "Mark on its way" stamp `reward_ordered_at`/`reward_sent_at` (`markRewardOrdered`/`markRewardSent`); these are optional sub-steps inside `fulfillment_started`, not statuses, and don't write `project_history`. "Mark fulfilled" stays available at any point so a reward that never ships physically can skip them.
 - `/admin` is styled with Hack Club's own theme (theme.hackclub.com): the palette, light/dark modes, radii, shadows, pill buttons/badges and Phantom Sans all live as tokens in `app/admin/admin.css` (monospace stays JetBrains Mono), and icons come from `@hackclub/icons` (icons.hackclub.com). Pages compose only the components in `app/admin/components/ui.tsx` — `PageHeader`, `Card`/`CardHeader`/`CardLink`, `Button`/`ButtonLink`/`ActionButton` (wraps `SubmitButton`'s pending guard), `Badge`/`StatusBadge`, `Stat`/`StatGrid`, `Table`/`EmptyRow`, `FilterBar`/`Field`/`Input`/`Select`/`Textarea`, `DescriptionList`, `HistoryTimeline`, `Callout`, `EmptyState`, `Avatar`, `TextLink`, `Mono`, `Icon`, `Pagination` (URL-based, for list pages that query by page), plus `PaginatedTable.tsx` (client-side, 10 rows a page, for tables whose rows are already all loaded, like the review page's Commits/Hackatime/Other YSWS tabs) and `Tabs.tsx` (`sticky` pins the tab bar under the top bar; the review page's left tabs use it, which is why flush cards use `overflow: clip` rather than `hidden`). Add new admin UI by extending that kit, never with raw colors or one-off classes in a page.
 
-### Thumbnails go through Supabase Storage
+### Thumbnails are stored in Postgres
 
-Optional wonder thumbnails upload to the public `wonder-thumbnails` bucket through `lib/storage.ts`, which checks the MIME type and a 5MB ceiling before writing to `<profile_id>/<uuid>.<ext>`. The public URL it returns is what lands in `projects.image_url` — the one column on `projects` the app does write. `/project-image-fallback.png` still backs every card when it is null.
+There is no object storage. Optional wonder thumbnails go through `lib/storage.ts`, which checks the MIME type and a 5MB ceiling, then inserts the bytes into the `thumbnails` table (`bytea`, tagged with the uploader's `profile_id`). It returns `/api/thumbnails/<uuid>`, a relative URL served (publicly, immutable cache headers) by `app/api/thumbnails/[id]/route.ts`; that's what lands in `projects.image_url` — the one column on `projects` the app does write. Because it's relative, the admin "Image URL" field is a text input, not `type="url"`. `/project-image-fallback.png` still backs every card when it is null.
 
 The file rides in a Server Action FormData, so `next.config.ts` raises `experimental.serverActions.bodySizeLimit` to `6mb`; the 1MB default would reject a 5MB image. `ThumbnailPicker.tsx` is a client component purely for the object-URL preview, and posts two fields into the surrounding form: `thumbnail` (the file) and `remove-thumbnail` (a flag the edit action reads to null the column).
 
@@ -139,8 +141,8 @@ After a mutation that isn't followed by a `redirect`, call `revalidatePath` for 
 
 ## Environment
 
-`.env` and `.env.local` are both gitignored (`.gitignore` matches `.env*`); `.env.example` is the template. Required for the dashboard: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `HC_AUTH_CLIENT_ID`, `HC_AUTH_CLIENT_SECRET`, `SESSION_SECRET`. `HC_AUTH_REDIRECT_URI` is optional and defaults to `<origin>/api/hc-auth/callback`.
+`.env` and `.env.local` are both gitignored (`.gitignore` matches `.env*`); `.env.example` is the template. Required for the dashboard: `DATABASE_URL`, `HC_AUTH_CLIENT_ID`, `HC_AUTH_CLIENT_SECRET`, `SESSION_SECRET`. `HC_AUTH_REDIRECT_URI` is optional and defaults to `<origin>/api/hc-auth/callback`.
 
 `SLACK_BOT_TOKEN` and `SLACK_CHANNEL_ID` drive `inviteToChannel`, called fire-and-forget from the OAuth callback — it logs failures rather than throwing, so a missing Slack config breaks channel invites but not login. The same bot (Panda) DMs players about their wonder through `notifyPlayer` in `lib/notifications.ts` (needs the `chat:write` scope): on ship (`in_review`), first-pass approval, second-pass approval, changes requested (quoting the reviewer note), fulfillment started, ordered, on its way, and fulfilled. The message copy lives in `messageFor` there and was approved by the project owner, so change it only when asked; it must never mention what the reward is. `notifyPlayer` sends inside `after()` and only logs failures, so a Slack outage never blocks a review or fulfillment action. Call it only when the transition actually happened (the `ok`/`started`/`fulfilled` result), never on a no-op.
 
-Missing env vars fail loudly at import time via the `getEnv` throw in `lib/supabase.ts`, which surfaces as a server error on the first page that touches the database.
+Missing env vars fail loudly at import time via the `getEnv` throw in `lib/db.ts`, which surfaces as a server error on the first page that touches the database.

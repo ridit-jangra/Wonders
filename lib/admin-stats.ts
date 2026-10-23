@@ -1,5 +1,5 @@
 import "server-only";
-import { supabase } from "@/lib/supabase";
+import { sql } from "@/lib/db";
 import { countProjectsByStatus } from "@/lib/projects";
 
 export interface OverviewStats {
@@ -9,18 +9,17 @@ export interface OverviewStats {
 }
 
 export async function getOverviewStats(): Promise<OverviewStats> {
-  const [{ count: totalUsers, error }, byStatus] = await Promise.all([
-    supabase.from("profiles").select("id", { count: "exact", head: true }),
+  const [[{ totalUsers }], byStatus] = await Promise.all([
+    sql<{ totalUsers: number }[]>`
+      select count(*)::int as "totalUsers" from profiles
+    `,
     countProjectsByStatus(),
   ]);
-  if (error) {
-    throw error;
-  }
 
   const totalWonders = Object.values(byStatus).reduce((a, b) => a + b, 0);
 
   return {
-    totalUsers: totalUsers ?? 0,
+    totalUsers,
     totalWonders,
     byStatus,
   };

@@ -1,5 +1,5 @@
 import "server-only";
-import { supabase } from "@/lib/supabase";
+import { sql } from "@/lib/db";
 
 export type ProjectStatus =
   | "building"
@@ -27,19 +27,17 @@ export interface Project {
   created_at: string;
 }
 
-export async function getProjects(profileId: string): Promise<Project[]> {
-  const { data, error } = await supabase
-    .from("projects")
-    .select(
-      "id, profile_id, title, description, image_url, link_url, github_url, status, reviewer_note, reward, created_at",
-    )
-    .eq("profile_id", profileId)
-    .order("created_at", { ascending: true });
+const COLUMNS = () => sql`
+  id, profile_id, title, description, image_url, link_url, github_url,
+  status, reviewer_note, reward, created_at
+`;
 
-  if (error) {
-    throw error;
-  }
-  return data;
+export async function getProjects(profileId: string): Promise<Project[]> {
+  return sql<Project[]>`
+    select ${COLUMNS()} from projects
+    where profile_id = ${profileId}
+    order by created_at asc
+  `;
 }
 
 export async function createProject(
@@ -52,40 +50,26 @@ export async function createProject(
     image_url?: string | null;
   },
 ): Promise<Project> {
-  const { data: project, error } = await supabase
-    .from("projects")
-    .insert({
-      profile_id: profileId,
-      title: data.title,
-      description: data.description,
-      link_url: data.link_url || null,
-      github_url: data.github_url || null,
-      image_url: data.image_url ?? null,
-    })
-    .select(
-      "id, profile_id, title, description, image_url, link_url, github_url, status, reviewer_note, reward, created_at",
+  const [project] = await sql<Project[]>`
+    insert into projects (profile_id, title, description, link_url, github_url, image_url)
+    values (
+      ${profileId},
+      ${data.title},
+      ${data.description},
+      ${data.link_url || null},
+      ${data.github_url || null},
+      ${data.image_url ?? null}
     )
-    .single();
-
-  if (error) {
-    throw error;
-  }
+    returning ${COLUMNS()}
+  `;
   return project;
 }
 
 export async function getProject(id: ProjectId): Promise<Project | null> {
-  const { data, error } = await supabase
-    .from("projects")
-    .select(
-      "id, profile_id, title, description, image_url, link_url, github_url, status, reviewer_note, reward, created_at",
-    )
-    .eq("id", id)
-    .maybeSingle();
-
-  if (error) {
-    throw error;
-  }
-  return data;
+  const [project] = await sql<Project[]>`
+    select ${COLUMNS()} from projects where id = ${id}
+  `;
+  return project ?? null;
 }
 
 export async function updateProject(
@@ -99,55 +83,41 @@ export async function updateProject(
     image_url?: string | null;
   },
 ) {
-  const { error } = await supabase
-    .from("projects")
-    .update({
-      title: data.title,
-      description: data.description,
-      link_url: data.link_url || null,
-      github_url: data.github_url || null,
-      ...(data.image_url !== undefined ? { image_url: data.image_url } : {}),
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", id)
-    .eq("profile_id", profileId)
-    .in("status", ["building", "rejected"]);
-
-  if (error) {
-    throw error;
-  }
+  await sql`
+    update projects set
+      title = ${data.title},
+      description = ${data.description},
+      link_url = ${data.link_url || null},
+      github_url = ${data.github_url || null},
+      ${data.image_url !== undefined ? sql`image_url = ${data.image_url},` : sql``}
+      updated_at = now()
+    where id = ${id}
+      and profile_id = ${profileId}
+      and status in ('building', 'rejected')
+  `;
 }
 
 export async function shipProject(
   id: ProjectId,
   profileId: string,
 ): Promise<boolean> {
-  const { data, error } = await supabase
-    .from("projects")
-    .update({ status: "in_review", updated_at: new Date().toISOString() })
-    .eq("id", id)
-    .eq("profile_id", profileId)
-    .in("status", ["building", "rejected"])
-    .select("id")
-    .maybeSingle();
-
-  if (error) {
-    throw error;
-  }
-  return data !== null;
+  const rows = await sql`
+    update projects set status = 'in_review', updated_at = now()
+    where id = ${id}
+      and profile_id = ${profileId}
+      and status in ('building', 'rejected')
+    returning id
+  `;
+  return rows.length > 0;
 }
 
 export async function deleteProject(id: ProjectId, profileId: string) {
-  const { error } = await supabase
-    .from("projects")
-    .delete()
-    .eq("id", id)
-    .eq("profile_id", profileId)
-    .in("status", ["building", "rejected"]);
-
-  if (error) {
-    throw error;
-  }
+  await sql`
+    delete from projects
+    where id = ${id}
+      and profile_id = ${profileId}
+      and status in ('building', 'rejected')
+  `;
 }
 
 
@@ -169,8 +139,19 @@ export interface ProjectWithOwner extends Project {
   profile: ProjectOwner;
 }
 
-const ADMIN_COLUMNS =
-  "id, profile_id, title, description, image_url, link_url, github_url, status, reviewer_note, reward, created_at, fulfilled_at, fulfilled_by, reward_ordered_at, reward_sent_at, on_hold, hold_reason, profile:profiles(name, slack_id, email, slack_display_name, slack_avatar_url)";
+const ADMIN_COLUMNS = () => sql`
+  p.id, p.profile_id, p.title, p.description, p.image_url, p.link_url,
+  p.github_url, p.status, p.reviewer_note, p.reward, p.created_at,
+  p.fulfilled_at, p.fulfilled_by, p.reward_ordered_at, p.reward_sent_at,
+  p.on_hold, p.hold_reason,
+  json_build_object(
+    'name', o.name,
+    'slack_id', o.slack_id,
+    'email', o.email,
+    'slack_display_name', o.slack_display_name,
+    'slack_avatar_url', o.slack_avatar_url
+  ) as profile
+`;
 
 export async function listAllProjects(opts: {
   status?: ProjectStatus | ProjectStatus[];
@@ -178,50 +159,45 @@ export async function listAllProjects(opts: {
   limit: number;
   offset: number;
 }): Promise<{ projects: ProjectWithOwner[]; total: number }> {
-  let query = supabase
-    .from("projects")
-    .select(ADMIN_COLUMNS, { count: "exact" })
-    .order("created_at", { ascending: false })
-    .range(opts.offset, opts.offset + opts.limit - 1);
+  const statuses = opts.status ? [opts.status].flat() : null;
+  const where = sql`
+    where true
+    ${statuses ? sql`and p.status = any(${statuses})` : sql``}
+    ${opts.search ? sql`and p.title ilike ${"%" + opts.search + "%"}` : sql``}
+  `;
 
-  if (opts.status) {
-    query = Array.isArray(opts.status)
-      ? query.in("status", opts.status)
-      : query.eq("status", opts.status);
-  }
-  if (opts.search) {
-    query = query.ilike("title", `%${opts.search}%`);
-  }
-
-  const { data, error, count } = await query;
-  if (error) {
-    throw error;
-  }
-  return { projects: data as unknown as ProjectWithOwner[], total: count ?? 0 };
+  const [projects, [{ total }]] = await Promise.all([
+    sql<ProjectWithOwner[]>`
+      select ${ADMIN_COLUMNS()}
+      from projects p join profiles o on o.id = p.profile_id
+      ${where}
+      order by p.created_at desc
+      limit ${opts.limit} offset ${opts.offset}
+    `,
+    sql<{ total: number }[]>`
+      select count(*)::int as total from projects p ${where}
+    `,
+  ]);
+  return { projects, total };
 }
 
 export async function getProjectWithOwner(
   id: ProjectId,
 ): Promise<ProjectWithOwner | null> {
-  const { data, error } = await supabase
-    .from("projects")
-    .select(ADMIN_COLUMNS)
-    .eq("id", id)
-    .maybeSingle();
-
-  if (error) {
-    throw error;
-  }
-  return data as unknown as ProjectWithOwner | null;
+  const [project] = await sql<ProjectWithOwner[]>`
+    select ${ADMIN_COLUMNS()}
+    from projects p join profiles o on o.id = p.profile_id
+    where p.id = ${id}
+  `;
+  return project ?? null;
 }
 
 export async function countProjectsByStatus(): Promise<
   Record<ProjectStatus, number>
 > {
-  const { data, error } = await supabase.from("projects").select("status");
-  if (error) {
-    throw error;
-  }
+  const rows = await sql<{ status: ProjectStatus; count: number }[]>`
+    select status, count(*)::int as count from projects group by status
+  `;
 
   const counts: Record<ProjectStatus, number> = {
     building: 0,
@@ -233,8 +209,8 @@ export async function countProjectsByStatus(): Promise<
     fulfillment_started: 0,
     fulfilled: 0,
   };
-  for (const row of data) {
-    counts[row.status as ProjectStatus]++;
+  for (const row of rows) {
+    counts[row.status] = row.count;
   }
   return counts;
 }
@@ -249,24 +225,17 @@ export async function firstPassReview(
     nextStatus = "second_pass";
   }
 
-  const { data, error } = await supabase
-    .from("projects")
-    .update({
-      status: nextStatus,
-      reviewer_note: feedback,
-      on_hold: false,
-      hold_reason: null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", id)
-    .eq("status", "in_review")
-    .select("id")
-    .maybeSingle();
-
-  if (error) {
-    throw error;
-  }
-  return data !== null;
+  const rows = await sql`
+    update projects set
+      status = ${nextStatus},
+      reviewer_note = ${feedback},
+      on_hold = false,
+      hold_reason = null,
+      updated_at = now()
+    where id = ${id} and status = 'in_review'
+    returning id
+  `;
+  return rows.length > 0;
 }
 
 export async function secondPassReview(
@@ -279,40 +248,27 @@ export async function secondPassReview(
     nextStatus = "shipped";
   }
 
-  const { data, error } = await supabase
-    .from("projects")
-    .update({
-      status: nextStatus,
-      reviewer_note: feedback,
-      on_hold: false,
-      hold_reason: null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", id)
-    .eq("status", "second_pass")
-    .select("id")
-    .maybeSingle();
-
-  if (error) {
-    throw error;
-  }
-  return data !== null;
+  const rows = await sql`
+    update projects set
+      status = ${nextStatus},
+      reviewer_note = ${feedback},
+      on_hold = false,
+      hold_reason = null,
+      updated_at = now()
+    where id = ${id} and status = 'second_pass'
+    returning id
+  `;
+  return rows.length > 0;
 }
 
 export async function setProjectHold(id: ProjectId, onHold: boolean, reason: string | null) {
-  const { error } = await supabase
-    .from("projects")
-    .update({
-      on_hold: onHold,
-      hold_reason: onHold ? reason : null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", id)
-    .in("status", ["in_review", "second_pass"]);
-
-  if (error) {
-    throw error;
-  }
+  await sql`
+    update projects set
+      on_hold = ${onHold},
+      hold_reason = ${onHold ? reason : null},
+      updated_at = now()
+    where id = ${id} and status in ('in_review', 'second_pass')
+  `;
 }
 
 export async function adminUpdateProject(
@@ -325,103 +281,71 @@ export async function adminUpdateProject(
     github_url: string | null;
   },
 ) {
-  const { error } = await supabase
-    .from("projects")
-    .update({
-      title: fields.title,
-      description: fields.description,
-      image_url: fields.image_url,
-      link_url: fields.link_url,
-      github_url: fields.github_url,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", id);
-
-  if (error) {
-    throw error;
-  }
+  await sql`
+    update projects set
+      title = ${fields.title},
+      description = ${fields.description},
+      image_url = ${fields.image_url},
+      link_url = ${fields.link_url},
+      github_url = ${fields.github_url},
+      updated_at = now()
+    where id = ${id}
+  `;
 }
 
 export async function startFulfillment(id: ProjectId): Promise<boolean> {
-  const { data, error } = await supabase
-    .from("projects")
-    .update({ status: "fulfillment_started", updated_at: new Date().toISOString() })
-    .eq("id", id)
-    .eq("status", "shipped")
-    .select("id")
-    .maybeSingle();
-
-  if (error) {
-    throw error;
-  }
-  return data !== null;
+  const rows = await sql`
+    update projects set status = 'fulfillment_started', updated_at = now()
+    where id = ${id} and status = 'shipped'
+    returning id
+  `;
+  return rows.length > 0;
 }
 
 export async function markRewardOrdered(id: ProjectId): Promise<boolean> {
-  const { data, error } = await supabase
-    .from("projects")
-    .update({ reward_ordered_at: new Date().toISOString(), updated_at: new Date().toISOString() })
-    .eq("id", id)
-    .eq("status", "fulfillment_started")
-    .is("reward_ordered_at", null)
-    .select("id")
-    .maybeSingle();
-
-  if (error) {
-    throw error;
-  }
-  return data !== null;
+  const rows = await sql`
+    update projects set reward_ordered_at = now(), updated_at = now()
+    where id = ${id}
+      and status = 'fulfillment_started'
+      and reward_ordered_at is null
+    returning id
+  `;
+  return rows.length > 0;
 }
 
 export async function markRewardSent(id: ProjectId): Promise<boolean> {
-  const { data, error } = await supabase
-    .from("projects")
-    .update({ reward_sent_at: new Date().toISOString(), updated_at: new Date().toISOString() })
-    .eq("id", id)
-    .eq("status", "fulfillment_started")
-    .not("reward_ordered_at", "is", null)
-    .is("reward_sent_at", null)
-    .select("id")
-    .maybeSingle();
-
-  if (error) {
-    throw error;
-  }
-  return data !== null;
+  const rows = await sql`
+    update projects set reward_sent_at = now(), updated_at = now()
+    where id = ${id}
+      and status = 'fulfillment_started'
+      and reward_ordered_at is not null
+      and reward_sent_at is null
+    returning id
+  `;
+  return rows.length > 0;
 }
 
 export async function fulfillProject(
   id: ProjectId,
   adminSlackId: string,
 ): Promise<boolean> {
-  const { data, error } = await supabase
-    .from("projects")
-    .update({
-      status: "fulfilled",
-      fulfilled_at: new Date().toISOString(),
-      fulfilled_by: adminSlackId,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", id)
-    .eq("status", "fulfillment_started")
-    .not("reward", "is", null)
-    .select("id")
-    .maybeSingle();
-
-  if (error) {
-    throw error;
-  }
-  return data !== null;
+  const rows = await sql`
+    update projects set
+      status = 'fulfilled',
+      fulfilled_at = now(),
+      fulfilled_by = ${adminSlackId},
+      updated_at = now()
+    where id = ${id}
+      and status = 'fulfillment_started'
+      and reward is not null
+    returning id
+  `;
+  return rows.length > 0;
 }
 
 export async function setProjectReward(id: ProjectId, reward: string | null) {
-  const { error } = await supabase
-    .from("projects")
-    .update({ reward, updated_at: new Date().toISOString() })
-    .eq("id", id)
-    .in("status", ["shipped", "fulfillment_started"]);
-
-  if (error) {
-    throw error;
-  }
+  await sql`
+    update projects set reward = ${reward}, updated_at = now()
+    where id = ${id} and status in ('shipped', 'fulfillment_started')
+  `;
 }

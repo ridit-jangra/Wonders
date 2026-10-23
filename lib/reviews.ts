@@ -1,5 +1,5 @@
 import "server-only";
-import { supabase } from "@/lib/supabase";
+import { sql } from "@/lib/db";
 import type { ProjectId } from "@/lib/projects";
 
 export type ReviewPass = "first" | "second";
@@ -38,35 +38,32 @@ export async function recordReview(review: {
   checks: string[];
   reviewedBy: string;
 }) {
-  const { error } = await supabase.from("project_reviews").insert({
-    project_id: Number(review.projectId),
-    pass: review.pass,
-    verdict: review.verdict,
-    feedback: review.feedback,
-    technical_notes: review.technicalNotes,
-    additional_notes: review.additionalNotes,
-    checks: review.checks,
-    reviewed_by: review.reviewedBy,
-  });
-
-  if (error) {
-    throw error;
-  }
+  await sql`
+    insert into project_reviews (
+      project_id, pass, verdict, feedback, technical_notes,
+      additional_notes, checks, reviewed_by
+    ) values (
+      ${Number(review.projectId)},
+      ${review.pass},
+      ${review.verdict},
+      ${review.feedback},
+      ${review.technicalNotes},
+      ${review.additionalNotes},
+      ${review.checks},
+      ${review.reviewedBy}
+    )
+  `;
 }
 
 export async function getProjectReviews(projectId: ProjectId): Promise<ProjectReview[]> {
-  const { data, error } = await supabase
-    .from("project_reviews")
-    .select(
-      "id, project_id, pass, verdict, feedback, technical_notes, additional_notes, checks, reviewed_by, created_at",
-    )
-    .eq("project_id", projectId)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    throw error;
-  }
-  return data;
+  return sql<ProjectReview[]>`
+    select
+      id, project_id, pass, verdict, feedback, technical_notes,
+      additional_notes, checks, reviewed_by, created_at
+    from project_reviews
+    where project_id = ${projectId}
+    order by created_at desc
+  `;
 }
 
 export interface ReviewDraft {
@@ -81,17 +78,14 @@ export interface ReviewDraft {
 }
 
 export async function getReviewDraft(projectId: ProjectId, pass: ReviewPass): Promise<ReviewDraft | null> {
-  const { data, error } = await supabase
-    .from("review_drafts")
-    .select("project_id, pass, technical_notes, additional_notes, feedback, checks, updated_by, updated_at")
-    .eq("project_id", projectId)
-    .eq("pass", pass)
-    .maybeSingle();
-
-  if (error) {
-    throw error;
-  }
-  return data;
+  const [draft] = await sql<ReviewDraft[]>`
+    select
+      project_id, pass, technical_notes, additional_notes, feedback,
+      checks, updated_by, updated_at
+    from review_drafts
+    where project_id = ${projectId} and pass = ${pass}
+  `;
+  return draft ?? null;
 }
 
 export async function saveReviewDraft(draft: {
@@ -103,36 +97,35 @@ export async function saveReviewDraft(draft: {
   checks: string[];
   updatedBy: string;
 }): Promise<string> {
-  const updatedAt = new Date().toISOString();
-
-  const { error } = await supabase.from("review_drafts").upsert(
-    {
-      project_id: Number(draft.projectId),
-      pass: draft.pass,
-      technical_notes: draft.technicalNotes,
-      additional_notes: draft.additionalNotes,
-      feedback: draft.feedback,
-      checks: draft.checks,
-      updated_by: draft.updatedBy,
-      updated_at: updatedAt,
-    },
-    { onConflict: "project_id,pass" },
-  );
-
-  if (error) {
-    throw error;
-  }
-  return updatedAt;
+  const [{ updated_at }] = await sql<{ updated_at: string }[]>`
+    insert into review_drafts (
+      project_id, pass, technical_notes, additional_notes, feedback,
+      checks, updated_by, updated_at
+    ) values (
+      ${Number(draft.projectId)},
+      ${draft.pass},
+      ${draft.technicalNotes},
+      ${draft.additionalNotes},
+      ${draft.feedback},
+      ${draft.checks},
+      ${draft.updatedBy},
+      now()
+    )
+    on conflict (project_id, pass) do update set
+      technical_notes = excluded.technical_notes,
+      additional_notes = excluded.additional_notes,
+      feedback = excluded.feedback,
+      checks = excluded.checks,
+      updated_by = excluded.updated_by,
+      updated_at = excluded.updated_at
+    returning updated_at
+  `;
+  return updated_at;
 }
 
 export async function deleteReviewDraft(projectId: ProjectId, pass: ReviewPass) {
-  const { error } = await supabase
-    .from("review_drafts")
-    .delete()
-    .eq("project_id", projectId)
-    .eq("pass", pass);
-
-  if (error) {
-    throw error;
-  }
+  await sql`
+    delete from review_drafts
+    where project_id = ${projectId} and pass = ${pass}
+  `;
 }

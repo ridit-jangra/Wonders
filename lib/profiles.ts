@@ -1,5 +1,5 @@
 import "server-only";
-import { supabase } from "@/lib/supabase";
+import { sql } from "@/lib/db";
 import { decryptPII, encryptPII } from "@/lib/crypto";
 import {
   extractAddress,
@@ -43,16 +43,11 @@ export interface ProfileWithStats extends Profile {
 }
 
 export async function getProfile(slackId: string): Promise<Profile | null> {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("id, slack_id, email, name, interest")
-    .eq("slack_id", slackId)
-    .maybeSingle();
-
-  if (error) {
-    throw error;
-  }
-  return data;
+  const [profile] = await sql<Profile[]>`
+    select id, slack_id, email, name, interest
+    from profiles where slack_id = ${slackId}
+  `;
+  return profile ?? null;
 }
 
 export async function saveInterest(session: {
@@ -60,20 +55,15 @@ export async function saveInterest(session: {
   email: string;
   name: string;
 }, interest: string) {
-  const { error } = await supabase.from("profiles").upsert(
-    {
-      slack_id: session.slackId,
-      email: session.email,
-      name: session.name,
-      interest,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "slack_id" },
-  );
-
-  if (error) {
-    throw error;
-  }
+  await sql`
+    insert into profiles (slack_id, email, name, interest)
+    values (${session.slackId}, ${session.email}, ${session.name}, ${interest})
+    on conflict (slack_id) do update set
+      email = excluded.email,
+      name = excluded.name,
+      interest = excluded.interest,
+      updated_at = now()
+  `;
 }
 
 export async function syncHcaIdentity(
@@ -87,7 +77,6 @@ export async function syncHcaIdentity(
     email: identity.primary_email,
     name: hcaFullName(identity),
     hca_id: identity.id,
-    updated_at: new Date().toISOString(),
   };
   if (identity.first_name) row.first_name = identity.first_name;
   if (identity.last_name) row.last_name = identity.last_name;
@@ -113,12 +102,13 @@ export async function syncHcaIdentity(
     row.address_postal = encryptPII(address.postal);
   }
 
-  const { error } = await supabase
-    .from("profiles")
-    .upsert(row, { onConflict: "slack_id" });
-  if (error) {
-    throw error;
-  }
+  const columns = Object.keys(row);
+  await sql`
+    insert into profiles ${sql(row, columns)}
+    on conflict (slack_id) do update set
+      ${sql(row, columns.filter((c) => c !== "slack_id"))},
+      updated_at = now()
+  `;
 }
 
 
@@ -127,63 +117,50 @@ export async function listAllProfiles(opts: {
   limit: number;
   offset: number;
 }): Promise<{ profiles: ProfileWithStats[]; total: number }> {
-  let query = supabase
-    .from("profiles")
-    .select("id, slack_id, email, name, interest, created_at, projects(count)", {
-      count: "exact",
-    })
-    .order("created_at", { ascending: false })
-    .range(opts.offset, opts.offset + opts.limit - 1);
+  const pattern = opts.search ? `%${opts.search}%` : null;
+  const where = pattern
+    ? sql`where pr.name ilike ${pattern} or pr.email ilike ${pattern}`
+    : sql``;
 
-  if (opts.search) {
-    query = query.or(`name.ilike.%${opts.search}%,email.ilike.%${opts.search}%`);
-  }
+  const [profiles, [{ total }]] = await Promise.all([
+    sql<ProfileWithStats[]>`
+      select
+        pr.id, pr.slack_id, pr.email, pr.name, pr.interest, pr.created_at,
+        (select count(*)::int from projects p where p.profile_id = pr.id) as wonder_count
+      from profiles pr
+      ${where}
+      order by pr.created_at desc
+      limit ${opts.limit} offset ${opts.offset}
+    `,
+    sql<{ total: number }[]>`
+      select count(*)::int as total from profiles pr ${where}
+    `,
+  ]);
 
-  const { data, error, count } = await query;
-  if (error) {
-    throw error;
-  }
-
-  const profiles = (data as unknown as (Profile & {
-    created_at: string;
-    projects: { count: number }[];
-  })[]).map((row) => ({
-    ...row,
-    wonder_count: row.projects[0]?.count ?? 0,
-  }));
-
-  return { profiles, total: count ?? 0 };
+  return { profiles, total };
 }
 
 export async function getProfileByIdAdmin(
   id: string,
 ): Promise<(Profile & { created_at: string }) | null> {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("id, slack_id, email, name, interest, created_at")
-    .eq("id", id)
-    .maybeSingle();
-
-  if (error) {
-    throw error;
-  }
-  return data;
+  const [profile] = await sql<(Profile & { created_at: string })[]>`
+    select id, slack_id, email, name, interest, created_at
+    from profiles where id = ${id}
+  `;
+  return profile ?? null;
 }
 
 export async function getProfileIdentityAdmin(
   id: string,
 ): Promise<ProfileIdentity | null> {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select(
-      "hca_id, first_name, last_name, slack_display_name, slack_avatar_url, birthday, phone, address_line1, address_line2, address_city, address_state, address_country, address_postal, hca_verification_status, hca_ysws_eligible",
-    )
-    .eq("id", id)
-    .maybeSingle();
-
-  if (error) {
-    throw error;
-  }
+  const [data] = await sql`
+    select
+      hca_id, first_name, last_name, slack_display_name, slack_avatar_url,
+      birthday, phone, address_line1, address_line2, address_city,
+      address_state, address_country, address_postal,
+      hca_verification_status, hca_ysws_eligible
+    from profiles where id = ${id}
+  `;
   if (!data) return null;
 
   return {

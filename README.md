@@ -115,9 +115,8 @@ The landing page works with zero configuration, so if you just want to see the s
 The dashboard, the auth flow, and the database need these. Drop them in `.env.local`:
 
 ```bash
-# Supabase (server side only, uses the service role key)
-SUPABASE_URL=
-SUPABASE_SERVICE_ROLE_KEY=
+# Postgres (the wonders-db database on Orchard)
+DATABASE_URL=postgresql://user:password@host:5432/dbname
 
 # Hack Club OAuth
 HC_AUTH_CLIENT_ID=
@@ -128,11 +127,11 @@ HC_AUTH_REDIRECT_URI=        # optional, defaults to <your origin>/api/hc-auth/c
 SESSION_SECRET=              # any long random string
 ```
 
-Anything that touches Supabase is behind `server-only`, so the service role key never ships to the browser. Sessions are a signed cookie: a base64 payload with an HMAC SHA-256 signature and a seven day expiry, checked with a constant time compare.
+Anything that touches the database is behind `server-only`, so `DATABASE_URL` never ships to the browser. Sessions are a signed cookie: a base64 payload with an HMAC SHA-256 signature and a seven day expiry, checked with a constant time compare.
 
 ### Database
 
-Supabase with two tables:
+Postgres on Orchard, queried with raw SQL through the `postgres` package. The whole schema is in `db/schema.sql`; apply it to a fresh database with `psql "$DATABASE_URL" -f db/schema.sql`. The main tables:
 
 - `profiles`: one row per person, keyed by `slack_id`, holds their name, email, and the interest answer from onboarding.
 - `projects`: one row per wonder, linked to a profile, holds the title, description, image, links, status, reviewer note, reward, and timestamps.
@@ -163,7 +162,7 @@ lib/
   hc-auth.ts               session cookie signing and verifying
   profiles.ts              profile reads and writes
   projects.ts              project CRUD
-  supabase.ts              the server side client
+  db.ts                    the server side Postgres client
 ```
 
 The scroll story in `Story.tsx` is worth a look. It pins a sticky frame for 700vh and maps scroll progress onto per word opacity and position, so the sentences build up, hold, then slide off as you keep scrolling.

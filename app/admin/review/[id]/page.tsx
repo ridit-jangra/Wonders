@@ -602,7 +602,7 @@ function EditSubmissionForm({
         <Textarea name="description" rows={6} defaultValue={project.description} />
       </Field>
       <Field label="Image URL">
-        <Input name="image_url" type="url" defaultValue={project.image_url ?? ""} />
+        <Input name="image_url" defaultValue={project.image_url ?? ""} />
       </Field>
       <Field label="Repo URL">
         <Input name="github_url" type="url" defaultValue={project.github_url ?? ""} />

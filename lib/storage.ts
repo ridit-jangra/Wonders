@@ -1,8 +1,6 @@
 import "server-only";
-import crypto from "node:crypto";
-import { supabase } from "@/lib/supabase";
+import { sql } from "@/lib/db";
 
-export const THUMBNAIL_BUCKET = "wonder-thumbnails";
 export const MAX_THUMBNAIL_BYTES = 5 * 1024 * 1024;
 
 const THUMBNAIL_EXTENSIONS: Record<string, string> = {
@@ -14,16 +12,11 @@ const THUMBNAIL_EXTENSIONS: Record<string, string> = {
 
 export const THUMBNAIL_MIME_TYPES = Object.keys(THUMBNAIL_EXTENSIONS);
 
-/**
- * Uploads a thumbnail to the public bucket and returns its public URL.
- * Files are namespaced per profile so one person can never overwrite another's.
- */
 export async function uploadThumbnail(
   file: File,
   profileId: string,
 ): Promise<string> {
-  const extension = THUMBNAIL_EXTENSIONS[file.type];
-  if (!extension) {
+  if (!THUMBNAIL_EXTENSIONS[file.type]) {
     throw new Error(`Unsupported thumbnail type: ${file.type || "unknown"}`);
   }
   if (file.size > MAX_THUMBNAIL_BYTES) {
@@ -32,16 +25,20 @@ export async function uploadThumbnail(
     );
   }
 
-  const path = `${profileId}/${crypto.randomUUID()}.${extension}`;
+  const data = Buffer.from(await file.arrayBuffer());
+  const [{ id }] = await sql<{ id: string }[]>`
+    insert into thumbnails (profile_id, content_type, data)
+    values (${profileId}, ${file.type}, ${data})
+    returning id
+  `;
+  return `/api/thumbnails/${id}`;
+}
 
-  const { error } = await supabase.storage
-    .from(THUMBNAIL_BUCKET)
-    .upload(path, file, { contentType: file.type, upsert: false });
-
-  if (error) {
-    throw error;
-  }
-
-  const { data } = supabase.storage.from(THUMBNAIL_BUCKET).getPublicUrl(path);
-  return data.publicUrl;
+export async function getThumbnail(
+  id: string,
+): Promise<{ content_type: string; data: Buffer } | null> {
+  const [thumbnail] = await sql<{ content_type: string; data: Buffer }[]>`
+    select content_type, data from thumbnails where id = ${id}
+  `;
+  return thumbnail ?? null;
 }

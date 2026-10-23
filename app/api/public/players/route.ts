@@ -1,24 +1,40 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { sql } from "@/lib/db";
 
 const PUBLIC_STATUSES = ["shipped", "fulfillment_started", "fulfilled"];
 
 export async function GET() {
-  const { data: profiles, error: profilesError } = await supabase
-    .from("profiles")
-    .select("id, slack_id, slack_display_name, slack_avatar_url, created_at");
-
-  if (profilesError) {
-    return NextResponse.json({ error: profilesError.message }, { status: 500 });
-  }
-
-  const { data: projects, error: projectsError } = await supabase
-    .from("projects")
-    .select("profile_id, title, description, github_url, link_url")
-    .in("status", PUBLIC_STATUSES);
-
-  if (projectsError) {
-    return NextResponse.json({ error: projectsError.message }, { status: 500 });
+  let profiles, projects;
+  try {
+    [profiles, projects] = await Promise.all([
+      sql<
+        {
+          id: string;
+          slack_id: string;
+          slack_display_name: string | null;
+          slack_avatar_url: string | null;
+          created_at: string;
+        }[]
+      >`
+        select id, slack_id, slack_display_name, slack_avatar_url, created_at
+        from profiles
+      `,
+      sql<
+        {
+          profile_id: string;
+          title: string;
+          description: string;
+          github_url: string | null;
+          link_url: string | null;
+        }[]
+      >`
+        select profile_id, title, description, github_url, link_url
+        from projects
+        where status = any(${PUBLIC_STATUSES})
+      `,
+    ]);
+  } catch (error) {
+    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
 
   const players = profiles.map((p) => {

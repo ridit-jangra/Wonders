@@ -12,6 +12,7 @@ import { uploadThumbnail } from "@/lib/storage";
 import ThumbnailPicker from "@/app/dashboard/components/ThumbnailPicker";
 import HackatimeProjectSelect from "@/app/dashboard/components/HackatimeProjectSelect";
 import SubmitButton from "@/app/dashboard/components/SubmitButton";
+import AutoSave from "@/app/dashboard/components/AutoSave";
 import DeleteProjectButton from "@/app/dashboard/components/DeleteProjectButton";
 
 const HACKATIME_NOTICE: Record<string, string> = {
@@ -130,6 +131,70 @@ export default async function EditProjectPage({
       hackatime_projects: hackatimeLinks,
     });
     redirect("/wonders");
+  }
+
+  async function autosaveProject(formData: FormData): Promise<{ ok: boolean }> {
+    "use server";
+
+    const store = await cookies();
+    const current = verifySessionCookie(store.get(SESSION_COOKIE)?.value);
+    if (!current) {
+      return { ok: false };
+    }
+
+    const currentProfile = await getSessionProfile(current);
+    if (!currentProfile) {
+      return { ok: false };
+    }
+
+    const existing = await getProject(id);
+    if (
+      !existing ||
+      existing.profile_id !== currentProfile.id ||
+      (existing.status !== "building" && existing.status !== "rejected")
+    ) {
+      return { ok: false };
+    }
+
+    const title = String(formData.get("title") ?? "").trim();
+    if (!title) {
+      return { ok: false };
+    }
+
+    const description = String(formData.get("description") ?? "").trim();
+    const githubUrl = String(formData.get("github-repo-url") ?? "").trim();
+    const demoUrl = String(formData.get("demo-url") ?? "").trim();
+    const thumbnail = formData.get("thumbnail");
+    const removeThumbnail = formData.get("remove-thumbnail") === "1";
+    const hackatimeLinks =
+      formData.get("hackatime-picker") === "1"
+        ? [
+            ...new Set(
+              formData
+                .getAll("hackatime-projects")
+                .map((v) => String(v).trim())
+                .filter((v) => v.length > 0 && v.length <= 200),
+            ),
+          ].slice(0, 20)
+        : undefined;
+
+    let imageUrl = removeThumbnail ? null : existing.image_url;
+    if (thumbnail instanceof File && thumbnail.size > 0) {
+      imageUrl = await uploadThumbnail(thumbnail, currentProfile.id);
+    }
+
+    await updateProject(id, currentProfile.id, {
+      title,
+      description,
+      link_url: demoUrl,
+      github_url: githubUrl,
+      image_url: imageUrl,
+      hackatime_projects: hackatimeLinks,
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath("/wonders");
+    return { ok: true };
   }
 
   async function shipProjectAction() {
@@ -318,19 +383,24 @@ export default async function EditProjectPage({
           </div>
         </fieldset>
         {editable ? (
-          <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-end">
-            <DeleteProjectButton
-              action={deleteProjectAction}
-              label="Delete it :("
-              className="w-full rounded-md bg-[#F2B3AD] px-4 py-2 font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-48"
-            />
-            <SubmitButton
-              pendingLabel="saving it... :3"
-              className="w-full rounded-md bg-[#D1E4B5] px-4 py-2 font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-48"
-            >
-              Save it :3
-            </SubmitButton>
-          </div>
+          <>
+            <div className="mt-6 flex justify-end">
+              <AutoSave action={autosaveProject} />
+            </div>
+            <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:justify-end">
+              <DeleteProjectButton
+                action={deleteProjectAction}
+                label="Delete it :("
+                className="w-full rounded-md bg-[#F2B3AD] px-4 py-2 font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-48"
+              />
+              <SubmitButton
+                pendingLabel="saving it... :3"
+                className="w-full rounded-md bg-[#D1E4B5] px-4 py-2 font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-48"
+              >
+                Save it :3
+              </SubmitButton>
+            </div>
+          </>
         ) : (
           <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-end">
             <button
@@ -371,7 +441,7 @@ export default async function EditProjectPage({
             done building? ship it for review :3
           </p>
           {missingForShip.length > 0 && (
-            <p className="font-finger-paint text-sm text-[#F2B3AD]">
+            <p className="font-finger-paint text-base text-[#A33B32]">
               add {missingForShip.join(", ")} before you can ship it
             </p>
           )}

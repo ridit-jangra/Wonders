@@ -13,6 +13,7 @@ import ThumbnailPicker from "@/app/dashboard/components/ThumbnailPicker";
 import HackatimeProjectSelect from "@/app/dashboard/components/HackatimeProjectSelect";
 import SubmitButton from "@/app/dashboard/components/SubmitButton";
 import AutoSave from "@/app/dashboard/components/AutoSave";
+import LockRibbons from "@/app/dashboard/components/LockRibbons";
 import DeleteProjectButton from "@/app/dashboard/components/DeleteProjectButton";
 
 const HACKATIME_NOTICE: Record<string, string> = {
@@ -27,10 +28,10 @@ export default async function EditProjectPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ hackatime?: string }>;
+  searchParams: Promise<{ hackatime?: string; locked?: string }>;
 }) {
   const { id } = await params;
-  const { hackatime: hackatimeOutcome } = await searchParams;
+  const { hackatime: hackatimeOutcome, locked } = await searchParams;
 
   const cookieStore = await cookies();
   const session = verifySessionCookie(cookieStore.get(SESSION_COOKIE)?.value);
@@ -249,7 +250,7 @@ export default async function EditProjectPage({
 
     revalidatePath("/dashboard");
     revalidatePath("/wonders");
-    redirect("/wonders");
+    redirect(shipped ? `/dashboard/projects/edit/${id}?locked=1` : "/wonders");
   }
 
   async function deleteProjectAction() {
@@ -280,6 +281,12 @@ export default async function EditProjectPage({
           className="h-full w-full object-fill"
         />
       </div>
+      {!editable && (
+        <LockRibbons
+          play={locked === "1"}
+          position="fixed inset-0 z-20 md:right-[2%] md:left-[calc(100vh*554/1080-10vh)]"
+        />
+      )}
       <h1 className="font-finger-paint text-3xl text-[#5C4A2E] sm:text-4xl lg:text-5xl">
         Edit your Wonder
       </h1>

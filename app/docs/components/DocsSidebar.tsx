@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { FullSearchTrigger } from "fumadocs-ui/layouts/shared/slots/search-trigger";
 import { DOCS_SIDEBAR_COOKIE } from "./sidebar-cookie";
+import DrawerFrame from "../../dashboard/components/DrawerFrame";
 
 export interface DocsSidebarPage {
   url: string;
@@ -16,15 +17,19 @@ export interface DocsSidebarPage {
 function DocsSidebarNav({
   pages,
   onNavigateAction,
+  wide = false,
 }: {
   pages: DocsSidebarPage[];
   onNavigateAction?: () => void;
+  wide?: boolean;
 }) {
   const pathname = usePathname();
 
   return (
     <>
-      <nav className="wonders-docs-sidebar absolute top-[18%] left-6 flex h-[70%] w-[70%] flex-col">
+      <nav
+        className={`wonders-docs-sidebar absolute top-[18%] left-6 flex h-[70%] flex-col ${wide ? "w-[calc(100%-3rem)]" : "w-[70%]"}`}
+      >
         <div className="flex min-h-0 flex-1 flex-col gap-4">
           <div onClickCapture={onNavigateAction} className="shrink-0">
             <FullSearchTrigger className="w-full border-[#1f2528] bg-[#2a3135] font-poppins text-[#eaf5f3] hover:bg-[#1f2528] hover:text-white [&_kbd]:border-[#454e53] [&_kbd]:bg-[#1f2528] [&_kbd]:text-[#eaf5f3]" />
@@ -131,19 +136,11 @@ export default function DocsSidebar({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setOpen(false)}
-            className="fixed inset-0 z-50 bg-black/40 md:hidden"
+            className="fixed inset-0 z-60 bg-black/40 md:hidden"
           >
-            <motion.div
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ type: "spring", stiffness: 320, damping: 32 }}
-              onClick={(e) => e.stopPropagation()}
-              className="relative h-full w-max max-w-[82vw] overflow-hidden"
-            >
-              <img className="h-full w-auto max-w-none" src="/sidebar.png" alt="" />
-              <DocsSidebarNav pages={pages} onNavigateAction={() => setOpen(false)} />
-            </motion.div>
+            <DrawerFrame>
+              <DocsSidebarNav wide pages={pages} onNavigateAction={() => setOpen(false)} />
+            </DrawerFrame>
             <button
               type="button"
               onClick={() => setOpen(false)}

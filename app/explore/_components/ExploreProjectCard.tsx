@@ -5,7 +5,14 @@ interface ExploreProject {
   description: string;
   repo_url: string | null;
   demo_url: string | null;
+  tag: "draft" | "in_review" | "shipped";
 }
+
+const TAG: Record<ExploreProject["tag"], { label: string; className: string }> = {
+  draft: { label: "Draft", className: "bg-[#E7E2C9] text-[#5C4A2E]" },
+  in_review: { label: "In review", className: "bg-[#F0E27D] text-[#16213E]" },
+  shipped: { label: "Shipped", className: "bg-[#D0E4B4] text-[#2F4A1F]" },
+};
 
 export default function ExploreProjectCard({
   project,
@@ -26,7 +33,12 @@ export default function ExploreProjectCard({
         alt=""
         className="absolute top-[5%] left-[3%] h-[74%] w-[36%] rounded-md object-cover"
       />
-      <div className="absolute top-[5.5%] left-[43%] h-[16%] w-[56%] flex items-center overflow-hidden">
+      <span
+        className={`absolute top-[6%] right-[2%] rounded-full px-3 py-0.5 font-finger-paint text-sm ${TAG[project.tag].className}`}
+      >
+        {TAG[project.tag].label}
+      </span>
+      <div className="absolute top-[5.5%] left-[43%] h-[16%] w-[38%] flex items-center overflow-hidden">
         <h3 className="truncate font-finger-paint text-lg text-[#5C4A2E]">
           {project.name}
         </h3>

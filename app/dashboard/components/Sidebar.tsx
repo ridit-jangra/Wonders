@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import SidebarNav from "./SidebarNav";
+import DrawerFrame from "./DrawerFrame";
 
 export default function Sidebar() {
   const [open, setOpen] = useState(false);
@@ -42,19 +43,11 @@ export default function Sidebar() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setOpen(false)}
-            className="fixed inset-0 z-50 bg-black/40 md:hidden"
+            className="fixed inset-0 z-60 bg-black/40 md:hidden"
           >
-            <motion.div
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ type: "spring", stiffness: 320, damping: 32 }}
-              onClick={(e) => e.stopPropagation()}
-              className="relative h-full w-max max-w-[82vw] overflow-hidden"
-            >
-              <img className="h-full w-auto max-w-none" src="/sidebar.png" alt="" />
+            <DrawerFrame>
               <SidebarNav onNavigateAction={() => setOpen(false)} />
-            </motion.div>
+            </DrawerFrame>
             <button
               type="button"
               onClick={() => setOpen(false)}

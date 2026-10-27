@@ -3,17 +3,17 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
-import { getHackatimeToken, getSessionProfile } from "@/lib/profiles";
+import { getHackatimeToken, getSessionProfile, getSlackActors } from "@/lib/profiles";
 import { fetchHackatimeProjects } from "@/lib/hackatime";
 import { deleteProject, getProject, shipProject, updateProject } from "@/lib/projects";
-import { recordProjectHistory } from "@/lib/project-history";
+import { getProjectTimeline, recordProjectHistory } from "@/lib/project-history";
 import { notifyPlayer } from "@/lib/notifications";
 import { uploadThumbnail } from "@/lib/storage";
 import ThumbnailPicker from "@/app/dashboard/components/ThumbnailPicker";
 import HackatimeProjectSelect from "@/app/dashboard/components/HackatimeProjectSelect";
 import SubmitButton from "@/app/dashboard/components/SubmitButton";
 import AutoSave from "@/app/dashboard/components/AutoSave";
-import LockRibbons from "@/app/dashboard/components/LockRibbons";
+import ProjectTimeline from "@/app/dashboard/components/ProjectTimeline";
 import DeleteProjectButton from "@/app/dashboard/components/DeleteProjectButton";
 
 const HACKATIME_NOTICE: Record<string, string> = {
@@ -28,10 +28,10 @@ export default async function EditProjectPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ hackatime?: string; locked?: string }>;
+  searchParams: Promise<{ hackatime?: string }>;
 }) {
   const { id } = await params;
-  const { hackatime: hackatimeOutcome, locked } = await searchParams;
+  const { hackatime: hackatimeOutcome } = await searchParams;
 
   const cookieStore = await cookies();
   const session = verifySessionCookie(cookieStore.get(SESSION_COOKIE)?.value);
@@ -54,6 +54,12 @@ export default async function EditProjectPage({
     project.status === "in_review" || project.status === "second_pass"
       ? "in review :3"
       : "shipped :D";
+
+  const timeline = await getProjectTimeline(project.id, profile.id);
+  const actors = await getSlackActors([
+    profile.slack_id,
+    ...timeline.map((entry) => entry.actorSlackId),
+  ]);
 
   const hackatimeConnected = Boolean(profile.hackatime_connected_at);
   const hackatimeToken =
@@ -250,7 +256,7 @@ export default async function EditProjectPage({
 
     revalidatePath("/dashboard");
     revalidatePath("/wonders");
-    redirect(shipped ? `/dashboard/projects/edit/${id}?locked=1` : "/wonders");
+    redirect("/wonders");
   }
 
   async function deleteProjectAction() {
@@ -281,12 +287,6 @@ export default async function EditProjectPage({
           className="h-full w-full object-fill"
         />
       </div>
-      {!editable && (
-        <LockRibbons
-          play={locked === "1"}
-          position="fixed inset-0 z-20"
-        />
-      )}
       <h1 className="font-finger-paint text-3xl text-[#5C4A2E] sm:text-4xl lg:text-5xl">
         Edit your Wonder
       </h1>
@@ -461,6 +461,12 @@ export default async function EditProjectPage({
           </SubmitButton>
         </form>
       )}
+      <ProjectTimeline
+        entries={timeline}
+        actors={actors}
+        ownerSlackId={profile.slack_id}
+        startedAt={project.created_at}
+      />
     </div>
   );
 }

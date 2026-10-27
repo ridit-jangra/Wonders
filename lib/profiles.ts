@@ -1,6 +1,7 @@
 import "server-only";
 import { redirect } from "next/navigation";
 import { sql } from "@/lib/db";
+import { fetchSlackProfile } from "@/lib/slack";
 import { decryptPII, encryptPII } from "@/lib/crypto";
 import {
   extractAddress,
@@ -264,4 +265,68 @@ export async function getProfileIdentityAdmin(
     hca_verification_status: data.hca_verification_status,
     hca_ysws_eligible: data.hca_ysws_eligible,
   };
+}
+
+export interface SlackActor {
+  slackId: string;
+  name: string;
+  avatarUrl: string | null;
+}
+
+const SLACK_ACTOR_TTL_MS = 10 * 60 * 1000;
+const slackActorCache = new Map<
+  string,
+  { at: number; displayName: string | null; avatarUrl: string | null }
+>();
+
+async function slackLookup(slackId: string) {
+  const cached = slackActorCache.get(slackId);
+  if (cached && Date.now() - cached.at < SLACK_ACTOR_TTL_MS) {
+    return cached;
+  }
+  const { displayName, avatarUrl } = await fetchSlackProfile(slackId);
+  const entry = { at: Date.now(), displayName, avatarUrl };
+  slackActorCache.set(slackId, entry);
+  return entry;
+}
+
+export async function getSlackActors(
+  slackIds: string[],
+): Promise<Record<string, SlackActor>> {
+  const ids = [...new Set(slackIds.filter(Boolean))];
+  if (ids.length === 0) {
+    return {};
+  }
+
+  const rows = await sql<
+    {
+      slack_id: string;
+      name: string;
+      slack_display_name: string | null;
+      slack_avatar_url: string | null;
+    }[]
+  >`
+    select slack_id, name, slack_display_name, slack_avatar_url
+    from profiles
+    where slack_id = any(${ids})
+  `;
+  const known = new Map(rows.map((row) => [row.slack_id, row]));
+
+  const entries = await Promise.all(
+    ids.map(async (slackId): Promise<[string, SlackActor]> => {
+      const row = known.get(slackId);
+      let displayName = row?.slack_display_name ?? null;
+      let avatarUrl = row?.slack_avatar_url ?? null;
+      if (!displayName || !avatarUrl) {
+        const slack = await slackLookup(slackId);
+        displayName = displayName ?? slack.displayName;
+        avatarUrl = avatarUrl ?? slack.avatarUrl;
+      }
+      return [
+        slackId,
+        { slackId, name: displayName || row?.name || slackId, avatarUrl },
+      ];
+    }),
+  );
+  return Object.fromEntries(entries);
 }

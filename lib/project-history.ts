@@ -82,3 +82,30 @@ export async function listRecentHistory(opts: {
   ]);
   return { entries, total };
 }
+
+export interface TimelineEntry {
+  id: string;
+  fromStatus: ProjectStatus | null;
+  toStatus: ProjectStatus;
+  note: string | null;
+  actorSlackId: string;
+  createdAt: string;
+}
+
+export async function getProjectTimeline(
+  projectId: ProjectId,
+  profileId: string,
+): Promise<TimelineEntry[]> {
+  return sql<TimelineEntry[]>`
+    select
+      id,
+      from_status as "fromStatus",
+      to_status as "toStatus",
+      reviewer_note as note,
+      reviewed_by as "actorSlackId",
+      created_at as "createdAt"
+    from project_history
+    where project_id = ${projectId} and profile_id = ${profileId}
+    order by created_at asc, id asc
+  `;
+}

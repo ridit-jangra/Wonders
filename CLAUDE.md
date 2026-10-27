@@ -115,6 +115,10 @@ The player then ticks which of their Hackatime projects the wonder is (`projects
 
 The player-facing copy deliberately never shows hours or treats them as a target ("There's no hour minimum: your wonder is judged on what you built"), so the picker lists project names only. Keep hours out of every player-facing view, the same way as `reward`.
 
+### The edit page shows the wonder's timeline
+
+Below the ship button, `app/dashboard/components/ProjectTimeline.tsx` lists a "started" entry (from `projects.created_at`) plus every `project_history` row for that wonder: who did it (Slack avatar + `@name`), a tag (submitted, resubmitted, passed first review, changes requested, approved, reward incoming, wonder complete), the date, and the note to the player when there is one. The data comes from `getProjectTimeline(projectId, profileId)` in `lib/project-history.ts`, which is owner-scoped and **deliberately does not select `reward`** (the reward stays admin-only), and it only exposes the coarse tag, never raw statuses beyond that mapping. Names and avatars come from `getSlackActors` in `lib/profiles.ts`: the `profiles` row first, else Slack `users.info` (cached in memory for 10 minutes, so a reviewer who never logged in as a player still resolves), else the Slack ID. Dates render in the viewer's timezone through the client `LocalTime.tsx`.
+
 ### Every mutation and navigation shows a pending state
 
 Double-clicking a submit button used to fire the Server Action twice and create duplicate rows, so nothing in the dashboard submits or navigates without feedback:

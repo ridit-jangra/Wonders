@@ -3,7 +3,8 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 
-const EASE = [0.22, 1, 0.36, 1] as const;
+const EASE = [0.215, 0.61, 0.355, 1] as const;
+const DURATION = 0.55;
 
 export default function LockRibbons({
   play = false,
@@ -25,17 +26,17 @@ export default function LockRibbons({
         alt=""
         initial={play ? { x: "-100%", y: "100%" } : false}
         animate={{ x: 0, y: 0 }}
-        transition={{ duration: 0.45, ease: EASE }}
+        transition={{ duration: DURATION, ease: EASE }}
         style={{ scaleX: -1 }}
-        className="absolute inset-0 h-full w-full object-cover"
+        className="absolute -inset-[15%] h-[130%] w-[130%] max-w-none object-cover"
       />
       <motion.img
         src="/locked-rainbow.png"
         alt=""
         initial={play ? { x: "100%", y: "100%" } : false}
         animate={{ x: 0, y: 0 }}
-        transition={{ duration: 0.45, ease: EASE, delay: 0.08 }}
-        className="absolute inset-0 h-full w-full object-cover"
+        transition={{ duration: DURATION, ease: EASE, delay: 0.1 }}
+        className="absolute -inset-[15%] h-[130%] w-[130%] max-w-none object-cover"
       />
     </div>
   );

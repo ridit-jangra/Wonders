@@ -284,7 +284,7 @@ export default async function EditProjectPage({
       {!editable && (
         <LockRibbons
           play={locked === "1"}
-          position="fixed inset-0 z-20 md:right-[2%] md:left-[calc(100vh*554/1080-10vh)]"
+          position="fixed inset-0 z-20"
         />
       )}
       <h1 className="font-finger-paint text-3xl text-[#5C4A2E] sm:text-4xl lg:text-5xl">

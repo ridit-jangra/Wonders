@@ -7,9 +7,10 @@ import { createProject } from "@/lib/projects";
 import { uploadThumbnail } from "@/lib/storage";
 import ThumbnailPicker from "@/app/dashboard/components/ThumbnailPicker";
 import SubmitButton from "@/app/dashboard/components/SubmitButton";
+import LinkPending from "@/app/dashboard/components/LinkPending";
 import Link from "next/link";
 
-const ALLOWED_REDIRECTS = ["/dashboard", "/wonders"];
+const ALLOWED_REDIRECTS = ["/dashboard", "/wonders", "/explore"];
 
 export default async function NewProjectPage({
   searchParams,
@@ -127,9 +128,10 @@ export default async function NewProjectPage({
         <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:justify-end">
           <Link
             href={redirectTo}
-            className="w-full rounded-md bg-[#F2B3AD] px-4 py-2 text-center font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-48"
+            className="relative w-full rounded-md bg-[#F2B3AD] px-4 py-2 text-center font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-48"
           >
             Cancel :(
+            <LinkPending className="rounded-md bg-[#F2B3AD]">going back... :3</LinkPending>
           </Link>
           <SubmitButton
             pendingLabel="creating it... :3"

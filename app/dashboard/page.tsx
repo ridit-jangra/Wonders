@@ -33,8 +33,8 @@ export default async function DashPage() {
       <h1 className="font-finger-paint wrap-break-word text-5xl text-[#D9D3AF]">
         {session.name || session.email}
       </h1>
-      <div className="pt-10 w-full flex flex-col gap-5">
-        <div className="flex flex-wrap items-center justify-between gap-3 w-full max-w-180">
+      <div className="flex w-fit max-w-full flex-col gap-5 pt-10">
+        <div className="flex w-full flex-wrap items-center justify-between gap-3">
           <h1 className="text-[#BFD8A8] font-finger-paint text-4xl">Wonders</h1>
           <Link
             href="/wonders"

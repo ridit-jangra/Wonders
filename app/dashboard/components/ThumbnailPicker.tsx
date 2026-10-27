@@ -70,10 +70,10 @@ export default function ThumbnailPicker({
           <img
             src={preview}
             alt=""
-            className="absolute inset-[5%] h-[90%] w-[90%] rounded-sm object-cover"
+            className="absolute top-[1%] left-[3.7%] h-[92.7%] w-[94.9%] overflow-hidden rounded-sm object-cover"
           />
         )}
-        <label className="absolute inset-0 flex cursor-pointer flex-col items-center justify-center gap-1 px-6 text-center">
+        <label className="absolute inset-0 cursor-pointer">
           <input
             ref={inputRef}
             type="file"
@@ -82,37 +82,41 @@ export default function ThumbnailPicker({
             onChange={handleChange}
             className="sr-only"
           />
-          <span
-            className={`font-finger-paint text-lg text-[#5C4A2E] sm:text-xl md:text-2xl ${
-              preview ? "rounded-md bg-[#F0EBD1]/85 px-3 py-1" : ""
-            }`}
-          >
-            {preview ? "change it :3" : "add a thumbnail :3"}
-          </span>
-          {!preview && (
-            <span className="font-finger-paint text-xs text-[#8C8368] sm:text-sm md:text-base">
-              png, jpg, webp or gif — up to {MAX_THUMBNAIL_MB}MB
+          <span className="group absolute top-[1%] left-[3.7%] flex h-[92.7%] w-[94.9%] flex-col items-center justify-center gap-1 px-6 text-center">
+            <span
+              className={`font-finger-paint text-lg text-[#5C4A2E] sm:text-xl md:text-2xl ${
+                preview
+                  ? "rounded-md bg-[#F0EBD1]/85 px-3 py-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100 [@media(hover:none)]:opacity-100"
+                  : ""
+              }`}
+            >
+              {preview ? "change it :3" : "add a thumbnail :3"}
             </span>
-          )}
+            {!preview && (
+              <span className="font-finger-paint text-xs text-[#8C8368] sm:text-sm md:text-base">
+                png, jpg, webp or gif — up to {MAX_THUMBNAIL_MB}MB
+              </span>
+            )}
+          </span>
         </label>
+        {preview && (
+          <div className="pointer-events-none absolute top-[1%] left-[3.7%] h-[92.7%] w-[94.9%]">
+            <button
+              type="button"
+              onClick={handleRemove}
+              className="pointer-events-auto absolute top-2 right-3 cursor-pointer font-finger-paint text-sm text-[#5C4A2E]/70 underline hover:text-[#5C4A2E]"
+            >
+              remove it :(
+            </button>
+          </div>
+        )}
       </div>
 
       {removed && <input type="hidden" name="remove-thumbnail" value="1" />}
 
-      <div className="flex min-h-6 items-center gap-4">
-        {preview && (
-          <button
-            type="button"
-            onClick={handleRemove}
-            className="font-finger-paint text-sm text-[#5C4A2E]/70 underline hover:text-[#5C4A2E]"
-          >
-            remove it :(
-          </button>
-        )}
-        {error && (
-          <p className="font-finger-paint text-sm text-[#B4524A]">{error}</p>
-        )}
-      </div>
+      {error && (
+        <p className="min-h-6 font-finger-paint text-sm text-[#B4524A]">{error}</p>
+      )}
     </div>
   );
 }

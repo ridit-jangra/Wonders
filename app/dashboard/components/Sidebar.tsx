@@ -22,7 +22,7 @@ export default function Sidebar() {
 
   return (
     <>
-      <div className="relative sticky top-0 hidden h-screen shrink-0 md:block">
+      <div className="relative sticky top-0 z-40 hidden h-screen shrink-0 md:block">
         <img className="h-full w-auto" src="/sidebar.png" alt="" />
         <SidebarNav />
       </div>

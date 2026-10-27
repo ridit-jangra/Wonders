@@ -89,7 +89,7 @@ export default function ExploreClient({ loggedIn }: { loggedIn: boolean }) {
                     nobody has started a wonder yet, be the first :3
                   </p>
                   <Link
-                    href={loggedIn ? "/dashboard/projects/new" : "/login"}
+                    href={loggedIn ? "/dashboard/projects/new?redirect_to=%2Fexplore" : "/login"}
                     className="group relative mt-2 block"
                   >
                     <img

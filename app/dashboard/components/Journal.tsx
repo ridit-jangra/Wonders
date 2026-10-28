@@ -9,6 +9,7 @@ import {
   JOURNAL_MAX_CONTENT,
   JOURNAL_MAX_TITLE,
   journalTextLength,
+  swapText,
   type EditResult,
   type FormatAction,
 } from "@/lib/journal-shared";
@@ -86,7 +87,13 @@ function Editor({
   autoFocus?: boolean;
 }) {
   const [title, setTitle] = useState(initial.title);
-  const [content, setContent] = useState(initial.content);
+  const [content, setContentState] = useState(initial.content);
+  const latest = useRef(initial.content);
+  const uploads = useRef(0);
+  function setContent(value: string) {
+    latest.current = value;
+    setContentState(value);
+  }
   const [preview, setPreview] = useState(false);
   const [help, setHelp] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -127,24 +134,35 @@ function Editor({
     if (images.length === 0) return;
     setBusy(true);
     setError(null);
-    let value = area.current?.value ?? content;
-    let caret = area.current?.selectionEnd ?? value.length;
     for (const image of images) {
+      uploads.current += 1;
+      const token = `![uploading ${uploads.current}](#uploading)`;
+      const at = area.current?.selectionEnd ?? latest.current.length;
+      const placed = insertImage(latest.current, at, "#uploading", `uploading ${uploads.current}`);
+      pending.current = { start: placed.end, end: placed.end };
+      setContent(placed.value);
+
       const form = new FormData();
       form.append("image", image);
-      const result = await upload(form);
-      if (!result.ok) {
-        setError(result.error);
-        break;
+      const result = await upload(form).catch(() => ({ ok: false as const, error: "upload failed, try again" }));
+
+      const el = area.current;
+      const swapped = swapText(
+        latest.current,
+        token,
+        result.ok ? `![screenshot](${result.url})` : "",
+        el?.selectionStart ?? latest.current.length,
+        el?.selectionEnd ?? latest.current.length,
+      );
+      if (!result.ok) setError(result.error);
+      if (swapped) {
+        pending.current = el ? { start: swapped.start, end: swapped.end } : null;
+        setContent(swapped.value);
+        onDraft?.({ title, content: swapped.value });
       }
-      const next = insertImage(value, caret, result.url);
-      value = next.value;
-      caret = next.end;
+      if (!result.ok) break;
     }
     setBusy(false);
-    pending.current = { start: caret, end: caret };
-    setContent(value);
-    onDraft?.({ title, content: value });
   }
 
   function submit() {

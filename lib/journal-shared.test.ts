@@ -6,6 +6,7 @@ import {
   isAllowedImageSrc,
   journalTextLength,
   stripDisallowedImages,
+  swapText,
 } from "./journal-shared";
 
 describe("applyFormat", () => {
@@ -92,5 +93,30 @@ describe("images", () => {
   test("text length ignores image markdown", () => {
     expect(journalTextLength("![a](/x)")).toBe(0);
     expect(journalTextLength("hi ![a](/x)")).toBe(2);
+  });
+});
+
+describe("swapText", () => {
+  test("swaps a placeholder and keeps text typed after it", () => {
+    const result = swapText("a [P] bcd", "[P]", "[final]", 9, 9);
+    expect(result?.value).toBe("a [final] bcd");
+    expect(result?.start).toBe(13);
+  });
+
+  test("leaves a caret before the placeholder where it was", () => {
+    const result = swapText("ab [P]", "[P]", "[final]", 1, 1);
+    expect([result?.start, result?.end]).toEqual([1, 1]);
+  });
+
+  test("a caret inside the placeholder lands after the swap", () => {
+    expect(swapText("[P]", "[P]", "[final]", 1, 1)?.start).toBe(7);
+  });
+
+  test("a deleted placeholder means there is nothing to swap", () => {
+    expect(swapText("gone", "[P]", "x", 0, 0)).toBeNull();
+  });
+
+  test("removing a failed placeholder", () => {
+    expect(swapText("a [P] b", "[P]", "", 7, 7)?.value).toBe("a  b");
   });
 });

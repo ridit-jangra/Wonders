@@ -114,6 +114,26 @@ export function insertImage(value: string, caret: number, url: string, alt = "sc
   return { value: next, start: position, end: position };
 }
 
+export function swapText(
+  value: string,
+  token: string,
+  replacement: string,
+  selStart: number,
+  selEnd: number,
+): EditResult | null {
+  const index = value.indexOf(token);
+  if (index === -1) return null;
+  const tokenEnd = index + token.length;
+  const delta = replacement.length - token.length;
+  const move = (position: number) =>
+    position >= tokenEnd ? position + delta : position > index ? index + replacement.length : position;
+  return {
+    value: value.slice(0, index) + replacement + value.slice(tokenEnd),
+    start: move(selStart),
+    end: move(selEnd),
+  };
+}
+
 export function stripDisallowedImages(content: string): string {
   return content.replace(/!\[([^\]]*)\]\(([^)\s]*)[^)]*\)/g, (whole, alt: string, src: string) =>
     isAllowedImageSrc(src) ? whole : `[image removed: ${alt || "link"}]`,

@@ -125,6 +125,25 @@ export async function shipProject(
   return rows.length > 0;
 }
 
+export async function unshipProject(id: ProjectId, profileId: string): Promise<boolean> {
+  const rows = await sql`
+    update projects set
+      status = 'building',
+      ai_review_status = 'none',
+      ai_review_token = null,
+      ai_review_summary = null,
+      ai_review_findings = null,
+      ai_review_model = null,
+      ai_reviewed_at = null,
+      updated_at = now()
+    where id = ${id}
+      and profile_id = ${profileId}
+      and status = 'in_review'
+    returning id
+  `;
+  return rows.length > 0;
+}
+
 export async function deleteProject(id: ProjectId, profileId: string) {
   await sql`
     delete from projects

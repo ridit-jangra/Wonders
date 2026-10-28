@@ -6,7 +6,7 @@ import { after } from "next/server";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
 import { getHackatimeToken, getSessionProfile, getSlackActors } from "@/lib/profiles";
 import { fetchHackatimeProjects } from "@/lib/hackatime";
-import { deleteProject, getProject, shipProject, updateProject } from "@/lib/projects";
+import { deleteProject, getProject, shipProject, unshipProject, updateProject } from "@/lib/projects";
 import { getProjectTimeline, recordProjectHistory } from "@/lib/project-history";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { notifyPlayer } from "@/lib/notifications";
@@ -280,6 +280,46 @@ export default async function EditProjectPage({
     redirect("/wonders");
   }
 
+  async function unshipProjectAction() {
+    "use server";
+
+    const store = await cookies();
+    const current = verifySessionCookie(store.get(SESSION_COOKIE)?.value);
+    if (!current) {
+      redirect("/login");
+    }
+
+    const currentProfile = await getSessionProfile(current);
+    if (!currentProfile) {
+      redirect("/onboarding");
+    }
+
+    const existing = await getProject(id);
+    if (!existing || existing.profile_id !== currentProfile.id) {
+      redirect("/wonders");
+    }
+    if (!(await checkRateLimit("project-unship", current.slackId, 10, 60)).allowed) {
+      return;
+    }
+
+    const undone = await unshipProject(id, currentProfile.id);
+    if (undone) {
+      await recordProjectHistory({
+        projectId: id,
+        profileId: currentProfile.id,
+        fromStatus: "in_review",
+        toStatus: "building",
+        reviewerNote: null,
+        reward: null,
+        reviewedBy: current.slackId,
+      });
+    }
+
+    revalidatePath("/dashboard");
+    revalidatePath("/wonders");
+    redirect(`/dashboard/projects/edit/${id}`);
+  }
+
   async function deleteProjectAction() {
     "use server";
 
@@ -482,6 +522,19 @@ export default async function EditProjectPage({
             className="w-full rounded-md bg-[#A8C7E0] px-4 py-2 font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-48"
           >
             Ship it :D
+          </SubmitButton>
+        </form>
+      )}
+      {project.status === "in_review" && (
+        <form action={unshipProjectAction} className="flex w-full flex-col gap-2 md:max-w-[90%]">
+          <p className="font-finger-paint text-[#5C4A2E]/70">
+            need to change something? pull it back to building :3
+          </p>
+          <SubmitButton
+            pendingLabel="unshipping... :3"
+            className="w-full rounded-md bg-[#F2B3AD] px-4 py-2 font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-48"
+          >
+            Unship it :c
           </SubmitButton>
         </form>
       )}

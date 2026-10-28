@@ -72,7 +72,7 @@ export const THEME_INFO: Record<
   dark: { label: "Dark", note: "Hack Club dark", preview: { bg: "#131418", surface: "#17171d", text: "#f4f4f6", primary: "#ec3750" } },
   light: { label: "Light", note: "Hack Club light", preview: { bg: "#f9fafc", surface: "#ffffff", text: "#1f2d3d", primary: "#ec3750" } },
   jetbrains: { label: "JetBrains", note: "IntelliJ New UI dark", preview: { bg: "#1e1f22", surface: "#2b2d30", text: "#dfe1e5", primary: "#3574f0" } },
-  cursor: { label: "Cursor", note: "Cursor dark", preview: { bg: "#141414", surface: "#1c1c1c", text: "#e4e4e4", primary: "#3c9cfc" } },
+  cursor: { label: "Cursor", note: "Cursor dark", preview: { bg: "#141414", surface: "#1c1c1c", text: "#e4e4e4", primary: "#ec3750" } },
   "tokyo-night": { label: "Tokyo Night", note: "Night variant", preview: { bg: "#1a1b26", surface: "#1f2335", text: "#c0caf5", primary: "#7aa2f7" } },
   dracula: { label: "Dracula", note: "Classic purple", preview: { bg: "#282a36", surface: "#303241", text: "#f8f8f2", primary: "#bd93f9" } },
   catppuccin: { label: "Catppuccin", note: "Mocha", preview: { bg: "#181825", surface: "#1e1e2e", text: "#cdd6f4", primary: "#cba6f7" } },
@@ -88,7 +88,7 @@ export const THEME_INFO: Record<
 };
 
 export const DEFAULT_STAFF_SETTINGS: StaffSettings = {
-  theme: "system",
+  theme: "cursor",
   accent: "theme",
   font: "phantom",
   monoFont: "jetbrains-mono",

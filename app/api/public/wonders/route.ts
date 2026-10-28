@@ -9,11 +9,12 @@ export async function GET() {
         description: string;
         github_url: string | null;
         link_url: string | null;
+        image_url: string | null;
         tag: "draft" | "in_review" | "shipped";
       }[]
     >`
       select
-        title, description, github_url, link_url,
+        title, description, github_url, link_url, image_url,
         case
           when status in ('shipped', 'fulfillment_started', 'fulfilled') then 'shipped'
           when status in ('in_review', 'second_pass', 'approved') then 'in_review'
@@ -28,6 +29,7 @@ export async function GET() {
       description: p.description,
       repo_url: p.github_url,
       demo_url: p.link_url,
+      image_url: p.image_url,
       tag: p.tag,
     }));
 

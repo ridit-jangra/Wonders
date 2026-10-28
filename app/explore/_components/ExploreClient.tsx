@@ -13,6 +13,7 @@ interface Project {
   description: string;
   repo_url: string | null;
   demo_url: string | null;
+  image_url?: string | null;
   tag: "draft" | "in_review" | "shipped";
 }
 

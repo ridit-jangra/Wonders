@@ -5,6 +5,7 @@ interface ExploreProject {
   description: string;
   repo_url: string | null;
   demo_url: string | null;
+  image_url?: string | null;
   tag: "draft" | "in_review" | "shipped";
 }
 
@@ -29,7 +30,7 @@ export default function ExploreProjectCard({
         className="absolute top-[-51.01%] left-[-25.62%] w-[144.69%] max-w-none"
       />
       <img
-        src="/project-image-fallback.png"
+        src={project.image_url || "/project-image-fallback.png"}
         alt=""
         className="absolute top-[5%] left-[3%] h-[74%] w-[36%] rounded-md object-cover"
       />

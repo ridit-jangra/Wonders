@@ -56,6 +56,19 @@ create table if not exists projects (
 create index if not exists projects_profile_id_idx on projects (profile_id);
 create index if not exists projects_status_idx on projects (status);
 
+alter table projects add column if not exists ai_review_status text not null default 'none'
+  constraint projects_ai_review_status_check check (ai_review_status in (
+    'none', 'pending', 'clear', 'flagged', 'sent_back', 'error'
+  ));
+alter table projects add column if not exists ai_review_token text;
+alter table projects add column if not exists ai_review_started_at timestamptz;
+alter table projects add column if not exists ai_reviewed_at timestamptz;
+alter table projects add column if not exists ai_review_model text;
+alter table projects add column if not exists ai_review_summary text;
+alter table projects add column if not exists ai_review_findings jsonb;
+alter table projects add column if not exists ai_review_error text;
+alter table projects add column if not exists ai_precheck_sendbacks integer not null default 0;
+
 create table if not exists project_history (
   id uuid primary key default gen_random_uuid(),
   project_id integer not null,

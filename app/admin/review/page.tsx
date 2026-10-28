@@ -87,6 +87,9 @@ export default async function AdminReviewQueuePage({
                     {project.title}
                   </TextLink>
                   {project.on_hold && <Badge tone="warning">On hold</Badge>}
+                  {project.ai_review_status === "flagged" && (
+                    <Badge tone="warning">Auto-check flagged</Badge>
+                  )}
                 </div>
               </td>
               <td>

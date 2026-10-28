@@ -2,6 +2,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
 import { getHackatimeToken, getSessionProfile, getSlackActors } from "@/lib/profiles";
 import { fetchHackatimeProjects } from "@/lib/hackatime";
@@ -9,6 +10,8 @@ import { deleteProject, getProject, shipProject, updateProject } from "@/lib/pro
 import { getProjectTimeline, recordProjectHistory } from "@/lib/project-history";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { notifyPlayer } from "@/lib/notifications";
+import { precheckEnabled, runPrecheck } from "@/lib/precheck/run";
+import { beginPrecheck } from "@/lib/precheck/store";
 import { uploadThumbnail } from "@/lib/storage";
 import ThumbnailPicker from "@/app/dashboard/components/ThumbnailPicker";
 import HackatimeProjectSelect from "@/app/dashboard/components/HackatimeProjectSelect";
@@ -263,6 +266,13 @@ export default async function EditProjectPage({
         reviewedBy: current.slackId,
       });
       notifyPlayer(current.slackId, "in_review", { title: existing.title });
+
+      if (precheckEnabled()) {
+        const token = await beginPrecheck(id, currentProfile.id);
+        if (token) {
+          after(() => runPrecheck(Number(id), token));
+        }
+      }
     }
 
     revalidatePath("/dashboard");

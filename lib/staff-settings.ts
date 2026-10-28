@@ -90,7 +90,7 @@ export const THEME_INFO: Record<
 export const DEFAULT_STAFF_SETTINGS: StaffSettings = {
   theme: "cursor",
   accent: "theme",
-  font: "phantom",
+  font: "ibm-plex-sans",
   monoFont: "jetbrains-mono",
   compact: false,
 };

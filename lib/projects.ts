@@ -1,5 +1,10 @@
 import "server-only";
 import { sql } from "@/lib/db";
+import {
+  PRECHECK_HIDE_MINUTES,
+  type AutoCheckFindings,
+  type AutoCheckStatus,
+} from "@/lib/precheck/store";
 
 export type ProjectStatus =
   | "building"
@@ -145,6 +150,13 @@ export interface ProjectWithOwner extends Project {
   reward_sent_at: string | null;
   on_hold: boolean;
   hold_reason: string | null;
+  ai_review_status: AutoCheckStatus;
+  ai_review_summary: string | null;
+  ai_review_findings: AutoCheckFindings | null;
+  ai_review_error: string | null;
+  ai_review_model: string | null;
+  ai_reviewed_at: string | null;
+  ai_precheck_sendbacks: number;
   profile: ProjectOwner;
 }
 
@@ -154,6 +166,9 @@ const ADMIN_COLUMNS = () => sql`
   p.hackatime_seconds, p.created_at,
   p.fulfilled_at, p.fulfilled_by, p.reward_ordered_at, p.reward_sent_at,
   p.on_hold, p.hold_reason,
+  p.ai_review_status, p.ai_review_summary, p.ai_review_findings,
+  p.ai_review_error, p.ai_review_model, p.ai_reviewed_at,
+  p.ai_precheck_sendbacks,
   json_build_object(
     'name', o.name,
     'slack_id', o.slack_id,
@@ -171,7 +186,10 @@ export async function listAllProjects(opts: {
 }): Promise<{ projects: ProjectWithOwner[]; total: number }> {
   const statuses = opts.status ? [opts.status].flat() : null;
   const where = sql`
-    where true
+    where not (
+      p.ai_review_status = 'pending'
+      and p.ai_review_started_at > now() - make_interval(mins => ${PRECHECK_HIDE_MINUTES})
+    )
     ${statuses ? sql`and p.status = any(${statuses})` : sql``}
     ${opts.search ? sql`and p.title ilike ${"%" + opts.search + "%"}` : sql``}
   `;

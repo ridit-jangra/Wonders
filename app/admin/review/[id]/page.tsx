@@ -41,6 +41,7 @@ import {
   Textarea,
   TextLink,
 } from "../../components/ui";
+import AutoCheckCard from "../../components/AutoCheckCard";
 import Markdown from "../../components/Markdown";
 import Tabs from "../../components/Tabs";
 import ReviewPassForm, { type DraftInput, type DraftResult } from "../../components/ReviewPassForm";
@@ -498,6 +499,8 @@ export default async function AdminReviewPanelPage({
             <Muted>No description.</Muted>
           )}
         </Card>
+
+        <AutoCheckCard project={project} />
 
         <Card padding="compact">
           <div className="flex flex-wrap items-center gap-3">

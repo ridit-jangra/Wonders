@@ -1655,3 +1655,33 @@ html:has(.admin-shell[data-theme="light"]) {
 .hc-feed li:last-child {
   border-bottom: 0;
 }
+
+.hc-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+.hc-collapse > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.hc-collapse > summary::-webkit-details-marker {
+  display: none;
+}
+
+.hc-collapse > summary .hc-card-header {
+  margin-bottom: 0;
+}
+
+.hc-collapse[open] > summary .hc-card-header {
+  margin-bottom: 16px;
+}
+
+.hc-collapse .hc-chevron {
+  transition: transform 0.15s ease;
+}
+
+.hc-collapse[open] .hc-chevron {
+  transform: rotate(90deg);
+}

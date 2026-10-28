@@ -52,6 +52,7 @@ function Ticket({
             <span className="font-bold">{project.title}</span>
             {extra}
             {project.on_hold && <Badge tone="warning">on hold</Badge>}
+            {project.ai_review_status === "flagged" && <Badge tone="warning">flagged</Badge>}
           </div>
           <div className="text-sm">
             <Muted>
@@ -77,12 +78,12 @@ export default async function AdminOverviewPage() {
   const [stats, review, fulfil, recent] = await Promise.all([
     getOverviewStats(),
     showReview
-      ? listAllProjects({ status: ["in_review", "second_pass"], limit: 8, offset: 0 })
+      ? listAllProjects({ status: ["in_review", "second_pass"], limit: 30, offset: 0 })
       : EMPTY,
     showFulfil
-      ? listAllProjects({ status: ["shipped", "fulfillment_started"], limit: 8, offset: 0 })
+      ? listAllProjects({ status: ["shipped", "fulfillment_started"], limit: 30, offset: 0 })
       : EMPTY,
-    listRecentHistory({ limit: 8, offset: 0 }),
+    listRecentHistory({ limit: 40, offset: 0 }),
   ]);
 
   const summary = [
@@ -96,14 +97,15 @@ export default async function AdminOverviewPage() {
     .join(" \u00b7 ");
 
   const lanes = showReview && showFulfil ? "lg:grid-cols-2" : "";
+  const list = "hc-scroll flex min-h-0 max-h-80 flex-col gap-2 overflow-y-auto lg:max-h-none lg:flex-1 [&>*]:shrink-0";
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6 lg:h-[calc(100svh-7.75rem)]">
       <PageHeader title="Inbox" description={summary} />
 
-      <div className={`grid gap-8 ${lanes}`}>
+      <div className={`grid gap-8 lg:h-1/2 lg:shrink-0 ${lanes}`}>
         {showReview && (
-          <section>
+          <section className="flex min-h-0 flex-col">
             <div className="hc-lane-head">
               Review <Badge>{review.total}</Badge>
               <TextLink href="/admin/review">all</TextLink>
@@ -113,7 +115,7 @@ export default async function AdminOverviewPage() {
                 Nothing is waiting on review.
               </EmptyState>
             ) : (
-              <div className="flex flex-col gap-2">
+              <div className={list}>
                 {review.projects.map((project) => (
                   <Ticket
                     key={project.id}
@@ -128,7 +130,7 @@ export default async function AdminOverviewPage() {
         )}
 
         {showFulfil && (
-          <section>
+          <section className="flex min-h-0 flex-col">
             <div className="hc-lane-head">
               Fulfil <Badge>{fulfil.total}</Badge>
               <TextLink href="/admin/fulfillment">all</TextLink>
@@ -138,7 +140,7 @@ export default async function AdminOverviewPage() {
                 No rewards are waiting.
               </EmptyState>
             ) : (
-              <div className="flex flex-col gap-2">
+              <div className={list}>
                 {fulfil.projects.map((project) => (
                   <Ticket
                     key={project.id}
@@ -153,7 +155,7 @@ export default async function AdminOverviewPage() {
         )}
       </div>
 
-      <section>
+      <section className="flex min-h-0 flex-col lg:flex-1">
         <div className="hc-lane-head">
           Recent
           <TextLink href="/admin/history">all</TextLink>
@@ -161,7 +163,7 @@ export default async function AdminOverviewPage() {
         {recent.entries.length === 0 ? (
           <Muted>No activity yet.</Muted>
         ) : (
-          <ul className="hc-feed">
+          <ul className="hc-feed hc-scroll max-h-80 min-h-0 overflow-y-auto lg:max-h-none lg:flex-1">
             {recent.entries.map((entry) => (
               <li key={entry.id}>
                 <TextLink href={`/admin/review/${entry.project_id}`}>

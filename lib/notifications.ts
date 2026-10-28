@@ -9,6 +9,7 @@ export type WonderEvent =
   | "first_pass_approved"
   | "second_pass_approved"
   | "changes_requested"
+  | "auto_check_sent_back"
   | "fulfillment_started"
   | "reward_ordered"
   | "reward_sent"
@@ -38,6 +39,9 @@ function messageFor(event: WonderEvent, title: string, note: string) {
   if (event === "changes_requested") {
     return `your wonder *${title}* needs a little fix before it can go through :c\nhere's what the reviewer said:\n${quote(note)}\nfix it up on your dashboard and ship it again whenever you're ready, you got this :3`;
   }
+  if (event === "auto_check_sent_back") {
+    return `hey! your wonder *${title}* came back before review because a few required things are missing :c\n${note}\nfix them, then ship it again from your dashboard :3\nthis was an automatic check. if you think it got something wrong, ship again without changes and a person will take a look`;
+  }
   if (event === "fulfillment_started") {
     return `your surprise for *${title}* is being put together :roo-gift:\nno peeking! i'll let you know when it's on the move :3`;
   }
@@ -50,6 +54,23 @@ function messageFor(event: WonderEvent, title: string, note: string) {
   return `your surprise for *${title}* has arrived!! :tw_tada:\nthank you for making something wonderful :3 can't wait to see what you build next`;
 }
 
+export async function notifyPlayerNow(
+  slackUserId: string | null | undefined,
+  event: WonderEvent,
+  wonder: { title: string; note?: string | null },
+) {
+  if (!slackUserId || !process.env.SLACK_BOT_TOKEN) {
+    return;
+  }
+
+  try {
+    const text = messageFor(event, escapeSlack(wonder.title), escapeSlack(wonder.note ?? ""));
+    await sendDirectMessage(slackUserId, `${text}\n\n<${DASHBOARD_URL}|open your dashboard>`);
+  } catch (err) {
+    console.error("Failed to DM player:", err);
+  }
+}
+
 export function notifyPlayer(
   slackUserId: string | null | undefined,
   event: WonderEvent,
@@ -59,12 +80,5 @@ export function notifyPlayer(
     return;
   }
 
-  after(async () => {
-    try {
-      const text = messageFor(event, escapeSlack(wonder.title), escapeSlack(wonder.note ?? ""));
-      await sendDirectMessage(slackUserId, `${text}\n\n<${DASHBOARD_URL}|open your dashboard>`);
-    } catch (err) {
-      console.error("Failed to DM player:", err);
-    }
-  });
+  after(() => notifyPlayerNow(slackUserId, event, wonder));
 }

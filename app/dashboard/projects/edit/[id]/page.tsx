@@ -25,15 +25,6 @@ const HACKATIME_NOTICE: Record<string, string> = {
     "that hackatime account isn't the one linked to your slack, log into your own hackatime and try again :(",
 };
 
-const PANEL_MASK = {
-  WebkitMaskImage: "url(/new-or-edit-projects-template.png)",
-  maskImage: "url(/new-or-edit-projects-template.png)",
-  WebkitMaskSize: "100% 100%",
-  maskSize: "100% 100%",
-  WebkitMaskRepeat: "no-repeat",
-  maskRepeat: "no-repeat",
-} as const;
-
 export default async function EditProjectPage({
   params,
   searchParams,
@@ -307,14 +298,8 @@ export default async function EditProjectPage({
           className="h-full w-full object-fill"
         />
       </div>
-      {!editable && (
-        <div
-          className="pointer-events-none fixed top-0 right-[2%] bottom-0 left-[calc(100vh*554/1080-10vh)] z-10 hidden overflow-hidden md:block"
-          style={PANEL_MASK}
-        >
-          <LockRibbons />
-        </div>
-      )}
+      <div className="relative flex flex-col gap-6 md:-mr-14 md:-ml-4 md:pr-14 md:pl-4">
+      {!editable && <LockRibbons className="md:right-[5%] md:left-[3%]" />}
       <h1 className="font-finger-paint text-3xl text-[#5C4A2E] sm:text-4xl lg:text-5xl">
         Edit your Wonder
       </h1>
@@ -322,8 +307,6 @@ export default async function EditProjectPage({
         action={submitProject}
         className="w-full md:max-w-[90%]"
       >
-        <div className="relative">
-        {!editable && <LockRibbons className="md:hidden" />}
         <fieldset
           disabled={!editable}
           className="flex w-full flex-col gap-4 disabled:opacity-70"
@@ -419,7 +402,6 @@ export default async function EditProjectPage({
             )}
           </div>
         </fieldset>
-        </div>
         {editable ? (
           <>
             <div className="mt-6 flex justify-end">
@@ -458,6 +440,7 @@ export default async function EditProjectPage({
           </div>
         )}
       </form>
+      </div>
       {project.status === "rejected" && (
         <div className="w-full rounded-md bg-[#F2B3AD]/30 p-4 md:max-w-[90%]">
           <p className="font-finger-paint text-[#5C4A2E]">

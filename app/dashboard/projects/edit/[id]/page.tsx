@@ -299,7 +299,7 @@ export default async function EditProjectPage({
         />
       </div>
       <div className="relative flex flex-col gap-6 md:-mr-14 md:-ml-4 md:pr-14 md:pl-4">
-      {!editable && <LockRibbons className="md:right-[5%] md:left-[3%]" />}
+      {!editable && <LockRibbons className="md:right-[7%] md:left-[calc(-10vh+3.5rem)]" />}
       <h1 className="font-finger-paint text-3xl text-[#5C4A2E] sm:text-4xl lg:text-5xl">
         Edit your Wonder
       </h1>

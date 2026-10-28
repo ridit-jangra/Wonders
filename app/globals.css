@@ -13,7 +13,7 @@
 }
 
 :root {
-  --background: #ffffff;
+  --background: #f8f7e8;
   --foreground: #171717;
 }
 
@@ -26,13 +26,6 @@
   --font-inter: var(--font-inter);
   --font-mono: var(--font-jetbrains-mono);
   --font-phantom: "Phantom Sans", system-ui, sans-serif;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {

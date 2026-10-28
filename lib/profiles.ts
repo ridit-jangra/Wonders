@@ -2,6 +2,7 @@ import "server-only";
 import { redirect } from "next/navigation";
 import { sql } from "@/lib/db";
 import { fetchSlackProfile } from "@/lib/slack";
+import { getActiveBan } from "@/lib/bans";
 import { decryptPII, encryptPII } from "@/lib/crypto";
 import {
   extractAddress,
@@ -68,6 +69,9 @@ export async function getSessionProfile(session: {
     (session.iat ?? 0) < Date.parse(row.sessions_valid_after)
   ) {
     redirect("/api/hc-auth/logout");
+  }
+  if (await getActiveBan(session.slackId)) {
+    redirect("/api/hc-auth/logout?reason=banned");
   }
   return getProfile(session.slackId);
 }
@@ -235,6 +239,7 @@ export async function getProfileAddress(
 
 export async function getProfileIdentityAdmin(
   id: string,
+  includePII = false,
 ): Promise<ProfileIdentity | null> {
   const [data] = await sql`
     select
@@ -252,15 +257,15 @@ export async function getProfileIdentityAdmin(
     last_name: data.last_name,
     slack_display_name: data.slack_display_name,
     slack_avatar_url: data.slack_avatar_url,
-    birthday: decryptPII(data.birthday),
-    phone: decryptPII(data.phone),
+    birthday: includePII ? decryptPII(data.birthday) : "",
+    phone: includePII ? decryptPII(data.phone) : "",
     address: {
-      line1: decryptPII(data.address_line1),
-      line2: decryptPII(data.address_line2),
-      city: decryptPII(data.address_city),
-      state: decryptPII(data.address_state),
-      country: decryptPII(data.address_country),
-      postal: decryptPII(data.address_postal),
+      line1: includePII ? decryptPII(data.address_line1) : "",
+      line2: includePII ? decryptPII(data.address_line2) : "",
+      city: includePII ? decryptPII(data.address_city) : "",
+      state: includePII ? decryptPII(data.address_state) : "",
+      country: includePII ? decryptPII(data.address_country) : "",
+      postal: includePII ? decryptPII(data.address_postal) : "",
     },
     hca_verification_status: data.hca_verification_status,
     hca_ysws_eligible: data.hca_ysws_eligible,

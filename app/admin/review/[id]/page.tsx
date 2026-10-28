@@ -3,7 +3,8 @@ import { Suspense } from "react";
 import { LinkExternalIcon, MarkGithubIcon } from "@primer/octicons-react";
 import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { requireAdmin } from "@/lib/admin";
+import { requireAccess } from "@/lib/admin";
+import { canReview } from "@/lib/security/roles";
 import {
   adminUpdateProject,
   firstPassReview,
@@ -72,7 +73,7 @@ export default async function AdminReviewPanelPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  await requireAdmin();
+  await requireAccess(canReview);
 
   const [project, history, reviews] = await Promise.all([
     getProjectWithOwner(id),
@@ -95,7 +96,7 @@ export default async function AdminReviewPanelPage({
 
   async function autosaveDraft(input: DraftInput): Promise<DraftResult> {
     "use server";
-    const admin = await requireAdmin();
+    const admin = await requireAccess(canReview);
     const existing = await getProjectWithOwner(id);
     if (!existing) {
       return { ok: false, savedAt: null };
@@ -137,7 +138,7 @@ export default async function AdminReviewPanelPage({
 
   async function submitReview(formData: FormData) {
     "use server";
-    const admin = await requireAdmin();
+    const admin = await requireAccess(canReview);
     const existing = await getProjectWithOwner(id);
     if (!existing) notFound();
 
@@ -230,7 +231,7 @@ export default async function AdminReviewPanelPage({
 
   async function putOnHold(formData: FormData) {
     "use server";
-    await requireAdmin();
+    await requireAccess(canReview);
     const existing = await getProjectWithOwner(id);
     if (!existing) notFound();
 
@@ -245,7 +246,7 @@ export default async function AdminReviewPanelPage({
 
   async function releaseHold() {
     "use server";
-    await requireAdmin();
+    await requireAccess(canReview);
     const existing = await getProjectWithOwner(id);
     if (!existing) notFound();
 
@@ -255,7 +256,7 @@ export default async function AdminReviewPanelPage({
 
   async function editSubmission(formData: FormData) {
     "use server";
-    await requireAdmin();
+    await requireAccess(canReview);
     const existing = await getProjectWithOwner(id);
     if (!existing) notFound();
 

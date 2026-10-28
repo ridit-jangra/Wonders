@@ -7,6 +7,8 @@ export const NAV: { href: string; label: string; glyph: GlyphName }[] = [
   { href: "/admin/users", label: "Users", glyph: "people-3" },
   { href: "/admin/wonders", label: "Wonders", glyph: "rep" },
   { href: "/admin/history", label: "History", glyph: "history" },
+  { href: "/admin/audit", label: "Audit", glyph: "private" },
+  { href: "/admin/team", label: "Team", glyph: "people-2" },
   { href: "/admin/settings", label: "Settings", glyph: "settings" },
 ];
 

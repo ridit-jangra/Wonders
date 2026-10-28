@@ -29,7 +29,18 @@ export default async function LoginPage({
           That Hack Club account isn&apos;t allowed in here yet.
         </p>
       )}
-      {error && (
+      {error === "banned" && (
+        <p className="max-w-sm font-poppins text-sm text-red-600">
+          This account can&apos;t sign in right now. If you think that&apos;s a mistake, ask in the Wonders
+          channel on Slack.
+        </p>
+      )}
+      {error === "rejected" && (
+        <p className="max-w-sm font-poppins text-sm text-red-600">
+          Hack Club Auth couldn&apos;t verify this account for Hack Club programs, so it can&apos;t be used here.
+        </p>
+      )}
+      {error && error !== "banned" && error !== "rejected" && (
         <p className="max-w-sm font-poppins text-sm text-red-600">
           Something went wrong signing you in ({error}). Try again.
         </p>

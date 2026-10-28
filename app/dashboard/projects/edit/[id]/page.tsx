@@ -7,6 +7,7 @@ import { getHackatimeToken, getSessionProfile, getSlackActors } from "@/lib/prof
 import { fetchHackatimeProjects } from "@/lib/hackatime";
 import { deleteProject, getProject, shipProject, updateProject } from "@/lib/projects";
 import { getProjectTimeline, recordProjectHistory } from "@/lib/project-history";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { notifyPlayer } from "@/lib/notifications";
 import { uploadThumbnail } from "@/lib/storage";
 import ThumbnailPicker from "@/app/dashboard/components/ThumbnailPicker";
@@ -103,6 +104,10 @@ export default async function EditProjectPage({
       redirect("/wonders");
     }
 
+    if (!(await checkRateLimit("project-save", current.slackId, 30, 60)).allowed) {
+      return;
+    }
+
     const title = String(formData.get("title") ?? "").trim();
     const description = String(formData.get("description") ?? "").trim();
     const githubUrl = String(formData.get("github-repo-url") ?? "").trim();
@@ -160,6 +165,10 @@ export default async function EditProjectPage({
       existing.profile_id !== currentProfile.id ||
       (existing.status !== "building" && existing.status !== "rejected")
     ) {
+      return { ok: false };
+    }
+
+    if (!(await checkRateLimit("project-autosave", current.slackId, 90, 60)).allowed) {
       return { ok: false };
     }
 
@@ -221,6 +230,9 @@ export default async function EditProjectPage({
     const existing = await getProject(id);
     if (!existing || existing.profile_id !== currentProfile.id) {
       redirect("/wonders");
+    }
+    if (!(await checkRateLimit("project-ship", current.slackId, 10, 60)).allowed) {
+      return;
     }
     if (
       !existing.image_url ||

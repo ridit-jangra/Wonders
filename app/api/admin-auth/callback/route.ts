@@ -1,11 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { appUrl, HC_AUTH_ME_URL, HC_AUTH_TOKEN_URL, hcaFullName, type HcaIdentity } from "@/lib/hc-auth";
 import {
+  ADMIN_REAUTH_COOKIE,
+  ADMIN_REAUTH_FLOW_COOKIE,
+  ADMIN_REAUTH_MAX_AGE,
+  ADMIN_REAUTH_RETURN_COOKIE,
   ADMIN_SESSION_COOKIE,
   ADMIN_STATE_COOKIE,
+  createAdminReauthCookie,
   createAdminSessionCookie,
-  isAdminSlackId,
+  getStaffAccess,
+  verifyAdminSessionCookie,
 } from "@/lib/admin";
+import { writeAudit } from "@/lib/audit";
+import { limitByIp } from "@/lib/rate-limit";
+import { safeAdminReturnTo } from "@/lib/security/return-to";
+import { isStaff } from "@/lib/security/roles";
 import { fetchSlackProfile } from "@/lib/slack";
 import { getProfile } from "@/lib/profiles";
 
@@ -15,10 +25,17 @@ function deny(message: string, status: number) {
     headers: { "Content-Type": "text/plain; charset=utf-8" },
   });
   response.cookies.delete(ADMIN_STATE_COOKIE);
+  response.cookies.delete(ADMIN_REAUTH_FLOW_COOKIE);
+  response.cookies.delete(ADMIN_REAUTH_RETURN_COOKIE);
   return response;
 }
 
 export async function GET(request: NextRequest) {
+  const limited = await limitByIp(request, "admin-callback", 20, 60);
+  if (limited) {
+    return limited;
+  }
+
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
   const state = searchParams.get("state");
@@ -71,9 +88,29 @@ export async function GET(request: NextRequest) {
   const identity = meData.identity;
   const slackId = identity?.slack_id ?? "";
 
-  if (!identity || !slackId || !isAdminSlackId(slackId)) {
+  if (!identity || !slackId || !isStaff(await getStaffAccess(slackId))) {
+    if (slackId) {
+      await writeAudit({ actor: slackId, action: "admin.login_denied" });
+    }
     return deny("You're not a Wonders admin.", 403);
   }
+
+  const reauthFlow = request.cookies.get(ADMIN_REAUTH_FLOW_COOKIE)?.value === "1";
+  const existing = verifyAdminSessionCookie(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
+  if (reauthFlow && existing && existing.slackId !== slackId) {
+    await writeAudit({
+      actor: slackId,
+      action: "admin.reauth_wrong_account",
+      detail: { expected: existing.slackId },
+      sensitive: true,
+    });
+    return deny("That's a different account from the one you're signed in with.", 403);
+  }
+
+  await writeAudit({
+    actor: slackId,
+    action: reauthFlow ? "admin.reauth" : "admin.login",
+  });
 
   let name = hcaFullName(identity);
   if (!name) {
@@ -95,7 +132,10 @@ export async function GET(request: NextRequest) {
     email: identity.primary_email ?? "",
   });
 
-  const response = NextResponse.redirect(appUrl("/admin", request));
+  const returnTo = reauthFlow
+    ? safeAdminReturnTo(request.cookies.get(ADMIN_REAUTH_RETURN_COOKIE)?.value)
+    : "/admin";
+  const response = NextResponse.redirect(appUrl(returnTo, request));
   response.cookies.set(ADMIN_SESSION_COOKIE, session.value, {
     httpOnly: true,
     secure: true,
@@ -103,6 +143,17 @@ export async function GET(request: NextRequest) {
     maxAge: session.maxAge,
     path: "/",
   });
+  if (reauthFlow) {
+    response.cookies.set(ADMIN_REAUTH_COOKIE, createAdminReauthCookie(slackId), {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      maxAge: ADMIN_REAUTH_MAX_AGE,
+      path: "/",
+    });
+  }
   response.cookies.delete(ADMIN_STATE_COOKIE);
+  response.cookies.delete(ADMIN_REAUTH_FLOW_COOKIE);
+  response.cookies.delete(ADMIN_REAUTH_RETURN_COOKIE);
   return response;
 }

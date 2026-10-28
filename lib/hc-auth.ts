@@ -11,6 +11,7 @@ export const HC_AUTH_SCOPE =
 
 export const SESSION_COOKIE = "wonders_session";
 export const STATE_COOKIE = "wonders_hc_auth_state";
+export const RETRY_COOKIE = "wonders_hc_auth_retry";
 
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7;
 
@@ -100,6 +101,8 @@ export interface HcaIdentity {
   addresses?: HcaAddress[];
   verification_status?: string;
   ysws_eligible?: boolean;
+  fatal_rejection?: boolean;
+  rejection_reason?: string;
 }
 
 export interface HcaMailingAddress {

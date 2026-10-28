@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { appUrl, HC_AUTH_AUTHORIZE_URL, HC_AUTH_SCOPE, STATE_COOKIE } from "@/lib/hc-auth";
+import { limitByIp } from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
+  const limited = await limitByIp(request, "hc-login", 30, 60);
+  if (limited) {
+    return limited;
+  }
+
   const clientId = process.env.HC_AUTH_CLIENT_ID;
   if (!clientId) {
     return NextResponse.json(

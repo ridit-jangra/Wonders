@@ -4,6 +4,7 @@ import {
   HC_AUTH_ME_URL,
   HC_AUTH_TOKEN_URL,
   STATE_COOKIE,
+  RETRY_COOKIE,
   SESSION_COOKIE,
   createSessionCookie,
   hcaFullName,
@@ -11,17 +12,37 @@ import {
 } from "@/lib/hc-auth";
 import { syncHcaIdentity } from "@/lib/profiles";
 import { fetchSlackProfile, inviteToChannel } from "@/lib/slack";
+import { limitByIp } from "@/lib/rate-limit";
+import { getActiveBan } from "@/lib/bans";
 
 export async function GET(request: NextRequest) {
+  const limited = await limitByIp(request, "hc-callback", 30, 60);
+  if (limited) {
+    return limited;
+  }
+
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
   const state = searchParams.get("state");
   const expectedState = request.cookies.get(STATE_COOKIE)?.value;
 
+  if (code && state && !expectedState && !request.cookies.get(RETRY_COOKIE)) {
+    const retry = NextResponse.redirect(appUrl("/api/hc-auth/login", request));
+    retry.cookies.set(RETRY_COOKIE, "1", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      maxAge: 300,
+      path: "/",
+    });
+    return retry;
+  }
+
   if (!code || !state || !expectedState || state !== expectedState) {
-    return NextResponse.redirect(
-      appUrl("/login?error=state", request),
-    );
+    const failed = NextResponse.redirect(appUrl("/login?error=state", request));
+    failed.cookies.delete(STATE_COOKIE);
+    failed.cookies.delete(RETRY_COOKIE);
+    return failed;
   }
 
   const clientId = process.env.HC_AUTH_CLIENT_ID;
@@ -82,6 +103,20 @@ export async function GET(request: NextRequest) {
       appUrl("/login?error=profile", request),
     );
   }
+  if (identity.verification_status === "ineligible" && identity.fatal_rejection === true) {
+    const rejected = NextResponse.redirect(appUrl("/login?error=rejected", request));
+    rejected.cookies.delete(SESSION_COOKIE);
+    rejected.cookies.delete(STATE_COOKIE);
+    return rejected;
+  }
+
+  if (slackId && (await getActiveBan(slackId))) {
+    const banned = NextResponse.redirect(appUrl("/login?error=banned", request));
+    banned.cookies.delete(SESSION_COOKIE);
+    banned.cookies.delete(STATE_COOKIE);
+    return banned;
+  }
+
   const name = hcaFullName(identity);
 
   try {
@@ -110,5 +145,6 @@ export async function GET(request: NextRequest) {
     path: "/",
   });
   response.cookies.delete(STATE_COOKIE);
+  response.cookies.delete(RETRY_COOKIE);
   return response;
 }

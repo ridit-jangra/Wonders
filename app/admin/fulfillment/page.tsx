@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
-import { requireAdmin } from "@/lib/admin";
+import { requireAccess } from "@/lib/admin";
+import { canFulfill } from "@/lib/security/roles";
 import {
   listAllProjects,
   getProjectWithOwner,
@@ -35,7 +36,7 @@ export default async function AdminFulfillmentPage({
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
-  await requireAdmin();
+  await requireAccess(canFulfill);
   const { page } = await searchParams;
   const currentPage = Math.max(1, parseInt(page ?? "1", 10) || 1);
 
@@ -49,7 +50,7 @@ export default async function AdminFulfillmentPage({
   async function saveReward(formData: FormData) {
     "use server";
 
-    await requireAdmin();
+    await requireAccess(canFulfill);
     const id = String(formData.get("id") ?? "");
     if (!id) return;
 
@@ -62,7 +63,7 @@ export default async function AdminFulfillmentPage({
   async function beginFulfillment(formData: FormData) {
     "use server";
 
-    const admin = await requireAdmin();
+    const admin = await requireAccess(canFulfill);
     const id = String(formData.get("id") ?? "");
     if (!id) return;
 
@@ -89,7 +90,7 @@ export default async function AdminFulfillmentPage({
   async function markOrdered(formData: FormData) {
     "use server";
 
-    await requireAdmin();
+    await requireAccess(canFulfill);
     const id = String(formData.get("id") ?? "");
     if (!id) return;
 
@@ -107,7 +108,7 @@ export default async function AdminFulfillmentPage({
   async function markSent(formData: FormData) {
     "use server";
 
-    await requireAdmin();
+    await requireAccess(canFulfill);
     const id = String(formData.get("id") ?? "");
     if (!id) return;
 
@@ -125,7 +126,7 @@ export default async function AdminFulfillmentPage({
   async function markFulfilled(formData: FormData) {
     "use server";
 
-    const admin = await requireAdmin();
+    const admin = await requireAccess(canFulfill);
     const id = String(formData.get("id") ?? "");
     if (!id) return;
 

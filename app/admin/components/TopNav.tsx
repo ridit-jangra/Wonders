@@ -5,12 +5,18 @@ import { usePathname } from "next/navigation";
 import Icon from "@hackclub/icons";
 import { NAV, isNavActive } from "./nav";
 
-export default function TopNav({ counts }: { counts: Record<string, number> }) {
+export default function TopNav({
+  counts,
+  hrefs,
+}: {
+  counts: Record<string, number>;
+  hrefs: string[];
+}) {
   const pathname = usePathname();
 
   return (
     <nav className="flex items-center gap-1">
-      {NAV.map((item) => {
+      {NAV.filter((item) => hrefs.includes(item.href)).map((item) => {
         const active = isNavActive(pathname, item.href);
         return (
           <Link

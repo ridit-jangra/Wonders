@@ -7,7 +7,15 @@ import { getStaffSettings, requireAdmin } from "@/lib/admin";
 import { staffSettingsAttributes } from "@/lib/staff-settings";
 import { adminFontVariables } from "./fonts";
 import { countProjectsByStatus } from "@/lib/projects";
+import {
+  canFulfill,
+  canManagePlayers,
+  canManageTeam,
+  canReview,
+  canViewAudit,
+} from "@/lib/security/roles";
 import TopNav from "./components/TopNav";
+import { NAV } from "./components/nav";
 import { Button, ButtonLink, Mono } from "./components/ui";
 
 export default async function AdminLayout({
@@ -25,6 +33,15 @@ export default async function AdminLayout({
     "/admin/review": byStatus.in_review + byStatus.second_pass,
     "/admin/fulfillment": byStatus.shipped + byStatus.fulfillment_started,
   };
+
+  const allowedByHref: Record<string, boolean> = {
+    "/admin/review": canReview(admin),
+    "/admin/fulfillment": canFulfill(admin),
+    "/admin/users": canManagePlayers(admin),
+    "/admin/audit": canViewAudit(admin),
+    "/admin/team": canManageTeam(admin),
+  };
+  const hrefs = NAV.map((item) => item.href).filter((href) => allowedByHref[href] ?? true);
 
   let displayName = "Admin";
   if (admin.name) {
@@ -47,7 +64,7 @@ export default async function AdminLayout({
             <span className="hc-heading">Wonders</span>
           </Link>
           <div className="min-w-0 flex-1 overflow-x-auto">
-            <TopNav counts={navCounts} />
+            <TopNav counts={navCounts} hrefs={hrefs} />
           </div>
           <div className="hidden shrink-0 items-center gap-3 lg:flex">
             <span className="text-sm">

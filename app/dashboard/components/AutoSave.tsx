@@ -31,7 +31,7 @@ function fileSignature(data: FormData) {
 
 function signature(data: FormData) {
   return JSON.stringify(
-    [...data.entries()].map(([name, value]) => [
+    ([...data.entries()] as [string, FormDataEntryValue][]).map(([name, value]) => [
       name,
       value instanceof File ? `file:${describeFile(value)}` : value,
     ]),

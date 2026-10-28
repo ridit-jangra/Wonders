@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { appUrl, SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
+import { checkRateLimit, tooManyRequests } from "@/lib/rate-limit";
 import {
   HACKATIME_AUTHORIZE_URL,
   HACKATIME_SCOPE,
@@ -11,6 +12,11 @@ export async function GET(request: NextRequest) {
   const session = verifySessionCookie(request.cookies.get(SESSION_COOKIE)?.value);
   if (!session) {
     return NextResponse.redirect(appUrl("/login", request));
+  }
+
+  const limit = await checkRateLimit("hackatime-connect", session.slackId, 20, 60);
+  if (!limit.allowed) {
+    return tooManyRequests(limit.retryAfter);
   }
 
   const clientId = process.env.HACKATIME_CLIENT_ID;

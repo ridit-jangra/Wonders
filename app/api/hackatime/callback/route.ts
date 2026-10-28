@@ -6,11 +6,17 @@ import {
   HACKATIME_TOKEN_URL,
 } from "@/lib/hackatime";
 import { getSessionProfile, setHackatimeToken } from "@/lib/profiles";
+import { checkRateLimit, tooManyRequests } from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
   const session = verifySessionCookie(request.cookies.get(SESSION_COOKIE)?.value);
   if (!session) {
     return NextResponse.redirect(appUrl("/login", request));
+  }
+
+  const limit = await checkRateLimit("hackatime-callback", session.slackId, 20, 60);
+  if (!limit.allowed) {
+    return tooManyRequests(limit.retryAfter);
   }
 
   const [expectedState, wonder] = (

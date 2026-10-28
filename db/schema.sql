@@ -111,3 +111,43 @@ create table if not exists staff_settings (
   settings jsonb not null default '{}'::jsonb,
   updated_at timestamptz not null default now()
 );
+
+create table if not exists staff_roles (
+  slack_id text primary key,
+  roles text[] not null default '{}',
+  updated_by text,
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists audit_logs (
+  id uuid primary key default gen_random_uuid(),
+  actor_slack_id text not null,
+  action text not null,
+  target text,
+  detail jsonb not null default '{}'::jsonb,
+  sensitive boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists audit_logs_created_idx on audit_logs (created_at desc);
+create index if not exists audit_logs_actor_idx on audit_logs (actor_slack_id, created_at desc);
+
+create table if not exists account_bans (
+  id uuid primary key default gen_random_uuid(),
+  slack_id text not null,
+  reason text not null,
+  banned_by text not null,
+  created_at timestamptz not null default now(),
+  expires_at timestamptz,
+  revoked_at timestamptz,
+  revoked_by text
+);
+
+create index if not exists account_bans_slack_idx on account_bans (slack_id);
+
+create table if not exists rate_limits (
+  bucket text not null,
+  window_start timestamptz not null,
+  count integer not null default 0,
+  primary key (bucket, window_start)
+);

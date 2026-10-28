@@ -1,4 +1,5 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { getProfileByIdAdmin, getProfileIdentityAdmin } from "@/lib/profiles";
 import { getProjects } from "@/lib/projects";
 import { getProfileHistory } from "@/lib/project-history";
@@ -9,30 +10,85 @@ import {
   Card,
   CardHeader,
   DescriptionList,
+  ActionButton,
+  Callout,
   EmptyState,
+  Field,
   HistoryTimeline,
+  Input,
   Mono,
   PageHeader,
   StatusBadge,
   TextLink,
 } from "../../components/ui";
-import { requireAdmin } from "@/lib/admin";
+import Select from "../../components/Select";
+import { hasRecentAuth, reauthUrl, requireAccess } from "@/lib/admin";
+import { writeAudit } from "@/lib/audit";
+import { banPlayer, getActiveBan, unbanPlayer } from "@/lib/bans";
+import { canManagePlayers } from "@/lib/security/roles";
 
 export default async function AdminUserDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireAdmin();
+  const admin = await requireAccess(canManagePlayers);
   const { id } = await params;
   const profile = await getProfileByIdAdmin(id);
   if (!profile) notFound();
 
-  const [projects, history, identity] = await Promise.all([
+  const unlocked = await hasRecentAuth(admin.slackId);
+  const [projects, history, identity, ban] = await Promise.all([
     getProjects(profile.id),
     getProfileHistory(profile.id),
-    getProfileIdentityAdmin(profile.id),
+    getProfileIdentityAdmin(profile.id, unlocked),
+    getActiveBan(profile.slack_id),
   ]);
+
+  if (unlocked) {
+    await writeAudit({
+      actor: admin.slackId,
+      action: "admin.view_pii",
+      target: profile.slack_id,
+      sensitive: true,
+    });
+  }
+
+  async function banAction(formData: FormData) {
+    "use server";
+    const actor = await requireAccess(canManagePlayers);
+    const target = await getProfileByIdAdmin(id);
+    if (!target || target.slack_id === actor.slackId) return;
+    const reason = String(formData.get("reason") ?? "").trim().slice(0, 500);
+    if (!reason) return;
+    const days = Number(formData.get("days"));
+    await banPlayer({
+      slackId: target.slack_id,
+      reason,
+      bannedBy: actor.slackId,
+      days: Number.isFinite(days) && days > 0 ? Math.min(days, 3650) : null,
+    });
+    await writeAudit({
+      actor: actor.slackId,
+      action: "player.ban",
+      target: target.slack_id,
+      detail: { reason, days: days > 0 ? days : null },
+      sensitive: true,
+    });
+    revalidatePath(`/admin/users/${id}`);
+    redirect(`/admin/users/${id}`);
+  }
+
+  async function unban() {
+    "use server";
+    const actor = await requireAccess(canManagePlayers);
+    const target = await getProfileByIdAdmin(id);
+    if (!target) return;
+    await unbanPlayer(target.slack_id, actor.slackId);
+    await writeAudit({ actor: actor.slackId, action: "player.unban", target: target.slack_id });
+    revalidatePath(`/admin/users/${id}`);
+    redirect(`/admin/users/${id}`);
+  }
 
   const address = identity?.address;
   const verification = identity?.hca_verification_status;
@@ -111,9 +167,67 @@ export default async function AdminUserDetailPage({
               ["Address", addressBlock],
             ]}
           />
-          <p className="hc-caption mt-4 text-xs">Synced from Hack Club Auth on each login.</p>
+          {unlocked ? (
+            <p className="hc-caption mt-4 text-xs">
+              Synced from Hack Club Auth on each login. Viewing this is logged.
+            </p>
+          ) : (
+            <div className="mt-4 flex flex-col gap-3">
+              <Callout tone="info" icon="private">
+                Birthday, phone and address are hidden. Sign in again to Hack Club Auth to view
+                them; it&apos;s logged.
+              </Callout>
+              <div>
+                <ButtonLink href={reauthUrl(`/admin/users/${profile.id}`)} variant="cream" size="sm">
+                  Verify it&apos;s you
+                </ButtonLink>
+              </div>
+            </div>
+          )}
         </Card>
       </div>
+
+      <Card>
+        <CardHeader title="Ban" icon="flag" />
+        {ban ? (
+          <form action={unban} className="flex flex-col gap-3">
+            <Callout tone="danger">
+              Banned {ban.expires_at ? `until ${new Date(ban.expires_at).toLocaleDateString()}` : "permanently"}:{" "}
+              {ban.reason}
+            </Callout>
+            <div>
+              <ActionButton pendingLabel="Unbanning..." variant="cream" size="sm">
+                Unban
+              </ActionButton>
+            </div>
+          </form>
+        ) : profile.slack_id === admin.slackId ? (
+          <p className="hc-caption text-sm">You can&apos;t ban yourself.</p>
+        ) : (
+          <form action={banAction} className="flex flex-col gap-3">
+            <Field label="Reason">
+              <Input name="reason" required maxLength={500} />
+            </Field>
+            <Field label="Length">
+              <Select
+                name="days"
+                defaultValue="7"
+                options={[
+                  { value: "1", label: "1 day" },
+                  { value: "7", label: "7 days" },
+                  { value: "30", label: "30 days" },
+                  { value: "0", label: "Permanent" },
+                ]}
+              />
+            </Field>
+            <div>
+              <ActionButton pendingLabel="Banning..." variant="danger" size="sm">
+                Ban player
+              </ActionButton>
+            </div>
+          </form>
+        )}
+      </Card>
 
       <Card padding="flush">
         <CardHeader title="Wonders" icon="rep" count={projects.length} />

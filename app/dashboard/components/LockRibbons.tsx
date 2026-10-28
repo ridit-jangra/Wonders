@@ -1,9 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 const SRC = "/locked-rainbow.png";
 
-export default function LockRibbons() {
+export default function LockRibbons({ className = "" }: { className?: string }) {
   return (
-    <div aria-hidden className="pointer-events-none absolute inset-0 z-10 overflow-hidden">
+    <div aria-hidden className={`pointer-events-none absolute inset-0 z-10 overflow-hidden ${className}`}>
       <img
         src={SRC}
         alt=""

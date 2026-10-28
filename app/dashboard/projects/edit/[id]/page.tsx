@@ -25,6 +25,15 @@ const HACKATIME_NOTICE: Record<string, string> = {
     "that hackatime account isn't the one linked to your slack, log into your own hackatime and try again :(",
 };
 
+const PANEL_MASK = {
+  WebkitMaskImage: "url(/new-or-edit-projects-template.png)",
+  maskImage: "url(/new-or-edit-projects-template.png)",
+  WebkitMaskSize: "100% 100%",
+  maskSize: "100% 100%",
+  WebkitMaskRepeat: "no-repeat",
+  maskRepeat: "no-repeat",
+} as const;
+
 export default async function EditProjectPage({
   params,
   searchParams,
@@ -298,6 +307,14 @@ export default async function EditProjectPage({
           className="h-full w-full object-fill"
         />
       </div>
+      {!editable && (
+        <div
+          className="pointer-events-none fixed top-0 right-[2%] bottom-0 left-[calc(100vh*554/1080-10vh)] z-10 hidden overflow-hidden md:block"
+          style={PANEL_MASK}
+        >
+          <LockRibbons />
+        </div>
+      )}
       <h1 className="font-finger-paint text-3xl text-[#5C4A2E] sm:text-4xl lg:text-5xl">
         Edit your Wonder
       </h1>
@@ -306,7 +323,7 @@ export default async function EditProjectPage({
         className="w-full md:max-w-[90%]"
       >
         <div className="relative">
-        {!editable && <LockRibbons />}
+        {!editable && <LockRibbons className="md:hidden" />}
         <fieldset
           disabled={!editable}
           className="flex w-full flex-col gap-4 disabled:opacity-70"

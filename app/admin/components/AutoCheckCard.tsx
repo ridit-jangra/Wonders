@@ -61,7 +61,9 @@ export default function AutoCheckCard({
   const meta =
     status === "clear" && !verified
       ? { label: "Not checked", tone: "neutral" as Tone }
-      : (STATUS[status] ?? { label: status, tone: "neutral" as Tone });
+      : status === "clear" && findings && findings.redFlags.length > 0
+        ? STATUS.flagged
+        : (STATUS[status] ?? { label: status, tone: "neutral" as Tone });
   const rows = findings
     ? [
         repoLine(findings.checks.repo),
@@ -72,7 +74,14 @@ export default function AutoCheckCard({
 
   return (
     <Card>
-      <details className="hc-collapse" open={status !== "clear" || !verified}>
+      <details
+        className="hc-collapse"
+        open={
+          status !== "clear" ||
+          !verified ||
+          (findings?.redFlags.length ?? 0) > 0
+        }
+      >
         <summary>
           <CardHeader
             title="Auto-check"

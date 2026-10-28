@@ -1,0 +1,46 @@
+.wonders-journal-md {
+  font-family: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #5c4a2e;
+  overflow-wrap: anywhere;
+}
+.wonders-journal-md > * + * {
+  margin-top: 0.6rem;
+}
+.wonders-journal-md h1,
+.wonders-journal-md h2,
+.wonders-journal-md h3 {
+  font-family: var(--font-finger-paint), ui-sans-serif, system-ui, sans-serif;
+  line-height: 1.2;
+  margin-top: 1rem;
+}
+.wonders-journal-md h1 { font-size: 1.5rem; }
+.wonders-journal-md h2 { font-size: 1.3rem; }
+.wonders-journal-md h3 { font-size: 1.1rem; }
+.wonders-journal-md ul { list-style: disc; padding-left: 1.4rem; }
+.wonders-journal-md ol { list-style: decimal; padding-left: 1.4rem; }
+.wonders-journal-md a { color: #3e7d7d; text-decoration: underline; text-underline-offset: 2px; }
+.wonders-journal-md blockquote {
+  border-left: 3px solid #b8ad85;
+  padding-left: 0.8rem;
+  color: #7d7148;
+}
+.wonders-journal-md code {
+  background: #d9d2b0;
+  border-radius: 4px;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.85em;
+}
+.wonders-journal-md pre {
+  background: #d9d2b0;
+  border-radius: 6px;
+  padding: 0.75rem;
+  overflow-x: auto;
+}
+.wonders-journal-md pre code { background: none; padding: 0; }
+.wonders-journal-md img { max-width: 100%; border-radius: 8px; }
+.wonders-journal-md table { border-collapse: collapse; }
+.wonders-journal-md th,
+.wonders-journal-md td { border: 1px solid #b8ad85; padding: 0.25rem 0.6rem; }
+.wonders-journal-md hr { border-color: #b8ad85; }

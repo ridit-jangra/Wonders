@@ -164,3 +164,15 @@ create table if not exists rate_limits (
   count integer not null default 0,
   primary key (bucket, window_start)
 );
+
+create table if not exists project_journal (
+  id uuid primary key default gen_random_uuid(),
+  project_id integer not null references projects (id) on delete cascade,
+  profile_id uuid not null,
+  title text,
+  content text not null,
+  created_at timestamptz not null default now(),
+  edited_at timestamptz
+);
+
+create index if not exists project_journal_project_id_idx on project_journal (project_id, created_at desc);

@@ -13,6 +13,14 @@ import { notifyPlayer } from "@/lib/notifications";
 import { precheckEnabled, runPrecheck } from "@/lib/precheck/run";
 import { beginPrecheck } from "@/lib/precheck/store";
 import { uploadThumbnail } from "@/lib/storage";
+import {
+  addJournalEntry,
+  deleteJournalEntry,
+  editJournalEntry,
+  listJournal,
+} from "@/lib/journal";
+import { JOURNAL_MAX_CONTENT } from "@/lib/journal-shared";
+import Journal, { type JournalResult } from "@/app/dashboard/components/Journal";
 import ThumbnailPicker from "@/app/dashboard/components/ThumbnailPicker";
 import HackatimeProjectSelect from "@/app/dashboard/components/HackatimeProjectSelect";
 import SubmitButton from "@/app/dashboard/components/SubmitButton";
@@ -21,12 +29,39 @@ import LockRibbons from "@/app/dashboard/components/LockRibbons";
 import ProjectTimeline from "@/app/dashboard/components/ProjectTimeline";
 import DeleteProjectButton from "@/app/dashboard/components/DeleteProjectButton";
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const HACKATIME_NOTICE: Record<string, string> = {
   connected: "hackatime connected :D",
   failed: "couldn't connect hackatime, try again :(",
   mismatch:
     "that hackatime account isn't the one linked to your slack, log into your own hackatime and try again :(",
 };
+
+type JournalGuard = { error: string; profileId?: undefined } | { error?: undefined; profileId: string };
+
+async function journalGuard(id: string, bucket: string, limit: number): Promise<JournalGuard | null> {
+  const store = await cookies();
+  const current = verifySessionCookie(store.get(SESSION_COOKIE)?.value);
+  if (!current) {
+    return null;
+  }
+  const currentProfile = await getSessionProfile(current);
+  if (!currentProfile) {
+    return null;
+  }
+  const existing = await getProject(id);
+  if (!existing || existing.profile_id !== currentProfile.id) {
+    return null;
+  }
+  if (existing.status === "in_review" || existing.status === "second_pass") {
+    return { error: "the journal is locked while your wonder is in review" };
+  }
+  if (!(await checkRateLimit(bucket, current.slackId, limit, 60)).allowed) {
+    return { error: "slow down a little and try again :3" };
+  }
+  return { profileId: currentProfile.id };
+}
 
 export default async function EditProjectPage({
   params,
@@ -59,6 +94,7 @@ export default async function EditProjectPage({
   const lockedLabel = underReview ? "in review :3" : "shipped :D";
 
   const timeline = await getProjectTimeline(project.id, profile.id);
+  const journal = await listJournal(project.id, profile.id);
   const actors = await getSlackActors([
     profile.slack_id,
     ...timeline.map((entry) => entry.actorSlackId),
@@ -320,6 +356,74 @@ export default async function EditProjectPage({
     redirect(`/dashboard/projects/edit/${id}`);
   }
 
+  async function postJournalAction(input: { title: string; content: string }): Promise<JournalResult> {
+    "use server";
+
+    const guard = await journalGuard(id, "journal-write", 30);
+    if (!guard) return { ok: false, error: "couldn't verify you, reload and try again" };
+    if (guard.error !== undefined) return { ok: false, error: guard.error };
+    if (
+      typeof input?.title !== "string" ||
+      typeof input?.content !== "string" ||
+      input.content.length > JOURNAL_MAX_CONTENT * 2
+    ) {
+      return { ok: false, error: "that entry doesn't look right" };
+    }
+    const added = await addJournalEntry(id, guard.profileId, input);
+    return added ? { ok: true } : { ok: false, error: "couldn't save that entry" };
+  }
+
+  async function editJournalAction(
+    entryId: string,
+    input: { title: string; content: string },
+  ): Promise<JournalResult> {
+    "use server";
+
+    const guard = await journalGuard(id, "journal-write", 30);
+    if (!guard) return { ok: false, error: "couldn't verify you, reload and try again" };
+    if (guard.error !== undefined) return { ok: false, error: guard.error };
+    if (
+      !UUID.test(String(entryId)) ||
+      typeof input?.title !== "string" ||
+      typeof input?.content !== "string" ||
+      input.content.length > JOURNAL_MAX_CONTENT * 2
+    ) {
+      return { ok: false, error: "that entry doesn't look right" };
+    }
+    const saved = await editJournalEntry(entryId, id, guard.profileId, input);
+    return saved ? { ok: true } : { ok: false, error: "couldn't save that entry" };
+  }
+
+  async function deleteJournalAction(entryId: string): Promise<JournalResult> {
+    "use server";
+
+    const guard = await journalGuard(id, "journal-write", 30);
+    if (!guard) return { ok: false, error: "couldn't verify you, reload and try again" };
+    if (guard.error !== undefined) return { ok: false, error: guard.error };
+    if (!UUID.test(String(entryId))) return { ok: false, error: "that entry doesn't look right" };
+    const removed = await deleteJournalEntry(entryId, id, guard.profileId);
+    return removed ? { ok: true } : { ok: false, error: "couldn't delete that entry" };
+  }
+
+  async function uploadJournalImageAction(
+    form: FormData,
+  ): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+    "use server";
+
+    const guard = await journalGuard(id, "journal-image", 20);
+    if (!guard) return { ok: false, error: "couldn't verify you, reload and try again" };
+    if (guard.error !== undefined) return { ok: false, error: guard.error };
+    const image = form.get("image");
+    if (!(image instanceof File) || image.size === 0) {
+      return { ok: false, error: "that isn't an image" };
+    }
+    try {
+      return { ok: true, url: await uploadThumbnail(image, guard.profileId) };
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : "upload failed" };
+    }
+  }
+
   async function deleteProjectAction() {
     "use server";
 
@@ -538,6 +642,15 @@ export default async function EditProjectPage({
           </SubmitButton>
         </form>
       )}
+      <Journal
+        projectId={Number(project.id)}
+        entries={journal}
+        locked={underReview}
+        post={postJournalAction}
+        edit={editJournalAction}
+        remove={deleteJournalAction}
+        upload={uploadJournalImageAction}
+      />
       <ProjectTimeline
         entries={timeline}
         actors={actors}

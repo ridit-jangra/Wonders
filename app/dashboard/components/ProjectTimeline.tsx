@@ -2,6 +2,7 @@
 import type { TimelineEntry } from "@/lib/project-history";
 import type { SlackActor } from "@/lib/profiles";
 import LocalTime from "./LocalTime";
+import PageList from "./PageList";
 
 type Tone = "neutral" | "progress" | "warn" | "success";
 
@@ -101,7 +102,7 @@ export default function ProjectTimeline({
   return (
     <section className="flex w-full flex-col gap-3 md:max-w-[90%]">
       <h2 className="font-finger-paint text-2xl text-[#5C4A2E]">timeline</h2>
-      <ol className="flex flex-col gap-2">
+      <PageList startAtEnd>
         {rows.map((row) => {
           const actor = actors[row.actorSlackId];
           return (
@@ -129,7 +130,7 @@ export default function ProjectTimeline({
             </li>
           );
         })}
-      </ol>
+      </PageList>
     </section>
   );
 }

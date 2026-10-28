@@ -2,6 +2,8 @@ import { fetchCommits } from "@/lib/commits";
 import { fetchHackatimeReport } from "@/lib/hackatime";
 import { findOtherYswsEntries } from "@/lib/ysws";
 import { SECOND_PASS_CHECKS, type ProjectReview } from "@/lib/reviews";
+import type { JournalEntry } from "@/lib/journal";
+import Markdown from "../../components/Markdown";
 import { Badge, EmptyState, Mono, Muted, TextLink } from "../../components/ui";
 import PaginatedTable from "../../components/PaginatedTable";
 
@@ -148,6 +150,33 @@ export async function HackatimePanel({
         />
       )}
     </div>
+  );
+}
+
+export function JournalPanel({ entries }: { entries: JournalEntry[] }) {
+  if (entries.length === 0) {
+    return (
+      <EmptyState title="No journal entries" icon="docs">
+        The player didn&apos;t keep a journal for this wonder.
+      </EmptyState>
+    );
+  }
+
+  return (
+    <ul>
+      {entries.map((entry) => (
+        <li key={entry.id} className="flex flex-col gap-2 border-b border-[var(--border)] p-4 last:border-b-0">
+          <div className="flex flex-wrap items-center gap-2">
+            {entry.title && <strong>{entry.title}</strong>}
+            <Muted className="text-sm">
+              <Mono>{formatDateTime(entry.createdAt)}</Mono>
+              {entry.editedAt && " · edited"}
+            </Muted>
+          </div>
+          <Markdown restrictImages>{entry.content}</Markdown>
+        </li>
+      ))}
+    </ul>
   );
 }
 

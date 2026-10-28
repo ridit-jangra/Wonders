@@ -45,7 +45,8 @@ import AutoCheckCard from "../../components/AutoCheckCard";
 import Markdown from "../../components/Markdown";
 import Tabs from "../../components/Tabs";
 import ReviewPassForm, { type DraftInput, type DraftResult } from "../../components/ReviewPassForm";
-import { CommitsPanel, HackatimePanel, PanelLoading, PastReviewsPanel, YswsPanel } from "./panels";
+import { listJournalAdmin } from "@/lib/journal";
+import { CommitsPanel, HackatimePanel, JournalPanel, PanelLoading, PastReviewsPanel, YswsPanel } from "./panels";
 
 const MIN_AUDIT_LENGTH = 20;
 const MIN_FEEDBACK_LENGTH = 10;
@@ -76,10 +77,11 @@ export default async function AdminReviewPanelPage({
   const { id } = await params;
   await requireAccess(canReview);
 
-  const [project, history, reviews] = await Promise.all([
+  const [project, history, reviews, journal] = await Promise.all([
     getProjectWithOwner(id),
     getProjectHistory(id),
     getProjectReviews(id),
+    listJournalAdmin(id),
   ]);
   if (!project) notFound();
 
@@ -558,6 +560,15 @@ export default async function AdminReviewPanelPage({
                     />
                   </Suspense>
                 ),
+              },
+              {
+                key: "journal",
+                label: (
+                  <span className="flex items-center gap-2">
+                    Journal <CountBadge>{journal.length}</CountBadge>
+                  </span>
+                ),
+                content: <JournalPanel entries={journal} />,
               },
               {
                 key: "reviews",

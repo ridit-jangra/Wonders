@@ -38,8 +38,16 @@ export default function AutoCheckCard({ project }: { project: ProjectWithOwner }
     return null;
   }
 
-  const meta = STATUS[status] ?? { label: status, tone: "neutral" as Tone };
   const findings = project.ai_review_findings;
+  const verified =
+    !findings ||
+    findings.checks.repo === "ok" ||
+    findings.checks.demo === "ok" ||
+    findings.checks.readme === "present";
+  const meta =
+    status === "clear" && !verified
+      ? { label: "Not checked", tone: "neutral" as Tone }
+      : (STATUS[status] ?? { label: status, tone: "neutral" as Tone });
   const rows = findings
     ? [
         repoLine(findings.checks.repo),
@@ -50,7 +58,7 @@ export default function AutoCheckCard({ project }: { project: ProjectWithOwner }
 
   return (
     <Card>
-      <details className="hc-collapse" open={status !== "clear"}>
+      <details className="hc-collapse" open={status !== "clear" || !verified}>
       <summary>
         <CardHeader
           title="Auto-check"

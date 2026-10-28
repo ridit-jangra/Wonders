@@ -13,7 +13,7 @@ export default function NotFound() {
         className="pointer-events-none absolute inset-0 -z-10 bg-contain bg-center bg-no-repeat md:bg-cover"
         style={{ backgroundImage: "url('/cliff-with-guy.png')" }}
       />
-      <div className="flex min-h-svh flex-col items-start gap-4 px-6 pt-[5svh] sm:px-10 md:ml-auto md:w-[55%] md:items-end md:justify-center md:pt-0 md:pr-[26%] md:pl-0 md:text-right">
+      <div className="flex min-h-svh flex-col items-start gap-4 px-6 pt-[5svh] sm:px-10 md:ml-auto md:w-[55%] md:items-end md:justify-center md:pt-0 md:pr-[10%] md:pl-0 md:text-right">
         <h1 className="font-finger-paint text-6xl leading-none text-[#5C4A2E] sm:text-7xl md:text-7xl lg:text-8xl">
           404
           <br />

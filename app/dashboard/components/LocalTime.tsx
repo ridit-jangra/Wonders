@@ -2,19 +2,19 @@
 
 import { useSyncExternalStore } from "react";
 
-function pad(value: number) {
-  return String(value).padStart(2, "0");
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function ordinal(day: number) {
+  if (day >= 11 && day <= 13) return `${day}th`;
+  const last = day % 10;
+  return `${day}${last === 1 ? "st" : last === 2 ? "nd" : last === 3 ? "rd" : "th"}`;
 }
 
 function format(date: Date, utc: boolean) {
   const year = utc ? date.getUTCFullYear() : date.getFullYear();
   const month = utc ? date.getUTCMonth() : date.getMonth();
   const day = utc ? date.getUTCDate() : date.getDate();
-  const hours = utc ? date.getUTCHours() : date.getHours();
-  const minutes = utc ? date.getUTCMinutes() : date.getMinutes();
-  const suffix = hours >= 12 ? "PM" : "AM";
-  const hour12 = hours % 12 === 0 ? 12 : hours % 12;
-  return `${year}-${pad(month + 1)}-${pad(day)} ${pad(hour12)}:${pad(minutes)} ${suffix}`;
+  return `${ordinal(day)} ${MONTHS[month]} ${year}`;
 }
 
 export default function LocalTime({
@@ -27,7 +27,7 @@ export default function LocalTime({
   const text = useSyncExternalStore(
     () => () => {},
     () => format(new Date(iso), false),
-    () => `${format(new Date(iso), true)} UTC`,
+    () => format(new Date(iso), true),
   );
 
   return (

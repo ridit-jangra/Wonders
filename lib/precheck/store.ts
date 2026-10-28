@@ -51,6 +51,10 @@ export async function beginPrecheck(id: ProjectId, profileId: string): Promise<s
       ai_review_token = ${token},
       ai_review_started_at = now(),
       ai_review_error = null,
+      ai_review_summary = null,
+      ai_review_findings = null,
+      ai_review_model = null,
+      ai_reviewed_at = null,
       updated_at = now()
     where id = ${id}
       and profile_id = ${profileId}

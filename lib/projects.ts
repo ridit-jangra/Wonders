@@ -1,5 +1,6 @@
 import "server-only";
 import { sql } from "@/lib/db";
+import { normalizeUrl } from "@/lib/url";
 import {
   PRECHECK_HIDE_MINUTES,
   type AutoCheckFindings,
@@ -64,8 +65,8 @@ export async function createProject(
       ${profileId},
       ${data.title},
       ${data.description},
-      ${data.link_url || null},
-      ${data.github_url || null},
+      ${normalizeUrl(data.link_url)},
+      ${normalizeUrl(data.github_url)},
       ${data.image_url ?? null}
     )
     returning ${COLUMNS()}
@@ -96,8 +97,8 @@ export async function updateProject(
     update projects set
       title = ${data.title},
       description = ${data.description},
-      link_url = ${data.link_url || null},
-      github_url = ${data.github_url || null},
+      link_url = ${normalizeUrl(data.link_url)},
+      github_url = ${normalizeUrl(data.github_url)},
       ${data.image_url !== undefined ? sql`image_url = ${data.image_url},` : sql``}
       ${data.hackatime_projects !== undefined ? sql`hackatime_projects = ${data.hackatime_projects},` : sql``}
       updated_at = now()
@@ -333,8 +334,8 @@ export async function adminUpdateProject(
       title = ${fields.title},
       description = ${fields.description},
       image_url = ${fields.image_url},
-      link_url = ${fields.link_url},
-      github_url = ${fields.github_url},
+      link_url = ${normalizeUrl(fields.link_url)},
+      github_url = ${normalizeUrl(fields.github_url)},
       updated_at = now()
     where id = ${id}
   `;

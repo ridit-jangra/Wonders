@@ -152,6 +152,8 @@ The design is built on hand-drawn PNG templates in `public/`. Cards and forms ar
 
 Most files open with `/* eslint-disable @next/next/no-img-element */` — plain `<img>` is a deliberate choice for these overlays and the fixed full-screen backgrounds, not an oversight. Keep the disable comment when adding to those files.
 
+`/explore` cards render twice: the hand-drawn wide card from `md` up and a plain stacked card (`StackedCard` in `ExploreProjectCard.tsx`) below it, because the wide template can't hold readable text on a phone. The footer artwork is picked by orientation (`landscape:` / `portrait`), not width, so a portrait tablet gets the portrait image. Project links are normalized on save (`normalizeUrl` in `lib/url.ts`: https added when missing, non-http(s) dropped), since a link without a scheme becomes a relative link on Explore.
+
 Interactive bits are the exception rather than the rule: server components by default, `"use client"` only where genuinely needed (`DeleteProjectButton.tsx` for its confirm modal, `explore/_components/ExploreClient.tsx` for tab fetching). `Story.tsx` pins a 700vh sticky frame and maps scroll progress onto per-word opacity/position with framer-motion.
 
 After a mutation that isn't followed by a `redirect`, call `revalidatePath` for both `/dashboard` and `/wonders` — they render the same project list from different routes.

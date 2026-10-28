@@ -23,7 +23,63 @@ export default function ExploreProjectCard({
   className?: string;
 }) {
   return (
-    <div className={`relative aspect-1327/345 overflow-hidden ${className}`}>
+    <>
+      <div className={`hidden md:block ${className}`}>
+        <WideCard project={project} />
+      </div>
+      <StackedCard project={project} />
+    </>
+  );
+}
+
+function StackedCard({ project }: { project: ExploreProject }) {
+  return (
+    <article className="flex flex-col gap-3 rounded-lg bg-[#D8D1AC] p-3 md:hidden">
+      <img
+        src={project.image_url || "/project-image-fallback.png"}
+        alt=""
+        className="aspect-video w-full rounded-md object-cover"
+      />
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="min-w-0 wrap-break-word font-finger-paint text-xl text-[#5C4A2E]">{project.name}</h3>
+        <span
+          className={`shrink-0 rounded-full px-3 py-0.5 font-finger-paint text-sm ${TAG[project.tag].className}`}
+        >
+          {TAG[project.tag].label}
+        </span>
+      </div>
+      <p className="line-clamp-4 font-poppins text-sm text-[#5C4A2E]">{project.description}</p>
+      {(project.repo_url || project.demo_url) && (
+        <div className="flex gap-3">
+          {project.repo_url && (
+            <a
+              href={project.repo_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 rounded-lg bg-[#D0E4B4] py-1.5 text-center font-finger-paint text-lg text-black/45"
+            >
+              Repo :D
+            </a>
+          )}
+          {project.demo_url && (
+            <a
+              href={project.demo_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 rounded-lg bg-[#F0E27D] py-1.5 text-center font-finger-paint text-lg text-black/45"
+            >
+              Demo :3
+            </a>
+          )}
+        </div>
+      )}
+    </article>
+  );
+}
+
+function WideCard({ project }: { project: ExploreProject }) {
+  return (
+    <div className="relative aspect-1327/345 overflow-hidden w-full">
       <img
         src="/project-template-base-with-inputs-1.png"
         alt=""

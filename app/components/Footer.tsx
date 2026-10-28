@@ -7,11 +7,11 @@ export function Footer() {
         style={{ backgroundImage: "url('/bg-effect-2.png')" }}
       />
       <div
-        className="absolute inset-0 bg-no-repeat bg-right bg-cover z-10 md:hidden"
+        className="absolute inset-0 bg-no-repeat bg-right bg-cover z-10 landscape:hidden"
         style={{ backgroundImage: "url('/cliff-with-guy-and-heart-mobile.png')" }}
       />
       <div
-        className="absolute inset-0 bg-no-repeat bg-center bg-cover z-10 hidden md:block"
+        className="absolute inset-0 bg-no-repeat bg-center bg-cover z-10 hidden landscape:block"
         style={{ backgroundImage: "url('/cliff-with-guy-and-heart-without-wonderful-text.png')" }}
       />
     </div>

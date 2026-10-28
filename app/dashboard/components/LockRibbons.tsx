@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-const SRC = "/locked-rainbow-thin.png";
+const SRC = "/locked-rainbow.png";
 
 export default function LockRibbons() {
   return (

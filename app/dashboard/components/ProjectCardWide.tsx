@@ -73,41 +73,30 @@ export default function ProjectCardWide({
         {project.description}
       </p>
       {editable ? (
-        <>
-          <DeleteProjectButton
-            action={deleteProjectAction}
-            className="absolute bottom-[22%] left-[42%] w-[28%] py-1 cursor-pointer hover:zoom-110 transition-all font-finger-paint text-xl bg-[#F2B3AD] text-black/45 rounded-lg"
-          />
-          <Link
-            href={`/dashboard/projects/edit/${project.id}`}
-            className="absolute bottom-[22%] right-[0%] w-[28%] py-1 text-center cursor-pointer hover:zoom-110 transition-all font-finger-paint text-xl bg-[#D0E4B4] text-black/45 rounded-lg"
-          >
-            Edit :3
-            <LinkPending className="rounded-lg bg-[#D0E4B4]">
-              <span className="font-finger-paint text-xl text-black/45">
-                opening...
-              </span>
-            </LinkPending>
-          </Link>
-        </>
+        <DeleteProjectButton
+          action={deleteProjectAction}
+          className="absolute bottom-[22%] left-[42%] w-[28%] py-1 cursor-pointer hover:zoom-110 transition-all font-finger-paint text-xl bg-[#F2B3AD] text-black/45 rounded-lg"
+        />
       ) : (
-        <>
-          <button
-            type="button"
-            disabled
-            className="absolute bottom-[22%] left-[42%] w-[28%] py-1 cursor-not-allowed opacity-60 font-finger-paint text-xl bg-[#F2B3AD] text-black/45 rounded-lg"
-          >
-            {lockedLabel}
-          </button>
-          <button
-            type="button"
-            disabled
-            className="absolute bottom-[22%] right-[0%] w-[28%] py-1 cursor-not-allowed opacity-60 font-finger-paint text-xl bg-[#D0E4B4] text-black/45 rounded-lg"
-          >
-            {lockedLabel}
-          </button>
-        </>
+        <button
+          type="button"
+          disabled
+          className="absolute bottom-[22%] left-[42%] w-[28%] py-1 cursor-not-allowed opacity-60 font-finger-paint text-xl bg-[#F2B3AD] text-black/45 rounded-lg"
+        >
+          {lockedLabel}
+        </button>
       )}
+      <Link
+        href={`/dashboard/projects/edit/${project.id}`}
+        className="absolute bottom-[22%] right-[0%] w-[28%] py-1 text-center cursor-pointer hover:zoom-110 transition-all font-finger-paint text-xl bg-[#D0E4B4] text-black/45 rounded-lg"
+      >
+        Edit :3
+        <LinkPending className="rounded-lg bg-[#D0E4B4]">
+          <span className="font-finger-paint text-xl text-black/45">
+            opening...
+          </span>
+        </LinkPending>
+      </Link>
       <span className="absolute bottom-[18%] right-[2%] font-finger-paint text-[10px] text-[#7A6B4A]">
         {STATUS_LABEL[project.status]}
       </span>

@@ -7,13 +7,18 @@ export interface RepoRef {
 
 const SEGMENT = /^[A-Za-z0-9._-]{1,100}$/;
 
+export function withScheme(url: string): string {
+  const trimmed = url.trim();
+  return /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
+
 export function parseGithubRepo(url: string | null | undefined): RepoRef | null {
   if (!url) {
     return null;
   }
   let parsed: URL;
   try {
-    parsed = new URL(url.trim());
+    parsed = new URL(withScheme(url));
   } catch {
     return null;
   }

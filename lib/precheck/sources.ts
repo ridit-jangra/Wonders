@@ -8,6 +8,7 @@ import {
   isPrivateAddress,
   parseAiAnswer,
   REQUIREMENTS,
+  withScheme,
   type AiAnswer,
   type DemoState,
   type RepoRef,
@@ -94,7 +95,7 @@ function probeOnce(target: URL): Promise<{ status: number | null; code: string |
 export async function probeUrl(rawUrl: string): Promise<ProbeResult> {
   let current: URL;
   try {
-    current = new URL(rawUrl.trim());
+    current = new URL(withScheme(rawUrl));
   } catch {
     return { status: null, code: "EBADURL", finalUrl: rawUrl };
   }

@@ -40,6 +40,13 @@ describe("parseGithubRepo", () => {
     });
   });
 
+  test("accepts links saved without a scheme", () => {
+    expect(parseGithubRepo("github.com/ridit-jangra/ysws-handbook")).toEqual({
+      owner: "ridit-jangra",
+      repo: "ysws-handbook",
+    });
+  });
+
   test("rejects other hosts, profiles and junk", () => {
     expect(parseGithubRepo("https://gitlab.com/a/b")).toBeNull();
     expect(parseGithubRepo("https://github.com/a")).toBeNull();

@@ -25,6 +25,22 @@ export async function uploadThumbnail(
     );
   }
 
+  if (process.env.HACKCLUB_CDN_API_KEY) {
+    const form = new FormData();
+    form.append("file", file, file.name || `thumbnail.${THUMBNAIL_EXTENSIONS[file.type]}`);
+    const response = await fetch("https://cdn.hackclub.com/api/v4/upload", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${process.env.HACKCLUB_CDN_API_KEY}` },
+      body: form,
+      signal: AbortSignal.timeout(20_000),
+    });
+    const json = (await response.json().catch(() => null)) as { url?: string } | null;
+    if (!response.ok || !json?.url || !json.url.startsWith("https://cdn.hackclub.com/")) {
+      throw new Error(`Thumbnail upload failed (${response.status})`);
+    }
+    return json.url;
+  }
+
   const data = Buffer.from(await file.arrayBuffer());
   const [{ id }] = await sql<{ id: string }[]>`
     insert into thumbnails (profile_id, content_type, data)

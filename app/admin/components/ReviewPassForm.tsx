@@ -68,7 +68,7 @@ function VerdictButtons({
   return (
     <div className="flex flex-wrap items-center gap-2">
       <button type="button" className="hc-btn hc-btn-outline" onClick={onBack} disabled={pending}>
-        ← Back
+        <span className="hc-arrow">&lt;-</span> Back
       </button>
       <button
         type="submit"
@@ -276,10 +276,10 @@ export default function ReviewPassForm({
       </div>
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <StepPill number={1} label="Submission" active={step === 1} disabled={false} onClick={() => setStep(1)} />
-        <span className="hc-muted">→</span>
+        <span className="hc-muted hc-arrow">-&gt;</span>
         <StepPill number={2} label="Audit notes" active={step === 2} disabled={false} onClick={() => setStep(2)} />
-        <span className="hc-muted">→</span>
-        <StepPill number={3} label="Verdict" active={step === 3} disabled={!auditDone} onClick={() => setStep(3)} />
+        <span className="hc-muted hc-arrow">-&gt;</span>
+        <StepPill number={3} label="Verdict" active={step === 3} disabled={false} onClick={() => setStep(3)} />
       </div>
 
       <div hidden={step !== 1} className="flex flex-col gap-4">
@@ -305,7 +305,7 @@ export default function ReviewPassForm({
 
         <div className="flex justify-end">
           <button type="button" className="hc-btn" onClick={() => setStep(2)}>
-            Next: Audit notes →
+            Next: Audit notes <span className="hc-arrow">-&gt;</span>
           </button>
         </div>
       </div>
@@ -313,7 +313,7 @@ export default function ReviewPassForm({
       <div hidden={step !== 2} className="flex flex-col gap-4">
         <p className="hc-eyebrow">
           Internal audit note, never shown to the user. Someone who wasn&apos;t involved should
-          reach the same conclusion you did.
+          reach the same conclusion you did. Needed to approve, not to request changes.
         </p>
 
         <label className="hc-label">
@@ -354,10 +354,10 @@ export default function ReviewPassForm({
 
         <div className="flex justify-between">
           <button type="button" className="hc-btn hc-btn-outline" onClick={() => setStep(1)}>
-            ← Back
+            <span className="hc-arrow">&lt;-</span> Back
           </button>
-          <button type="button" className="hc-btn" disabled={!auditDone} onClick={() => setStep(3)}>
-            Next: Verdict →
+          <button type="button" className="hc-btn" onClick={() => setStep(3)}>
+            Next: Verdict <span className="hc-arrow">-&gt;</span>
           </button>
         </div>
       </div>
@@ -385,9 +385,15 @@ export default function ReviewPassForm({
           <p className="hc-caption text-sm">Tick every check in step 1 to approve.</p>
         )}
 
+        {!auditDone && (
+          <p className="hc-caption text-sm">
+            Approving needs both audit notes from step 2. Requesting changes doesn&apos;t.
+          </p>
+        )}
+
         <VerdictButtons
-          canApprove={pass === "first" || allChecked}
-          canSubmit={auditDone && feedbackDone}
+          canApprove={auditDone && (pass === "first" || allChecked)}
+          canSubmit={feedbackDone}
           onBack={() => setStep(2)}
         />
       </div>

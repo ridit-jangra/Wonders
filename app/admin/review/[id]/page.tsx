@@ -165,7 +165,10 @@ export default async function AdminReviewPanelPage({
     if (feedback.length < MIN_FEEDBACK_LENGTH) {
       return;
     }
-    if (technicalNotes.length < MIN_AUDIT_LENGTH || additionalNotes.length < MIN_AUDIT_LENGTH) {
+    if (
+      verdict === "approved" &&
+      (technicalNotes.length < MIN_AUDIT_LENGTH || additionalNotes.length < MIN_AUDIT_LENGTH)
+    ) {
       return;
     }
 

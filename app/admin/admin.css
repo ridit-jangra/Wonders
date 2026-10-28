@@ -1685,3 +1685,7 @@ html:has(.admin-shell[data-theme="light"]) {
 .hc-collapse[open] .hc-chevron {
   transform: rotate(90deg);
 }
+
+.hc-arrow {
+  font-family: var(--font-jetbrains-mono), ui-monospace, Menlo, Consolas, monospace;
+}

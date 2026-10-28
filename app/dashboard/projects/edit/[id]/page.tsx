@@ -299,7 +299,7 @@ export default async function EditProjectPage({
         />
       </div>
       <div className="relative flex flex-col gap-6 md:-mr-14 md:-ml-4 md:pr-14 md:pl-4">
-      {!editable && <LockRibbons className="md:-left-[10vh] md:right-[2vw] md:[-webkit-mask-image:url(/new-or-edit-projects-template.png)] md:[mask-image:url(/new-or-edit-projects-template.png)] md:[-webkit-mask-size:100%_100%] md:[mask-size:100%_100%] md:[-webkit-mask-repeat:no-repeat] md:[mask-repeat:no-repeat]" />}
+      {!editable && <LockRibbons />}
       <h1 className="font-finger-paint text-3xl text-[#5C4A2E] sm:text-4xl lg:text-5xl">
         Edit your Wonder
       </h1>

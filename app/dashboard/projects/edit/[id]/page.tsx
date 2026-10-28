@@ -14,6 +14,7 @@ import ThumbnailPicker from "@/app/dashboard/components/ThumbnailPicker";
 import HackatimeProjectSelect from "@/app/dashboard/components/HackatimeProjectSelect";
 import SubmitButton from "@/app/dashboard/components/SubmitButton";
 import AutoSave from "@/app/dashboard/components/AutoSave";
+import LockRibbons from "@/app/dashboard/components/LockRibbons";
 import ProjectTimeline from "@/app/dashboard/components/ProjectTimeline";
 import DeleteProjectButton from "@/app/dashboard/components/DeleteProjectButton";
 
@@ -51,10 +52,8 @@ export default async function EditProjectPage({
   }
 
   const editable = project.status === "building" || project.status === "rejected";
-  const lockedLabel =
-    project.status === "in_review" || project.status === "second_pass"
-      ? "in review :3"
-      : "shipped :D";
+  const underReview = project.status === "in_review" || project.status === "second_pass";
+  const lockedLabel = underReview ? "in review :3" : "shipped :D";
 
   const timeline = await getProjectTimeline(project.id, profile.id);
   const actors = await getSlackActors([
@@ -306,6 +305,8 @@ export default async function EditProjectPage({
         action={submitProject}
         className="w-full md:max-w-[90%]"
       >
+        <div className="relative">
+        {!editable && <LockRibbons />}
         <fieldset
           disabled={!editable}
           className="flex w-full flex-col gap-4 disabled:opacity-70"
@@ -401,6 +402,7 @@ export default async function EditProjectPage({
             )}
           </div>
         </fieldset>
+        </div>
         {editable ? (
           <>
             <div className="mt-6 flex justify-end">

@@ -67,9 +67,11 @@ body {
   color: var(--color-fd-foreground);
 }
 
-.wonders-scroll {
-  scrollbar-width: thin;
-  scrollbar-color: #b8ad85 transparent;
+@supports not selector(::-webkit-scrollbar) {
+  .wonders-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #b8ad85 transparent;
+  }
 }
 .wonders-scroll::-webkit-scrollbar {
   width: 10px;
@@ -88,6 +90,9 @@ body {
 }
 .wonders-scroll::-webkit-scrollbar-button {
   display: none;
+}
+.wonders-scroll::-webkit-scrollbar-corner {
+  background: transparent;
 }
 .wonders-scroll::-webkit-resizer {
   background: transparent;

@@ -573,7 +573,24 @@ export default async function EditProjectPage({
               >
                 Save it :3
               </SubmitButton>
+              <SubmitButton
+                formAction={shipProjectAction}
+                pendingLabel="shipping it... :3"
+                disabled={missingForShip.length > 0}
+                className="w-full rounded-md bg-[#A8C7E0] px-4 py-2 font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-48"
+              >
+                Ship it :D
+              </SubmitButton>
             </div>
+            <p
+              className={`mt-3 text-right font-finger-paint text-base ${
+                missingForShip.length > 0 ? "text-[#A33B32]" : "text-[#5C4A2E]/70"
+              }`}
+            >
+              {missingForShip.length > 0
+                ? `add ${missingForShip.join(", ")} before you can ship it`
+                : "done building? ship it for review :3"}
+            </p>
           </>
         ) : (
           <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-end">
@@ -606,28 +623,6 @@ export default async function EditProjectPage({
             </p>
           )}
         </div>
-      )}
-      {(project.status === "building" || project.status === "rejected") && (
-        <form
-          action={shipProjectAction}
-          className="flex w-full flex-col gap-2 md:max-w-[90%]"
-        >
-          <p className="font-finger-paint text-[#5C4A2E]/70">
-            done building? ship it for review :3
-          </p>
-          {missingForShip.length > 0 && (
-            <p className="font-finger-paint text-base text-[#A33B32]">
-              add {missingForShip.join(", ")} before you can ship it
-            </p>
-          )}
-          <SubmitButton
-            pendingLabel="shipping it... :3"
-            disabled={missingForShip.length > 0}
-            className="w-full rounded-md bg-[#A8C7E0] px-4 py-2 font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-48"
-          >
-            Ship it :D
-          </SubmitButton>
-        </form>
       )}
       {project.status === "in_review" && (
         <form action={unshipProjectAction} className="flex w-full flex-col gap-2 md:max-w-[90%]">

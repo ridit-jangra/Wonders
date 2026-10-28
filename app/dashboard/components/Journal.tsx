@@ -102,7 +102,7 @@ function Editor({
   const area = useRef<HTMLTextAreaElement>(null);
   const file = useRef<HTMLInputElement>(null);
   const previewBox = useRef<HTMLDivElement>(null);
-  const pending = useRef<{ start: number; end: number } | null>(null);
+  const pending = useRef<{ start: number; end: number; top: number } | null>(null);
 
   const length = journalTextLength(content);
   const canSubmit = length > 0 && !saving && !busy;
@@ -112,13 +112,18 @@ function Editor({
     const el = area.current;
     if (target && el) {
       pending.current = null;
-      el.focus();
+      el.focus({ preventScroll: true });
       el.setSelectionRange(target.start, target.end);
+      el.scrollTop = target.top;
     }
   }, [content]);
 
+  function queueSelection(start: number, end: number) {
+    pending.current = { start, end, top: area.current?.scrollTop ?? 0 };
+  }
+
   function commit(result: EditResult) {
-    pending.current = { start: result.start, end: result.end };
+    queueSelection(result.start, result.end);
     setContent(result.value);
     onDraft?.({ title, content: result.value });
   }
@@ -139,7 +144,7 @@ function Editor({
       const token = `![uploading ${uploads.current}](#uploading)`;
       const at = area.current?.selectionEnd ?? latest.current.length;
       const placed = insertImage(latest.current, at, "#uploading", `uploading ${uploads.current}`);
-      pending.current = { start: placed.end, end: placed.end };
+      queueSelection(placed.end, placed.end);
       setContent(placed.value);
 
       const form = new FormData();
@@ -156,7 +161,8 @@ function Editor({
       );
       if (!result.ok) setError(result.error);
       if (swapped) {
-        pending.current = el ? { start: swapped.start, end: swapped.end } : null;
+        if (el) queueSelection(swapped.start, swapped.end);
+        else pending.current = null;
         setContent(swapped.value);
         onDraft?.({ title, content: swapped.value });
       }

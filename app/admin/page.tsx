@@ -1,115 +1,184 @@
 import { getOverviewStats } from "@/lib/admin-stats";
-import { listAllProjects } from "@/lib/projects";
+import { listAllProjects, type ProjectWithOwner } from "@/lib/projects";
 import { listRecentHistory } from "@/lib/project-history";
 import {
-  ButtonLink,
-  Card,
-  CardHeader,
+  Avatar,
+  Badge,
+  CardLink,
   EmptyState,
-  HistoryTimeline,
   Mono,
   Muted,
   PageHeader,
-  Stat,
-  StatGrid,
   StatusBadge,
   TextLink,
 } from "./components/ui";
 import { requireAdmin } from "@/lib/admin";
+import { canFulfill, canReview } from "@/lib/security/roles";
+
+const EMPTY = { projects: [] as ProjectWithOwner[], total: 0 };
+
+function fulfilmentBadge(project: ProjectWithOwner) {
+  if (project.status === "shipped") {
+    return project.reward ? (
+      <Badge tone="success">reward set</Badge>
+    ) : (
+      <Badge tone="warning">needs reward</Badge>
+    );
+  }
+  if (project.reward_sent_at) {
+    return <Badge tone="success">on its way</Badge>;
+  }
+  if (project.reward_ordered_at) {
+    return <Badge tone="info">ordered</Badge>;
+  }
+  return <Badge>started</Badge>;
+}
+
+function Ticket({
+  project,
+  href,
+  extra,
+}: {
+  project: ProjectWithOwner;
+  href: string;
+  extra?: React.ReactNode;
+}) {
+  return (
+    <CardLink href={href}>
+      <div className="flex items-center gap-3">
+        <Avatar src={project.profile?.slack_avatar_url} size={32} />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-bold">{project.title}</span>
+            {extra}
+            {project.on_hold && <Badge tone="warning">on hold</Badge>}
+          </div>
+          <div className="text-sm">
+            <Muted>
+              {project.profile?.slack_display_name ||
+                project.profile?.name ||
+                project.profile?.email}
+            </Muted>
+          </div>
+        </div>
+        <Muted className="shrink-0 text-sm">
+          <Mono>{new Date(project.created_at).toLocaleDateString()}</Mono>
+        </Muted>
+      </div>
+    </CardLink>
+  );
+}
 
 export default async function AdminOverviewPage() {
-  await requireAdmin();
-  const [stats, reviewQueue, recent] = await Promise.all([
+  const admin = await requireAdmin();
+  const showReview = canReview(admin);
+  const showFulfil = canFulfill(admin);
+
+  const [stats, review, fulfil, recent] = await Promise.all([
     getOverviewStats(),
-    listAllProjects({ status: ["in_review", "second_pass"], limit: 6, offset: 0 }),
+    showReview
+      ? listAllProjects({ status: ["in_review", "second_pass"], limit: 8, offset: 0 })
+      : EMPTY,
+    showFulfil
+      ? listAllProjects({ status: ["shipped", "fulfillment_started"], limit: 8, offset: 0 })
+      : EMPTY,
     listRecentHistory({ limit: 8, offset: 0 }),
   ]);
 
-  const fulfilled = stats.byStatus.fulfilled ?? 0;
-  const pendingFulfillments =
-    (stats.byStatus.shipped ?? 0) + (stats.byStatus.fulfillment_started ?? 0);
+  const summary = [
+    showReview ? `${review.total} to review` : null,
+    showFulfil ? `${fulfil.total} to fulfil` : null,
+    `${stats.totalUsers} players`,
+    `${stats.totalWonders} wonders`,
+    `${stats.byStatus.fulfilled ?? 0} fulfilled`,
+  ]
+    .filter(Boolean)
+    .join(" \u00b7 ");
+
+  const lanes = showReview && showFulfil ? "lg:grid-cols-2" : "";
 
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader title="Overview" description="Everything happening across Wonders." />
+    <div className="flex flex-col gap-8">
+      <PageHeader title="Inbox" description={summary} />
 
-      <StatGrid>
-        <Stat label="Projects" value={stats.totalWonders} icon="rep" href="/admin/wonders" />
-        <Stat label="Users" value={stats.totalUsers} icon="people-3" href="/admin/users" />
-        <Stat
-          label="Fulfilled"
-          value={fulfilled}
-          icon="check-circle"
-          tone="success"
-          href="/admin/wonders?status=fulfilled"
-        />
-        <Stat
-          label="Pending fulfillments"
-          value={pendingFulfillments}
-          icon="package"
-          tone="warning"
-          href="/admin/fulfillment"
-        />
-      </StatGrid>
+      <div className={`grid gap-8 ${lanes}`}>
+        {showReview && (
+          <section>
+            <div className="hc-lane-head">
+              Review <Badge>{review.total}</Badge>
+              <TextLink href="/admin/review">all</TextLink>
+            </div>
+            {review.projects.length === 0 ? (
+              <EmptyState title="Inbox zero" icon="checkmark-all">
+                Nothing is waiting on review.
+              </EmptyState>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {review.projects.map((project) => (
+                  <Ticket
+                    key={project.id}
+                    project={project}
+                    href={`/admin/review/${project.id}`}
+                    extra={<StatusBadge status={project.status} />}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card padding="flush">
-          <CardHeader
-            title="Needs review"
-            icon="view"
-            count={reviewQueue.total}
-            action={
-              <ButtonLink href="/admin/review" variant="ghost" size="sm">
-                View all
-              </ButtonLink>
-            }
-          />
-          {reviewQueue.projects.length === 0 ? (
-            <EmptyState title="All caught up" icon="checkmark-all">
-              Nothing is waiting on review right now.
-            </EmptyState>
-          ) : (
-            <ul>
-              {reviewQueue.projects.map((project) => (
-                <li
-                  key={project.id}
-                  className="flex items-center justify-between gap-4 border-b border-[var(--border)] px-4 py-3 last:border-b-0"
-                >
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <TextLink href={`/admin/review/${project.id}`} className="font-bold">
-                        {project.title}
-                      </TextLink>
-                      <StatusBadge status={project.status} />
-                    </div>
-                    <div className="text-sm">
-                      <Muted>{project.profile?.name || project.profile?.email}</Muted>
-                    </div>
-                  </div>
-                  <Muted className="shrink-0 text-sm">
-                    <Mono>{new Date(project.created_at).toLocaleDateString()}</Mono>
-                  </Muted>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        <Card padding="flush">
-          <CardHeader
-            title="Recent activity"
-            icon="history"
-            action={
-              <ButtonLink href="/admin/history" variant="ghost" size="sm">
-                View all
-              </ButtonLink>
-            }
-          />
-          <div className="p-4">
-            <HistoryTimeline entries={recent.entries} linkProjects />
-          </div>
-        </Card>
+        {showFulfil && (
+          <section>
+            <div className="hc-lane-head">
+              Fulfil <Badge>{fulfil.total}</Badge>
+              <TextLink href="/admin/fulfillment">all</TextLink>
+            </div>
+            {fulfil.projects.length === 0 ? (
+              <EmptyState title="Nothing to send" icon="package">
+                No rewards are waiting.
+              </EmptyState>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {fulfil.projects.map((project) => (
+                  <Ticket
+                    key={project.id}
+                    project={project}
+                    href="/admin/fulfillment"
+                    extra={fulfilmentBadge(project)}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
       </div>
+
+      <section>
+        <div className="hc-lane-head">
+          Recent
+          <TextLink href="/admin/history">all</TextLink>
+        </div>
+        {recent.entries.length === 0 ? (
+          <Muted>No activity yet.</Muted>
+        ) : (
+          <ul className="hc-feed">
+            {recent.entries.map((entry) => (
+              <li key={entry.id}>
+                <TextLink href={`/admin/review/${entry.project_id}`}>
+                  wonder #{entry.project_id}
+                </TextLink>
+                <StatusBadge status={entry.to_status} />
+                <Muted>
+                  <Mono>{entry.reviewed_by}</Mono>
+                </Muted>
+                <Muted className="ml-auto">
+                  <Mono>{new Date(entry.created_at).toLocaleString()}</Mono>
+                </Muted>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }

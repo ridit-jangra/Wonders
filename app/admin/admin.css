@@ -1515,3 +1515,143 @@ html:has(.admin-shell[data-theme="light"]) {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+
+.hc-cmd-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 560px;
+  height: 36px;
+  margin: 0 auto;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 0.1s ease;
+}
+
+.hc-cmd-trigger:hover {
+  border-color: var(--muted);
+  color: var(--text);
+}
+
+.hc-cmd-trigger-label {
+  flex: 1;
+  text-align: left;
+}
+
+.hc-cmd-kbd {
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.hc-cmd-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 12vh 16px 0;
+  background: rgb(0 0 0 / 0.45);
+}
+
+.hc-cmd-panel {
+  width: 100%;
+  max-width: 520px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 24px 64px rgb(0 0 0 / 0.35);
+}
+
+.hc-cmd-input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+  outline: none;
+}
+
+.hc-cmd-list {
+  max-height: 340px;
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.hc-cmd-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.hc-cmd-item[data-active] {
+  background: var(--surface-hover);
+}
+
+.hc-cmd-empty {
+  padding: 14px 10px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.hc-lane-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.hc-lane-head a {
+  margin-left: auto;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.hc-feed {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hc-feed li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.hc-feed li:last-child {
+  border-bottom: 0;
+}

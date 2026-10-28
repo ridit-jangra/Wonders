@@ -14,7 +14,7 @@ import {
   canReview,
   canViewAudit,
 } from "@/lib/security/roles";
-import TopNav from "./components/TopNav";
+import CommandBar from "./components/CommandBar";
 import { NAV } from "./components/nav";
 import { Button, ButtonLink, Mono } from "./components/ui";
 
@@ -41,7 +41,10 @@ export default async function AdminLayout({
     "/admin/audit": canViewAudit(admin),
     "/admin/team": canManageTeam(admin),
   };
-  const hrefs = NAV.map((item) => item.href).filter((href) => allowedByHref[href] ?? true);
+  const commandItems = NAV.filter((item) => allowedByHref[item.href] ?? true).map((item) => ({
+    ...item,
+    count: navCounts[item.href],
+  }));
 
   let displayName = "Admin";
   if (admin.name) {
@@ -63,8 +66,8 @@ export default async function AdminLayout({
             />
             <span className="hc-heading">Wonders</span>
           </Link>
-          <div className="min-w-0 flex-1 overflow-x-auto">
-            <TopNav counts={navCounts} hrefs={hrefs} />
+          <div className="min-w-0 flex-1">
+            <CommandBar items={commandItems} />
           </div>
           <div className="hidden shrink-0 items-center gap-3 lg:flex">
             <span className="text-sm">

@@ -5,6 +5,7 @@ import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
 import { getSessionProfile } from "@/lib/profiles";
 import { getProjects } from "@/lib/projects";
 import Sidebar from "@/app/dashboard/components/Sidebar";
+import { Profile } from "@/app/dashboard/components/Profile";
 import ProjectCard from "@/app/dashboard/components/ProjectCard";
 import AddProjectCard from "@/app/dashboard/components/AddProjectCard";
 import ProjectCardWide from "@/app/dashboard/components/ProjectCardWide";
@@ -33,6 +34,7 @@ export default async function ProjectsPage() {
         alt=""
       />
       <Sidebar />
+      <Profile />
       <main className="relative min-w-0 flex-1 pr-6 pt-20 md:pr-10 md:pt-10">
         <h1 className="font-finger-paint text-4xl text-[#BFD8A8]">
           Your Wonders

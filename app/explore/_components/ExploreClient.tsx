@@ -70,12 +70,12 @@ export default function ExploreClient({ loggedIn }: { loggedIn: boolean }) {
           )}
 
           {!loading && tab === "wonders" && (
-            <div className="mt-2 flex flex-col items-start gap-3">
+            <div className="mt-2 flex flex-col items-stretch gap-3">
               {projects.map((p, i) => (
                 <ExploreProjectCard
                   project={p}
                   key={i}
-                  className="w-full max-w-6xl"
+                  className="w-full"
                 />
               ))}
               {projects.length === 0 && (

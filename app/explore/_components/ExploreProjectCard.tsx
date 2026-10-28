@@ -9,7 +9,7 @@ interface ExploreProject {
 }
 
 const TAG: Record<ExploreProject["tag"], { label: string; className: string }> = {
-  draft: { label: "Draft", className: "bg-[#E7E2C9] text-[#5C4A2E]" },
+  draft: { label: "Draft", className: "bg-[#A89C6C] text-[#2E2712]" },
   in_review: { label: "In review", className: "bg-[#F0E27D] text-[#16213E]" },
   shipped: { label: "Shipped", className: "bg-[#D0E4B4] text-[#2F4A1F]" },
 };

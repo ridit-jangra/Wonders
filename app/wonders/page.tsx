@@ -49,16 +49,16 @@ export default async function ProjectsPage() {
           <AddProjectCard size="aspect-square w-full" redirectTo="/wonders" />
         </div>
 
-        <div className="mt-8 hidden flex-col items-start gap-3 md:flex">
+        <div className="mt-8 hidden flex-col items-stretch gap-3 md:flex">
           {projects.map((project) => (
             <ProjectCardWide
               key={project.id}
               project={project}
-              className="w-full max-w-6xl"
+              className="w-full"
             />
           ))}
           <AddProjectCardWide
-            className="w-full max-w-6xl"
+            className="w-full"
             redirectTo="/wonders"
           />
         </div>

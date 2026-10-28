@@ -462,9 +462,19 @@ export default function Journal({ projectId, entries, locked, post, edit, remove
   return (
     <section className="flex w-full flex-col gap-3 md:max-w-[90%]">
       <h2 className="font-finger-paint text-2xl text-[#5C4A2E]">journal</h2>
-      <p className="font-finger-paint text-[#5C4A2E]/70">
-        a private log of how it&apos;s going. only you, the reviewers and the automatic check can read it :3
-      </p>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <p className="font-finger-paint text-[#5C4A2E]/70">
+          a private log of how it&apos;s going. only you, the reviewers and the automatic check can read it :3
+        </p>
+        <a
+          href="/docs/why-journal"
+          target="_blank"
+          rel="noopener"
+          className="ml-auto font-finger-paint text-[#5C4A2E] underline underline-offset-4 hover:text-[#3e7d7d]"
+        >
+          why should we journal?
+        </a>
+      </div>
       {locked ? (
         <p className="rounded-md bg-[#F0E27D]/40 px-4 py-3 font-finger-paint text-[#5C4A2E]">
           your wonder is in review, so the journal is locked until the review is done.

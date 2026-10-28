@@ -14,7 +14,10 @@ function format(date: Date, utc: boolean) {
   const year = utc ? date.getUTCFullYear() : date.getFullYear();
   const month = utc ? date.getUTCMonth() : date.getMonth();
   const day = utc ? date.getUTCDate() : date.getDate();
-  return `${ordinal(day)} ${MONTHS[month]} ${year}`;
+  const hours = utc ? date.getUTCHours() : date.getHours();
+  const minutes = String(utc ? date.getUTCMinutes() : date.getMinutes()).padStart(2, "0");
+  const hour12 = hours % 12 === 0 ? 12 : hours % 12;
+  return `${ordinal(day)} ${MONTHS[month]} ${year}, ${hour12}:${minutes} ${hours >= 12 ? "PM" : "AM"}`;
 }
 
 export default function LocalTime({

@@ -326,7 +326,7 @@ function Editor({
           ref={previewBox}
           tabIndex={0}
           onKeyDown={onKeyDown}
-          className="min-h-40 rounded-md bg-[#F0EBD1] px-4 py-3 focus:outline-none"
+          className="wonders-scroll min-h-40 rounded-md bg-[#F0EBD1] px-4 py-3 focus:outline-none"
         >
           {content.trim() ? (
             <JournalMarkdown>{content}</JournalMarkdown>
@@ -338,7 +338,7 @@ function Editor({
         <textarea
           ref={area}
           autoFocus={autoFocus}
-          className={`${FIELD} min-h-40 resize-y`}
+          className={`${FIELD} wonders-scroll min-h-40 resize-y`}
           maxLength={JOURNAL_MAX_CONTENT}
           placeholder="what did you build today? markdown works. paste or drop an image to attach it."
           value={content}

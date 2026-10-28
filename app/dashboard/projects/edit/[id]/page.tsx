@@ -484,7 +484,7 @@ export default async function EditProjectPage({
             defaultValue={project.description}
             placeholder="what is it? why does it feel like you?"
             rows={5}
-            className="w-full font-finger-paint resize-none border border-[#8C8368]/30 bg-[#E7E2C9] px-4 py-3 text-base text-[#5C4A2E] placeholder:text-[#8C8368] focus:border-[#8C8368] focus:outline-none md:border-0"
+            className="wonders-scroll w-full font-finger-paint resize-none border border-[#8C8368]/30 bg-[#E7E2C9] px-4 py-3 text-base text-[#5C4A2E] placeholder:text-[#8C8368] focus:border-[#8C8368] focus:outline-none md:border-0"
           />
           <p className="font-finger-paint text-[#5C4A2E]/70">
             Give your wonder a thumbnail :3

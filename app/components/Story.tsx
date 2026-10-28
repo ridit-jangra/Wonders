@@ -28,12 +28,14 @@ function Sentence({
 
   const holdEnd = segStart + duration * 0.9;
 
-  const lineX = useTransform(scrollYProgress, [holdEnd, segEnd], [0, -150]);
-  const lineOpacity = useTransform(
-    scrollYProgress,
-    [segStart, buildEnd, holdEnd, segEnd],
-    [1, 1, 1, 0],
+  const lineX = useTransform(scrollYProgress, (p) =>
+    p <= holdEnd ? 0 : -150 * Math.min(1, (p - holdEnd) / (segEnd - holdEnd)),
   );
+  const lineOpacity = useTransform(scrollYProgress, (p) => {
+    if (p < segStart || p >= segEnd) return 0;
+    if (p <= holdEnd) return 1;
+    return (segEnd - p) / (segEnd - holdEnd);
+  });
 
   return (
     <motion.div

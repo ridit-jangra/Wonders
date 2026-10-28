@@ -5,7 +5,7 @@ export default function LockRibbons({ className = "" }: { className?: string }) 
       <img
         src="/arrows.png"
         alt=""
-        className="absolute inset-0 h-full w-full object-cover object-center"
+        className="absolute inset-0 h-full w-full object-contain object-center"
       />
     </div>
   );

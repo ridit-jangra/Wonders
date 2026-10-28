@@ -3,6 +3,8 @@ import { writeAudit } from "@/lib/audit";
 import { notifyPlayerNow } from "@/lib/notifications";
 import { recordProjectHistory } from "@/lib/project-history";
 import { recordReview } from "@/lib/reviews";
+import { listJournalAdmin } from "@/lib/journal";
+import { summariseJournal } from "@/lib/journal-shared";
 import { findOtherYswsEntries } from "@/lib/ysws";
 import {
   BLOCKING,
@@ -32,6 +34,7 @@ import {
 } from "./sources";
 import {
   finishPrecheck,
+  findDuplicateWonders,
   getPrecheckProject,
   sendBackAfterPrecheck,
   type AutoCheckFindings,
@@ -56,6 +59,16 @@ function commitNotes(commits: CommitInfo[]): string[] {
     }
   }
   return notes;
+}
+
+function journalNote(entries: { createdAt: string }[]): string {
+  if (entries.length === 0) {
+    return "No journal entries.";
+  }
+  const days = entries.map((entry) => entry.createdAt.slice(0, 10)).sort();
+  const first = days[0];
+  const last = days[days.length - 1];
+  return `${entries.length} journal ${entries.length === 1 ? "entry" : "entries"}${first === last ? ` on ${first}` : ` from ${first} to ${last}`}.`;
 }
 
 function aiProviderNote(error: unknown): string {
@@ -97,6 +110,17 @@ export async function runPrecheck(projectId: number, token: string): Promise<voi
       ]);
     }
 
+    const [journalEntries, duplicates] = await Promise.all([
+      listJournalAdmin(projectId).catch(() => []),
+      findDuplicateWonders(project).catch(() => []),
+    ]);
+    const duplicateLines = duplicates.map((item) => {
+      const what = [item.sameRepo ? "same repo" : null, item.sameDemo ? "same demo" : null]
+        .filter(Boolean)
+        .join(" and ");
+      return `- #${item.id} "${item.title}" (${item.status}), ${what}, ${item.sameOwner ? "same player" : "different player"}`;
+    });
+
     const sendbacks = project.ai_precheck_sendbacks;
     const hardMiss =
       repo === "not_found" || demo === "dead" || (repo === "ok" && readme === null);
@@ -126,6 +150,8 @@ export async function runPrecheck(projectId: number, token: string): Promise<voi
               files,
               commits,
               otherYsws,
+              journal: summariseJournal(journalEntries),
+              duplicates: duplicateLines,
             });
             if (!ai) {
               aiNote = "AI review returned an answer that could not be read";
@@ -143,11 +169,20 @@ export async function runPrecheck(projectId: number, token: string): Promise<voi
       ...(aiNote ? [aiNote] : []),
     ];
     const sendBack = shouldSendBack(findings.blocking, sendbacks);
+    const flagged = findings.blocking.length > 0 || duplicates.length > 0;
 
     const notes = [
       ...(ai?.notes ?? []),
       ...commitNotes(commits),
       ...(otherYsws.length > 0 ? [`Already shipped to another YSWS:\n${otherYsws.join("\n")}`] : []),
+      ...(duplicateLines.length > 0 ? [`Also in Wonders:\n${duplicateLines.join("\n")}`] : []),
+      journalNote(journalEntries),
+    ];
+    const redFlags = [
+      ...duplicates.map(
+        (item) => `${item.sameRepo ? "Same repo" : "Same demo"} as wonder #${item.id}`,
+      ),
+      ...(ai?.redFlags ?? []),
     ];
 
     const details: AutoCheckFindings = {
@@ -164,7 +199,7 @@ export async function runPrecheck(projectId: number, token: string): Promise<voi
       })),
       skipped,
       notes,
-      redFlags: ai?.redFlags ?? [],
+      redFlags,
       strengths: ai?.strengths ?? [],
       review: ai?.review ?? "",
       sentBack: sendBack,
@@ -174,7 +209,7 @@ export async function runPrecheck(projectId: number, token: string): Promise<voi
 
     if (!sendBack) {
       const saved = await finishPrecheck(projectId, token, {
-        status: findings.blocking.length > 0 ? "flagged" : "clear",
+        status: flagged ? "flagged" : "clear",
         summary,
         findings: details,
         error,
@@ -183,7 +218,7 @@ export async function runPrecheck(projectId: number, token: string): Promise<voi
       if (saved) {
         await writeAudit({
           actor: AUTO_CHECK_REVIEWER,
-          action: findings.blocking.length > 0 ? "precheck.flagged" : "precheck.clear",
+          action: flagged ? "precheck.flagged" : "precheck.clear",
           target: `project:${projectId}`,
           detail: { blocking: findings.blocking, skipped },
         });

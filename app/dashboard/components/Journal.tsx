@@ -463,7 +463,7 @@ export default function Journal({ projectId, entries, locked, post, edit, remove
     <section className="flex w-full flex-col gap-3 md:max-w-[90%]">
       <h2 className="font-finger-paint text-2xl text-[#5C4A2E]">journal</h2>
       <p className="font-finger-paint text-[#5C4A2E]/70">
-        a private log of how it&apos;s going. only you and the reviewers can read it :3
+        a private log of how it&apos;s going. only you, the reviewers and the automatic check can read it :3
       </p>
       {locked ? (
         <p className="rounded-md bg-[#F0E27D]/40 px-4 py-3 font-finger-paint text-[#5C4A2E]">

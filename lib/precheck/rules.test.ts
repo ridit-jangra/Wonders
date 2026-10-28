@@ -3,10 +3,12 @@ import {
   BLOCKING,
   classifyProbe,
   classifyRepoStatus,
+  demoKey,
   evaluate,
   isPrivateAddress,
   parseAiAnswer,
   parseGithubRepo,
+  repoKey,
   reviewNoteFor,
   shouldSendBack,
   type AiAnswer,
@@ -244,5 +246,30 @@ describe("reviewNoteFor", () => {
     expect(note).toContain(BLOCKING.repo_not_found);
     expect(note).toContain(BLOCKING.how_to_run);
     expect(note).toContain("ship again");
+  });
+});
+
+describe("duplicate keys", () => {
+  test("the same repo written differently gets the same key", () => {
+    const keys = [
+      "https://github.com/Ridit/Wonders",
+      "github.com/ridit/wonders.git",
+      "http://www.github.com/ridit/wonders/tree/main",
+    ].map(repoKey);
+    expect(new Set(keys).size).toBe(1);
+    expect(keys[0]).toBe("ridit/wonders");
+    expect(repoKey("https://gitlab.com/a/b")).toBeNull();
+  });
+
+  test("demo keys ignore scheme, www and a trailing slash", () => {
+    expect(demoKey("https://www.Example.dev/app/")).toBe("example.dev/app");
+    expect(demoKey("example.dev/app")).toBe("example.dev/app");
+    expect(demoKey("https://example.dev/other")).not.toBe(demoKey("https://example.dev/app"));
+  });
+
+  test("links that say nothing about the project have no key", () => {
+    expect(demoKey("https://github.com/a/b")).toBeNull();
+    expect(demoKey("localhost")).toBeNull();
+    expect(demoKey("")).toBeNull();
   });
 });

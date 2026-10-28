@@ -143,3 +143,28 @@ export function stripDisallowedImages(content: string): string {
 export function journalTextLength(content: string): number {
   return content.replace(/!\[[^\]]*\]\([^)]*\)/g, "").trim().length;
 }
+
+export function journalLocked(status: string): boolean {
+  return status === "in_review" || status === "second_pass";
+}
+
+export function summariseJournal(
+  entries: { title: string | null; content: string; createdAt: string }[],
+  maxEntries = 8,
+  perEntry = 600,
+  total = 4000,
+): { date: string; title: string | null; text: string }[] {
+  const out: { date: string; title: string | null; text: string }[] = [];
+  let used = 0;
+  for (const entry of entries.slice(0, maxEntries)) {
+    const text = entry.content
+      .replace(/!\[[^\]]*\]\([^)]*\)/g, "[image]")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, perEntry);
+    if (used + text.length > total) break;
+    used += text.length;
+    out.push({ date: entry.createdAt.slice(0, 10), title: entry.title, text });
+  }
+  return out;
+}

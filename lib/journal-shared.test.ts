@@ -4,7 +4,9 @@ import {
   continueList,
   insertImage,
   isAllowedImageSrc,
+  journalLocked,
   journalTextLength,
+  summariseJournal,
   stripDisallowedImages,
   swapText,
 } from "./journal-shared";
@@ -118,5 +120,32 @@ describe("swapText", () => {
 
   test("removing a failed placeholder", () => {
     expect(swapText("a [P] b", "[P]", "", 7, 7)?.value).toBe("a  b");
+  });
+});
+
+describe("journalLocked", () => {
+  test("only the review statuses lock it", () => {
+    expect(journalLocked("in_review")).toBe(true);
+    expect(journalLocked("second_pass")).toBe(true);
+    for (const status of ["building", "rejected", "shipped", "fulfilled"]) {
+      expect(journalLocked(status)).toBe(false);
+    }
+  });
+});
+
+describe("summariseJournal", () => {
+  const entry = (content: string, createdAt = "2026-10-01T10:00:00Z") => ({ title: null, content, createdAt });
+
+  test("flattens whitespace, hides images and keeps the date", () => {
+    const [first] = summariseJournal([entry("a\n\n b ![x](/api/thumbnails/1) c")]);
+    expect(first).toEqual({ date: "2026-10-01", title: null, text: "a b [image] c" });
+  });
+
+  test("caps entries, length per entry and the total", () => {
+    const many = Array.from({ length: 20 }, () => entry("x".repeat(1000)));
+    const summary = summariseJournal(many);
+    expect(summary.length).toBeLessThanOrEqual(8);
+    expect(summary.every((item) => item.text.length <= 600)).toBe(true);
+    expect(summary.reduce((sum, item) => sum + item.text.length, 0)).toBeLessThanOrEqual(4000);
   });
 });

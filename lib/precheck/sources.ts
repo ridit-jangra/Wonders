@@ -254,11 +254,16 @@ export interface ModelInput {
   files: string[];
   commits: CommitInfo[];
   otherYsws: string[];
+  journal: { date: string; title: string | null; text: string }[];
+  duplicates: string[];
 }
 
 function buildPrompt(input: ModelInput): string {
   const commitLines = input.commits
     .map((commit) => `- ${commit.date.slice(0, 10)} ${commit.message}`)
+    .join("\n");
+  const journalLines = input.journal
+    .map((entry) => `- ${entry.date}${entry.title ? ` "${entry.title}"` : ""}: ${entry.text}`)
     .join("\n");
   const questions = REQUIREMENTS.map((requirement) => `- ${requirement.id}: ${requirement.question}`).join("\n");
 
@@ -282,10 +287,16 @@ ${input.files.join("\n") || "(unavailable)"}
 
 RECENT COMMITS (newest first, up to ${COMMIT_LIMIT}):
 ${commitLines || "(unavailable)"}
+
+PRIVATE BUILD JOURNAL (entries the author wrote while building, newest first; empty means they kept none):
+${journalLines || "(no entries)"}
 </untrusted>
 
 ALSO SHIPPED ELSEWHERE (same repo or demo found in another YSWS):
 ${input.otherYsws.join("\n") || "(no matches)"}
+
+SAME REPO OR DEMO ALSO IN WONDERS:
+${input.duplicates.join("\n") || "(no matches)"}
 
 Answer these README questions. "met" is whether the README clearly does it. "confident" is true only when you are sure, for example the README is empty, off topic or just a template. When in doubt set confident to false.
 ${questions}
@@ -298,7 +309,7 @@ Respond with ONLY a JSON object, no markdown fences, matching exactly:
   },
   "summary": "one sentence on what this project actually is and does, for a quick glance",
   "review": "a short running paragraph for the reviewer: what it is, how it is built (stack, structure, what the code seems to implement from the file list), and how good the README is. Concrete and terse, no filler, no praise, no markdown.",
-  "notes": ["things worth the reviewer's attention, such as: only one commit or all commits at once, looks like a tutorial or template, README copied from elsewhere, demo link is just the repo, already shipped elsewhere"],
+  "notes": ["things worth the reviewer's attention, such as: the journal contradicting the commits or the README, a journal that reads like it was written all at once, only one commit or all commits at once, looks like a tutorial or template, README copied from elsewhere, demo link is just the repo, already shipped elsewhere"],
   "redFlags": ["short phrase per concern, empty array if none"],
   "strengths": ["short phrase per notable strength, empty array if none"]
 }`;

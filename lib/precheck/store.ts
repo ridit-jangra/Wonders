@@ -2,6 +2,7 @@ import "server-only";
 import crypto from "node:crypto";
 import { sql } from "@/lib/db";
 import type { ProjectId } from "@/lib/projects";
+import { demoKey, repoKey } from "./rules";
 
 export type AutoCheckStatus = "none" | "pending" | "clear" | "flagged" | "sent_back" | "error";
 
@@ -130,4 +131,53 @@ export async function sendBackAfterPrecheck(
     returning id
   `;
   return rows.length > 0;
+}
+
+export interface DuplicateWonder {
+  id: number;
+  title: string;
+  status: string;
+  sameOwner: boolean;
+  sameRepo: boolean;
+  sameDemo: boolean;
+}
+
+export async function findDuplicateWonders(project: {
+  id: number;
+  profile_id: string;
+  github_url: string | null;
+  link_url: string | null;
+}): Promise<DuplicateWonder[]> {
+  const repo = repoKey(project.github_url);
+  const demo = demoKey(project.link_url);
+  if (!repo && !demo) {
+    return [];
+  }
+
+  const rows = await sql<
+    { id: number; title: string; status: string; profile_id: string; github_url: string | null; link_url: string | null }[]
+  >`
+    select id, title, status, profile_id, github_url, link_url
+    from projects
+    where id <> ${project.id}
+      and (
+        (${repo}::text is not null and github_url is not null
+          and position(${repo ?? ""} in lower(github_url)) > 0)
+        or (${demo}::text is not null and link_url is not null
+          and position(${demo ?? ""} in lower(link_url)) > 0)
+      )
+    order by id
+    limit 20
+  `;
+
+  return rows
+    .map((row) => ({
+      id: row.id,
+      title: row.title,
+      status: row.status,
+      sameOwner: row.profile_id === project.profile_id,
+      sameRepo: repo !== null && repoKey(row.github_url) === repo,
+      sameDemo: demo !== null && demoKey(row.link_url) === demo,
+    }))
+    .filter((row) => row.sameRepo || row.sameDemo);
 }

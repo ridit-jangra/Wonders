@@ -41,6 +41,29 @@ export function parseGithubRepo(url: string | null | undefined): RepoRef | null 
   return { owner, repo };
 }
 
+export function repoKey(url: string | null | undefined): string | null {
+  const ref = parseGithubRepo(url);
+  return ref ? `${ref.owner}/${ref.repo}`.toLowerCase() : null;
+}
+
+export function demoKey(url: string | null | undefined): string | null {
+  if (!url) {
+    return null;
+  }
+  let parsed: URL;
+  try {
+    parsed = new URL(withScheme(url));
+  } catch {
+    return null;
+  }
+  const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
+  if (!host.includes(".") || host === "github.com") {
+    return null;
+  }
+  const path = parsed.pathname.replace(/\/+$/, "").toLowerCase();
+  return `${host}${path}`;
+}
+
 function ipv6Bytes(address: string): number[] | null {
   let text = address.toLowerCase();
   const zone = text.indexOf("%");

@@ -19,7 +19,7 @@ import {
   editJournalEntry,
   listJournal,
 } from "@/lib/journal";
-import { JOURNAL_MAX_CONTENT } from "@/lib/journal-shared";
+import { JOURNAL_MAX_CONTENT, journalLocked } from "@/lib/journal-shared";
 import Journal, { type JournalResult } from "@/app/dashboard/components/Journal";
 import ThumbnailPicker from "@/app/dashboard/components/ThumbnailPicker";
 import HackatimeProjectSelect from "@/app/dashboard/components/HackatimeProjectSelect";
@@ -54,7 +54,7 @@ async function journalGuard(id: string, bucket: string, limit: number): Promise<
   if (!existing || existing.profile_id !== currentProfile.id) {
     return null;
   }
-  if (existing.status === "in_review" || existing.status === "second_pass") {
+  if (journalLocked(existing.status)) {
     return { error: "the journal is locked while your wonder is in review" };
   }
   if (!(await checkRateLimit(bucket, current.slackId, limit, 60)).allowed) {
@@ -640,7 +640,7 @@ export default async function EditProjectPage({
       <Journal
         projectId={Number(project.id)}
         entries={journal}
-        locked={underReview}
+        locked={journalLocked(project.status)}
         post={postJournalAction}
         edit={editJournalAction}
         remove={deleteJournalAction}

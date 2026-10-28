@@ -1,0 +1,78 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "rsvp":
+      - /url: https://rsvp.hackclub.community/wonders
+      - img "rsvp" [ref=e4] [cursor=pointer]
+  - generic [ref=e9]:
+    - generic [ref=e10]:
+      - generic [ref=e11]: Every
+      - generic [ref=e12]: project
+      - generic [ref=e13]: tells
+      - generic [ref=e14]: a
+      - generic [ref=e15]: story,
+      - generic [ref=e16]: they
+      - generic [ref=e17]: shouldn't
+      - generic [ref=e18]: be
+      - generic [ref=e19]: judged
+      - generic [ref=e20]: by
+      - generic [ref=e21]: hours.
+    - generic [ref=e22]:
+      - generic [ref=e23]: Introducing
+      - generic [ref=e24]: Wonders!!!
+    - generic [ref=e25]:
+      - generic [ref=e26]: Where
+      - generic [ref=e27]: every
+      - generic [ref=e28]: project
+      - generic [ref=e29]: is
+      - generic [ref=e30]: a
+      - generic [ref=e31]: wonder
+      - generic [ref=e32]: and
+      - generic [ref=e33]: not
+      - generic [ref=e34]: a
+      - generic [ref=e35]: way
+      - generic [ref=e36]: to
+      - generic [ref=e37]: farm
+      - generic [ref=e38]: hours!!
+  - generic [ref=e41]:
+    - img "How this works!" [ref=e43]
+    - generic [ref=e44]:
+      - generic [ref=e45]:
+        - img "Find the wonder that could only come from you" [ref=e46]
+        - paragraph [ref=e47]: Find the wonder that could only come from you
+        - paragraph [ref=e48]: Make it!!!! don't care how many hours you farm, HOURS do not MATTER here
+      - generic [ref=e49]:
+        - img "Ship it!!!!" [ref=e50]
+        - paragraph [ref=e51]: Ship it!!!!
+        - paragraph [ref=e52]: and WAIT for your WONDERFUL project to get REVIEWED by our wonderful reviewers :3
+      - generic [ref=e53]:
+        - img "Get your wonderful reviewer feedback" [ref=e54]
+        - paragraph [ref=e55]: Get your wonderful reviewer feedback
+        - paragraph [ref=e56]: and wait for your wonderful surprise :3
+  - generic [ref=e59]:
+    - heading "FAQ" [level=2] [ref=e60]
+    - generic [ref=e61]:
+      - button "1. When will it start? +" [ref=e63] [cursor=pointer]:
+        - generic [ref=e64]: 1. When will it start?
+        - generic [ref=e65]: +
+      - button "2. How does it work? +" [ref=e67] [cursor=pointer]:
+        - generic [ref=e68]: 2. How does it work?
+        - generic [ref=e69]: +
+      - button "3. Payouts? +" [ref=e71] [cursor=pointer]:
+        - generic [ref=e72]: 3. Payouts?
+        - generic [ref=e73]: +
+      - button "4. Hardware or Software? +" [ref=e75] [cursor=pointer]:
+        - generic [ref=e76]: 4. Hardware or Software?
+        - generic [ref=e77]: +
+      - button "5. Only big projects? +" [ref=e79] [cursor=pointer]:
+        - generic [ref=e80]: 5. Only big projects?
+        - generic [ref=e81]: +
+      - button "6. For beginners? +" [ref=e83] [cursor=pointer]:
+        - generic [ref=e84]: 6. For beginners?
+        - generic [ref=e85]: +
+      - button "7. Can i use AI? +" [ref=e87] [cursor=pointer]:
+        - generic [ref=e88]: 7. Can i use AI?
+        - generic [ref=e89]: +
+      - button "8. When does time tracking start? +" [ref=e91] [cursor=pointer]:
+        - generic [ref=e92]: 8. When does time tracking start?
+        - generic [ref=e93]: +
+    - paragraph [ref=e94]: "Anything else???? Just ask it in #wonders!"

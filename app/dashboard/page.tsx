@@ -43,7 +43,7 @@ export default async function DashPage() {
             go to /wonders to see all &gt;
           </Link>
         </div>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-[repeat(2,minmax(0,22.5rem))] lg:grid-cols-[repeat(3,minmax(0,max(13rem,min(22.5rem,calc((100vh-20rem)/1.78)))))]">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-[repeat(2,minmax(0,22.5rem))] lg:grid-cols-[repeat(3,minmax(0,max(13rem,min(22.5rem,calc((100vh-17rem)/1.78)))))]">
           {projects.slice(0, 3).map((project) => (
             <ProjectCard
               key={project.id}

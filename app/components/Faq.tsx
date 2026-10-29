@@ -71,7 +71,16 @@ export function Faq() {
         </div>
 
         <p className="mt-10 text-center text-black">
-          Anything else???? Just ask it in #wonders!
+          Anything else???? Just ask it in{" "}
+          <a
+            href="https://hackclub.slack.com/archives/C0BS3VD47E3"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:opacity-70"
+          >
+            #wonders
+          </a>
+          !
         </p>
       </div>
     </div>

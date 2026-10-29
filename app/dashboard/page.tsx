@@ -33,7 +33,7 @@ export default async function DashPage() {
       <h1 className="font-finger-paint wrap-break-word text-5xl text-[#D9D3AF]">
         {session.name || session.email}
       </h1>
-      <div className="flex w-fit max-w-full flex-col gap-5 pt-10">
+      <div className="flex w-fit max-w-full flex-col gap-5 pt-6 lg:pt-8">
         <div className="flex w-full flex-wrap items-center justify-between gap-3">
           <h1 className="text-[#BFD8A8] font-finger-paint text-4xl">Wonders</h1>
           <Link
@@ -43,12 +43,12 @@ export default async function DashPage() {
             go to /wonders to see all &gt;
           </Link>
         </div>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-[repeat(2,minmax(0,22.5rem))] lg:grid-cols-[repeat(3,minmax(0,22.5rem))]">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-[repeat(2,minmax(0,22.5rem))] lg:grid-cols-[repeat(3,minmax(0,max(13rem,min(22.5rem,calc((100vh-25rem)/1.78)))))]">
           {projects.slice(0, 3).map((project) => (
             <ProjectCard
               key={project.id}
               project={project}
-              size="aspect-square w-full max-w-90"
+              size="aspect-square w-full"
             />
           ))}
           <div className="col-span-full">

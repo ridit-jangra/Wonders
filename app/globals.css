@@ -61,32 +61,33 @@ body {
 }
 
 @supports not selector(::-webkit-scrollbar) {
-  .wonders-scroll {
+  * {
     scrollbar-width: thin;
     scrollbar-color: #b8ad85 transparent;
   }
 }
-.wonders-scroll::-webkit-scrollbar {
+*::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
-.wonders-scroll::-webkit-scrollbar-track {
+*::-webkit-scrollbar-track {
   background: transparent;
 }
-.wonders-scroll::-webkit-scrollbar-thumb {
+*::-webkit-scrollbar-thumb {
   background: #b8ad85;
   border-radius: 999px;
-  border: 2px solid #e7e2c9;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
-.wonders-scroll::-webkit-scrollbar-thumb:hover {
+*::-webkit-scrollbar-thumb:hover {
   background: #8c8368;
 }
-.wonders-scroll::-webkit-scrollbar-button {
+*::-webkit-scrollbar-button {
   display: none;
 }
-.wonders-scroll::-webkit-scrollbar-corner {
+*::-webkit-scrollbar-corner {
   background: transparent;
 }
-.wonders-scroll::-webkit-resizer {
+*::-webkit-resizer {
   background: transparent;
 }

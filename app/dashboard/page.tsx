@@ -28,9 +28,9 @@ export default async function DashPage() {
       <img
         src="/hi-welcome.png"
         alt="hi, welcome"
-        className="h-auto w-full max-w-120 lg:max-w-88"
+        className="h-auto w-full max-w-120 lg:max-w-72"
       />
-      <h1 className="font-finger-paint wrap-break-word text-5xl lg:text-4xl text-[#D9D3AF]">
+      <h1 className="font-finger-paint wrap-break-word text-5xl lg:text-3xl text-[#D9D3AF]">
         {session.name || session.email}
       </h1>
       <div className="flex w-fit max-w-full flex-col gap-5 pt-6 lg:pt-8">

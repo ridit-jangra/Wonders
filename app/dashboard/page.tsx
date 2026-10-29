@@ -6,7 +6,7 @@ import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
 import { getSessionProfile } from "@/lib/profiles";
 import { getProjects } from "@/lib/projects";
 import ProjectCard from "./components/ProjectCard";
-import AddProjectCard from "./components/AddProjectCard";
+import AddProjectCardWide from "./components/AddProjectCardWide";
 
 export default async function DashPage() {
   const cookieStore = await cookies();
@@ -44,14 +44,16 @@ export default async function DashPage() {
           </Link>
         </div>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-[repeat(2,minmax(0,22.5rem))] lg:grid-cols-[repeat(3,minmax(0,22.5rem))]">
-          {projects.slice(0, 2).map((project) => (
+          {projects.slice(0, 3).map((project) => (
             <ProjectCard
               key={project.id}
               project={project}
               size="aspect-square w-full max-w-90"
             />
           ))}
-          <AddProjectCard size="aspect-square w-full max-w-90" />
+          <div className="col-span-full">
+            <AddProjectCardWide className="w-full" />
+          </div>
         </div>
       </div>
     </div>

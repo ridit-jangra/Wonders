@@ -9,10 +9,10 @@ interface ExploreProject {
   tag: "draft" | "in_review" | "shipped";
 }
 
-const TAG: Record<ExploreProject["tag"], { label: string; className: string }> = {
-  draft: { label: "Draft", className: "bg-[#A89C6C] text-[#2E2712]" },
-  in_review: { label: "In review", className: "bg-[#F0E27D] text-[#16213E]" },
-  shipped: { label: "Shipped", className: "bg-[#D0E4B4] text-[#2F4A1F]" },
+const TAG: Record<ExploreProject["tag"], string> = {
+  draft: "building :)",
+  in_review: "in review :3",
+  shipped: "shipped :D",
 };
 
 export default function ExploreProjectCard({
@@ -42,10 +42,8 @@ function StackedCard({ project }: { project: ExploreProject }) {
       />
       <div className="flex items-start justify-between gap-3">
         <h3 className="min-w-0 wrap-break-word font-finger-paint text-xl text-[#5C4A2E]">{project.name}</h3>
-        <span
-          className={`shrink-0 rounded-full px-3 py-0.5 font-finger-paint text-sm ${TAG[project.tag].className}`}
-        >
-          {TAG[project.tag].label}
+        <span className="shrink-0 pt-1 font-finger-paint text-xs text-[#7A6B4A]">
+          {TAG[project.tag]}
         </span>
       </div>
       <p className="line-clamp-4 font-poppins text-sm text-[#5C4A2E]">{project.description}</p>
@@ -90,10 +88,8 @@ function WideCard({ project }: { project: ExploreProject }) {
         alt=""
         className="absolute top-[5%] left-[3%] h-[74%] w-[36%] rounded-md object-cover"
       />
-      <span
-        className={`absolute top-[6%] right-[2%] rounded-full px-3 py-0.5 font-finger-paint text-sm ${TAG[project.tag].className}`}
-      >
-        {TAG[project.tag].label}
+      <span className="absolute bottom-[5%] right-[3%] font-finger-paint text-[10px] text-[#7A6B4A]">
+        {TAG[project.tag]}
       </span>
       <div className="absolute top-[5.5%] left-[43%] h-[16%] w-[38%] flex items-center overflow-hidden">
         <h3 className="truncate font-finger-paint text-lg text-[#5C4A2E]">

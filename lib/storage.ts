@@ -7,7 +7,6 @@ const THUMBNAIL_EXTENSIONS: Record<string, string> = {
   "image/png": "png",
   "image/jpeg": "jpg",
   "image/webp": "webp",
-  "image/gif": "gif",
 };
 
 export const THUMBNAIL_MIME_TYPES = Object.keys(THUMBNAIL_EXTENSIONS);
@@ -18,6 +17,10 @@ export async function uploadThumbnail(
 ): Promise<string> {
   if (!THUMBNAIL_EXTENSIONS[file.type]) {
     throw new Error(`Unsupported thumbnail type: ${file.type || "unknown"}`);
+  }
+  const head = Buffer.from(await file.slice(0, 4).arrayBuffer()).toString("latin1");
+  if (head === "GIF8") {
+    throw new Error("GIFs are not allowed");
   }
   if (file.size > MAX_THUMBNAIL_BYTES) {
     throw new Error(

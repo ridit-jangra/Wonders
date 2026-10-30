@@ -135,7 +135,7 @@ function Editor({
   }
 
   async function attach(files: File[]) {
-    const images = files.filter((f) => f.type.startsWith("image/"));
+    const images = files.filter((f) => f.type.startsWith("image/") && f.type !== "image/gif");
     if (images.length === 0) return;
     setBusy(true);
     setError(null);
@@ -354,7 +354,7 @@ function Editor({
           }}
           onKeyDown={onKeyDown}
           onPaste={(event) => {
-            const images = [...event.clipboardData.files].filter((f) => f.type.startsWith("image/"));
+            const images = [...event.clipboardData.files].filter((f) => f.type.startsWith("image/") && f.type !== "image/gif");
             if (images.length > 0) {
               event.preventDefault();
               void attach(images);
@@ -367,7 +367,7 @@ function Editor({
         type="file"
         hidden
         multiple
-        accept="image/png,image/jpeg,image/webp,image/gif"
+        accept="image/png,image/jpeg,image/webp"
         onChange={(event) => {
           const files = [...(event.target.files ?? [])];
           event.target.value = "";

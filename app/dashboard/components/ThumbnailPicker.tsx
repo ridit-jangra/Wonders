@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from "react";
 
 const MAX_THUMBNAIL_MB = 5;
-const ACCEPTED = "image/png,image/jpeg,image/webp,image/gif";
+const ACCEPTED = "image/png,image/jpeg,image/webp";
 
 export default function ThumbnailPicker({
   name = "thumbnail",
@@ -94,7 +94,7 @@ export default function ThumbnailPicker({
             </span>
             {!preview && (
               <span className="font-finger-paint text-xs text-[#8C8368] sm:text-sm md:text-base">
-                png, jpg, webp or gif — up to {MAX_THUMBNAIL_MB}MB
+                png, jpg or webp — up to {MAX_THUMBNAIL_MB}MB
               </span>
             )}
           </span>

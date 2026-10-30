@@ -88,7 +88,7 @@ function WideCard({ project }: { project: ExploreProject }) {
         alt=""
         className="absolute top-[5%] left-[3%] h-[74%] w-[36%] rounded-md object-cover"
       />
-      <span className="absolute bottom-[5%] right-[3%] font-finger-paint text-[10px] text-[#7A6B4A]">
+      <span className="absolute bottom-[18%] right-[2%] font-finger-paint text-[10px] text-[#7A6B4A]">
         {TAG[project.tag]}
       </span>
       <div className="absolute top-[5.5%] left-[43%] h-[16%] w-[38%] flex items-center overflow-hidden">

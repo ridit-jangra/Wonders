@@ -14,6 +14,13 @@ import { syncHcaIdentity } from "@/lib/profiles";
 import { fetchSlackProfile, inviteToChannel } from "@/lib/slack";
 import { limitByIp } from "@/lib/rate-limit";
 import { getActiveBan } from "@/lib/bans";
+import {
+  attachReferral,
+  findReferrerBySlug,
+  isReferralSlug,
+  profileExists,
+  REFERRAL_COOKIE,
+} from "@/lib/referrals";
 
 export async function GET(request: NextRequest) {
   const limited = await limitByIp(request, "hc-callback", 30, 60);
@@ -118,6 +125,8 @@ export async function GET(request: NextRequest) {
   }
 
   const name = hcaFullName(identity);
+  const refSlug = request.cookies.get(REFERRAL_COOKIE)?.value;
+  const isNewPlayer = slackId && isReferralSlug(refSlug) ? !(await profileExists(slackId)) : false;
 
   try {
     await syncHcaIdentity(identity, await fetchSlackProfile(slackId));
@@ -126,6 +135,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(
       appUrl("/login?error=profile", request),
     );
+  }
+
+  if (isNewPlayer && isReferralSlug(refSlug)) {
+    try {
+      const referrer = await findReferrerBySlug(refSlug);
+      if (referrer) await attachReferral(referrer.id, slackId);
+    } catch (err) {
+      console.error("Failed to record referral:", err);
+    }
   }
 
   const session = createSessionCookie({ email, name, slackId });
@@ -146,5 +164,6 @@ export async function GET(request: NextRequest) {
   });
   response.cookies.delete(STATE_COOKIE);
   response.cookies.delete(RETRY_COOKIE);
+  response.cookies.delete(REFERRAL_COOKIE);
   return response;
 }

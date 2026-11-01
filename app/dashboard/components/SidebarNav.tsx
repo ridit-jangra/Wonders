@@ -7,6 +7,7 @@ const links = [
   { href: "/dashboard", label: "Dashboard :)", src: "/button-template-1.png" },
   { href: "/wonders", label: "Wonders :D", src: "/button-template-2.png" },
   { href: "/explore", label: "Explore :3", src: "/button-template-3.png" },
+  { href: "/refers", label: "Refers <3", src: "/button-template-1.png" },
 ];
 
 export default function SidebarNav({

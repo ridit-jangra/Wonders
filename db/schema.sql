@@ -22,6 +22,8 @@ create table if not exists profiles (
   hackatime_token text,
   hackatime_connected_at timestamptz,
   sessions_valid_after timestamptz,
+  referral_slug text not null unique default substr(md5(random()::text || clock_timestamp()::text), 1, 10),
+  referral_pin_sent_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -176,3 +178,28 @@ create table if not exists project_journal (
 );
 
 create index if not exists project_journal_project_id_idx on project_journal (project_id, created_at desc);
+
+alter table profiles add column if not exists referral_slug text not null unique
+  default substr(md5(random()::text || clock_timestamp()::text), 1, 10);
+alter table profiles add column if not exists referral_pin_sent_at timestamptz;
+
+create table if not exists referral_clicks (
+  id uuid primary key default gen_random_uuid(),
+  referrer_id uuid not null references profiles (id) on delete cascade,
+  visitor_hash text not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists referral_clicks_referrer_idx
+  on referral_clicks (referrer_id, created_at desc);
+
+create table if not exists referrals (
+  id uuid primary key default gen_random_uuid(),
+  referrer_id uuid not null references profiles (id) on delete cascade,
+  referred_id uuid not null unique references profiles (id) on delete cascade,
+  sticker_sent_at timestamptz,
+  created_at timestamptz not null default now(),
+  check (referrer_id <> referred_id)
+);
+
+create index if not exists referrals_referrer_idx on referrals (referrer_id);

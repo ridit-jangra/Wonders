@@ -42,6 +42,7 @@ export default async function AdminLayout({
   const allowedByHref: Record<string, boolean> = {
     "/admin/review": canReview(admin),
     "/admin/fulfillment": canFulfill(admin),
+    "/admin/referrals": canFulfill(admin),
     "/admin/users": canManagePlayers(admin),
     "/admin/audit": canViewAudit(admin),
     "/admin/team": canManageTeam(admin),

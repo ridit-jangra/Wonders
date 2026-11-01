@@ -176,6 +176,10 @@ Failures never block a wonder: a lookup that can't run (GitHub rate limit, a dem
 
 `probeUrl` fetches a URL the player typed, so it is SSRF-guarded: http(s) only, default ports only, no credentials in the URL, every DNS answer and every redirect hop is checked against `isPrivateAddress` (loopback, private, link-local and metadata ranges, IPv6 and IPv4-mapped included). `lib/precheck/rules.ts` is pure and covered by `rules.test.ts`.
 
+### Referrals
+
+Every profile has a `referral_slug` (random 10 hex chars, DB default). `/r/[slug]` (`app/r/[slug]/route.ts`) records an anonymous click (`referral_clicks`, hashed IP+UA, one per visitor per 24h), sets the `wonders_ref` cookie and sends the visitor to `/login`. The OAuth callback only attaches a referral (`referrals`, `referred_id` unique) when there was **no `profiles` row before that login**, so existing players can never be referred. `/refers` shows the link, progress to `REFERRALS_FOR_PIN` (5), clicks and who joined. A referral counts once the referred player has onboarded (`interest` set) and isn't `hca_ysws_eligible = false`. `/admin/referrals` (`canFulfill`) lists pins due (5+ counted) and stickers due (every counted referred player), with mark-sent buttons. Logic is in `lib/referrals.ts`.
+
 ### Security layer (ported from Macondo)
 
 - `next.config.ts` sets security headers; `proxy.ts` rejects cross-origin mutating requests (Origin / `Sec-Fetch-Site`, extra origins via `APP_ORIGINS`). Pure helpers live in `lib/security/` with `bun test` coverage (`lib/security/security.test.ts`).

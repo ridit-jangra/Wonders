@@ -2,6 +2,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
+import { findReferrerBySlug, isReferralSlug, REFERRAL_COOKIE } from "@/lib/referrals";
 
 export default async function LoginPage({
   searchParams,
@@ -16,6 +17,9 @@ export default async function LoginPage({
     redirect("/dashboard");
   }
 
+  const refSlug = cookieStore.get(REFERRAL_COOKIE)?.value;
+  const referrer = isReferralSlug(refSlug) ? await findReferrerBySlug(refSlug) : null;
+
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center">
       <img
@@ -24,6 +28,11 @@ export default async function LoginPage({
         alt=""
       />
       <img src="/logo.png" alt="hi, welcome" className="w-120 h-auto" />
+      {referrer && (
+        <p className="max-w-sm font-finger-paint text-lg text-[#5C4A2E]">
+          {referrer.name} invited you! sign up and we&apos;ll send you free stickers :D
+        </p>
+      )}
       {denied && (
         <p className="max-w-sm font-poppins text-sm text-red-600">
           That Hack Club account isn&apos;t allowed in here yet.

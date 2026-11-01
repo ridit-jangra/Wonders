@@ -37,16 +37,16 @@ export default function PinHero({
     <section className="@container">
       <div className="relative hidden @4xl:block">
         <img src="/hc-pin-container.png" alt="" className="block h-auto w-full" />
-        <div className="absolute inset-y-0 left-[33%] right-[10%] flex flex-col justify-center gap-[1.6cqw]">
-          <h2 className="font-finger-paint text-[clamp(1.2rem,3.1cqw,2.1rem)] leading-tight text-[#5C4A2E]">
+        <div className="absolute inset-y-0 left-[33%] right-[12%] flex flex-col justify-center gap-[1.2cqw]">
+          <h2 className="font-finger-paint text-[clamp(1rem,2.5cqw,2.1rem)] leading-tight text-[#5C4A2E]">
             bring <span className="font-poppins">{REFERRALS_FOR_PIN}</span> friends, get a Hack Club pin
           </h2>
-          <p className="font-finger-paint text-[clamp(.72rem,1.4cqw,1.05rem)] text-[#5C4A2E]/80">
+          <p className="font-finger-paint text-[clamp(.65rem,1.15cqw,1.05rem)] text-[#5C4A2E]/80">
             everyone you refer gets free stickers from us too. only brand new players with an ID verified by
             Hack Club count, and they can&apos;t already have a Wonders account.
           </p>
           <div className="flex items-center gap-[1cqw]">{pips}</div>
-          <p className="font-finger-paint text-[clamp(.85rem,1.7cqw,1.2rem)] text-[#5C4A2E]">{status}</p>
+          <p className="font-finger-paint text-[clamp(.75rem,1.4cqw,1.2rem)] text-[#5C4A2E]">{status}</p>
         </div>
       </div>
 

@@ -47,14 +47,17 @@ export default async function RefersPage() {
   return (
     <div className="relative flex min-h-screen">
       <img className="fixed inset-0 -z-10 h-full w-full object-cover" src="/bg-effect-4.png" alt="" />
+      <div className="pointer-events-none fixed top-0 right-[2%] bottom-0 left-0 -z-10 hidden md:left-[calc(100vh*554/1080-10vh)] md:block">
+        <img src="/new-or-edit-projects-template.png" alt="" className="h-full w-full object-fill" />
+      </div>
       <Sidebar />
       <Profile />
-      <main className="relative min-w-0 flex-1 pb-16 pl-4 pr-4 pt-20 md:pl-0 md:pr-10 md:pt-10">
+      <main className="relative min-w-0 flex-1 bg-[#F0EBD1] px-6 pb-10 pt-24 sm:px-10 md:bg-transparent md:py-16 md:pl-4 md:pr-14 lg:py-24">
         <div className="flex flex-col gap-6">
-          <h1 className="font-finger-paint text-4xl text-[#BFD8A8]">Refers</h1>
+          <h1 className="font-finger-paint text-3xl text-[#5C4A2E] sm:text-4xl lg:text-5xl">Refers</h1>
 
           {referredBy && (
-            <div className="rounded-lg bg-[#BFD8A8]/90 p-5 md:p-7">
+            <div className="bg-[#BFD8A8]/90 p-5 md:p-7">
               <p className="font-finger-paint text-xl text-[#2f4a24]">
                 {referredBy.name} invited you!{" "}
                 {referredBy.sticker_sent_at

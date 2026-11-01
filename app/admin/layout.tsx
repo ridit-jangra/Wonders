@@ -2,6 +2,7 @@
 import "./admin.css";
 import "./themes.css";
 import "./fonts.css";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getStaffSettings, requireAdmin } from "@/lib/admin";
 import { staffSettingsAttributes } from "@/lib/staff-settings";
@@ -17,6 +18,10 @@ import {
 import CommandBar from "./components/CommandBar";
 import { NAV } from "./components/nav";
 import { Button, ButtonLink, Mono } from "./components/ui";
+
+export const metadata: Metadata = {
+  title: "Wonders - Admin",
+};
 
 export default async function AdminLayout({
   children,

@@ -2,7 +2,6 @@ import { getStaffSettings, requireAdmin } from "@/lib/admin";
 import { PageHeader } from "../components/ui";
 import SettingsClient from "./SettingsClient";
 
-export const metadata = { title: "Settings · Wonders admin" };
 
 export default async function AdminSettingsPage() {
   const admin = await requireAdmin();

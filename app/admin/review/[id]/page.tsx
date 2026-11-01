@@ -595,7 +595,7 @@ export default async function AdminReviewPanelPage({
       </div>
 
       <aside className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto lg:pr-1">
-        <Tabs variant="segmented" tabs={rightTabs} />
+        <Tabs tabs={rightTabs} />
       </aside>
     </div>
   );

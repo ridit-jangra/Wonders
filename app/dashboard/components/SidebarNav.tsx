@@ -7,7 +7,6 @@ const links = [
   { href: "/dashboard", label: "Dashboard :)", src: "/button-template-1.png" },
   { href: "/wonders", label: "Wonders :D", src: "/button-template-2.png" },
   { href: "/explore", label: "Explore :3", src: "/button-template-3.png" },
-  { href: "/refers", label: "Refers <3", src: "/button-template-1.png" },
 ];
 
 export default function SidebarNav({
@@ -34,13 +33,22 @@ export default function SidebarNav({
           </span>
         </Link>
       ))}
+      <div className="mt-auto flex flex-col gap-2">
+        <Link
+          href="/refers"
+          onClick={onNavigateAction}
+          className="ml-6 self-start font-finger-paint text-xl text-[#16213E] underline decoration-[#16213E]/40 underline-offset-4 hover:decoration-[#16213E]"
+        >
+          refer friends, get a pin &lt;3
+        </Link>
       <Link
         href="/docs"
         onClick={onNavigateAction}
-        className="mt-auto ml-6 self-start font-finger-paint text-xl text-[#16213E] underline decoration-[#16213E]/40 underline-offset-4 hover:decoration-[#16213E]"
+        className="ml-6 self-start font-finger-paint text-xl text-[#16213E] underline decoration-[#16213E]/40 underline-offset-4 hover:decoration-[#16213E]"
       >
         need help? read the docs :3
       </Link>
+      </div>
       <a
         href="/api/hc-auth/logout"
         onClick={onNavigateAction}

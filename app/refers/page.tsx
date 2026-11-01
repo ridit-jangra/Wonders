@@ -8,6 +8,7 @@ import Sidebar from "@/app/dashboard/components/Sidebar";
 import { Profile } from "@/app/dashboard/components/Profile";
 import LocalTime from "@/app/dashboard/components/LocalTime";
 import CopyLink from "./CopyLink";
+import PinHero from "./PinHero";
 
 export const metadata = { title: "Refers - Wonders" };
 
@@ -70,50 +71,7 @@ export default async function RefersPage() {
             </Panel>
           )}
 
-          <Panel className="relative overflow-hidden md:p-0">
-            <img
-              src="/hc-pin-container.png"
-              alt=""
-              className="pointer-events-none absolute inset-0 hidden h-full w-full object-cover object-left md:block"
-            />
-            <div className="relative flex flex-col items-center gap-6 md:min-h-64 md:flex-row md:justify-center md:py-10 md:pl-[30%] md:pr-[9%]">
-              <img
-                src="/hc-pin.png"
-                alt="Hack Club enamel pin"
-                className="w-64 shrink-0 -rotate-6 drop-shadow-[0_10px_16px_rgba(60,40,10,0.35)] md:hidden"
-              />
-              <div className="flex flex-col gap-3 text-center md:text-left">
-                <h2 className="font-finger-paint text-3xl leading-tight text-[#5C4A2E]">
-                  bring {REFERRALS_FOR_PIN} friends, get a Hack Club pin
-                </h2>
-                <p className="font-finger-paint text-base text-[#5C4A2E]/80">
-                  everyone you refer gets free stickers from us too. only brand new players with an ID verified by
-                  Hack Club count, and they can&apos;t already have a Wonders account.
-                </p>
-                <div className="mt-1 flex items-center justify-center gap-2 md:justify-start">
-                  {Array.from({ length: REFERRALS_FOR_PIN }, (_, i) => (
-                    <span
-                      key={i}
-                      className={`flex h-11 w-11 items-center justify-center rounded-full border-2 font-finger-paint text-lg transition ${
-                        i < progress
-                          ? "border-[#4f7a3d] bg-[#86c77a] text-[#17301a]"
-                          : "border-dashed border-[#8C8368]/60 text-[#8C8368]"
-                      }`}
-                    >
-                      {i < progress ? "✓" : i + 1}
-                    </span>
-                  ))}
-                </div>
-                <p className="font-finger-paint text-lg text-[#5C4A2E]">
-                  {stats.pinSentAt
-                    ? "your pin is on its way :D"
-                    : left === 0
-                      ? "you did it! we'll send your pin soon :D"
-                      : `${left} more to go :3`}
-                </p>
-              </div>
-            </div>
-          </Panel>
+          <PinHero progress={progress} left={left} pinSent={Boolean(stats.pinSentAt)} />
 
           <Panel>
             <h2 className="mb-3 font-finger-paint text-2xl text-[#5C4A2E]">your link</h2>

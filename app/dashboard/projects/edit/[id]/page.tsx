@@ -608,6 +608,15 @@ export default async function EditProjectPage({
             >
               {lockedLabel}
             </button>
+            {project.status === "in_review" && (
+              <SubmitButton
+                formAction={unshipProjectAction}
+                pendingLabel="unshipping... :3"
+                className="w-full rounded-md bg-[#A8C7E0] px-4 py-2 font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-48"
+              >
+                Unship it :c
+              </SubmitButton>
+            )}
           </div>
         )}
       </form>
@@ -623,19 +632,6 @@ export default async function EditProjectPage({
             </p>
           )}
         </div>
-      )}
-      {project.status === "in_review" && (
-        <form action={unshipProjectAction} className="flex w-full flex-col gap-2 md:max-w-[90%]">
-          <p className="font-finger-paint text-[#5C4A2E]/70">
-            need to change something? pull it back to building :3
-          </p>
-          <SubmitButton
-            pendingLabel="unshipping... :3"
-            className="w-full rounded-md bg-[#F2B3AD] px-4 py-2 font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-48"
-          >
-            Unship it :c
-          </SubmitButton>
-        </form>
       )}
       <Journal
         projectId={Number(project.id)}

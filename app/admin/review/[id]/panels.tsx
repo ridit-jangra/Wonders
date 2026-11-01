@@ -102,13 +102,25 @@ export async function HackatimePanel({
 
   const repoName = matchKey((githubUrl ?? "").replace(/\/+$/, "").replace(/\.git$/, "").split("/").pop() ?? "");
   const titleName = matchKey(projectTitle);
-  const matching = report.projects.filter((project) => {
+  const linked = report.projects.filter((project) => linkedProjects.includes(project.name));
+  const matched = report.projects.filter((project) => {
+    if (linkedProjects.includes(project.name)) return false;
     const name = matchKey(project.name);
-    return (
-      linkedProjects.includes(project.name) ||
-      (name !== "" && (name === repoName || name === titleName))
-    );
+    return name !== "" && (name === repoName || name === titleName);
   });
+  const row = (project: (typeof report.projects)[number]) => (
+    <tr key={project.name}>
+      <td className="font-bold">{project.name}</td>
+      <td>
+        <Mono>{project.text}</Mono>
+      </td>
+      <td>
+        <Muted>
+          <Mono>{project.percent.toFixed(1)}%</Mono>
+        </Muted>
+      </td>
+    </tr>
+  );
 
   return (
     <div>
@@ -127,27 +139,18 @@ export async function HackatimePanel({
           </>
         )}
       </p>
-      {matching.length === 0 ? (
-        <EmptyState title="No matching Hackatime project" icon="clock">
-          None of this user&apos;s Hackatime projects are linked to this wonder or named like the repo or the wonder&apos;s title.
+      {linked.length === 0 ? (
+        <EmptyState title="No linked Hackatime project" icon="clock">
+          The player didn&apos;t link a Hackatime project to this wonder.
         </EmptyState>
       ) : (
-        <PaginatedTable
-          headers={["Project", "Time", "Share"]}
-          rows={matching.map((project) => (
-            <tr key={project.name}>
-              <td className="font-bold">{project.name}</td>
-              <td>
-                <Mono>{project.text}</Mono>
-              </td>
-              <td>
-                <Muted>
-                  <Mono>{project.percent.toFixed(1)}%</Mono>
-                </Muted>
-              </td>
-            </tr>
-          ))}
-        />
+        <PaginatedTable headers={["Project", "Time", "Share"]} rows={linked.map(row)} />
+      )}
+      {matched.length > 0 && (
+        <>
+          <p className="hc-heading border-y border-[var(--border)] px-4 py-3 text-sm">Matched</p>
+          <PaginatedTable headers={["Project", "Time", "Share"]} rows={matched.map(row)} />
+        </>
       )}
     </div>
   );

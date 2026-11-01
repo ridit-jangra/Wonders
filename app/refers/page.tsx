@@ -22,7 +22,7 @@ async function siteOrigin() {
 
 function Stat({ value, label }: { value: number; label: string }) {
   return (
-    <div className="flex flex-1 flex-col items-center rounded-md bg-[#F4F0DC] px-4 py-4">
+    <div className="flex flex-1 flex-col items-center rounded-md bg-[#E7E2C9] px-4 py-4">
       <span className="font-poppins text-4xl font-semibold text-[#5C4A2E]">{value}</span>
       <span className="font-finger-paint text-sm text-[#5C4A2E]/70">{label}</span>
     </div>
@@ -86,7 +86,7 @@ export default async function RefersPage() {
                 ["2", "they sign up", "a brand new player logs in, gets their ID verified by Hack Club and finishes onboarding."],
                 ["3", "everyone gets stuff", <>they get stickers, you get a pin after <span className="font-poppins">{REFERRALS_FOR_PIN}</span> friends.</>],
               ] as [string, string, React.ReactNode][]).map(([n, title, text]) => (
-                <li key={n} className="rounded-md bg-[#F4F0DC] p-4">
+                <li key={n} className="rounded-md bg-[#E7E2C9] p-4">
                   <span className="font-finger-paint text-3xl text-[#c9a227]">{n}</span>
                   <p className="font-finger-paint text-lg text-[#5C4A2E]">{title}</p>
                   <p className="font-finger-paint text-sm text-[#5C4A2E]/70">{text}</p>
@@ -106,11 +106,11 @@ export default async function RefersPage() {
             <Panel>
               <h2 className="mb-3 font-finger-paint text-2xl text-[#5C4A2E]">who joined</h2>
               {stats.referred.length === 0 ? (
-                <p className="font-finger-paint text-base text-[#5C4A2E]/70">nobody yet. send your link!</p>
+                <p className="rounded-md bg-[#E7E2C9] px-4 py-3 font-finger-paint text-base text-[#5C4A2E]/70">nobody yet. send your link!</p>
               ) : (
                 <ul className="flex flex-col gap-2">
                   {stats.referred.map((r) => (
-                    <li key={r.id} className="flex items-center gap-3 rounded-md bg-[#F4F0DC] p-3">
+                    <li key={r.id} className="flex items-center gap-3 rounded-md bg-[#E7E2C9] p-3">
                       {r.avatar ? (
                         <img src={r.avatar} alt="" className="h-10 w-10 rounded-full" />
                       ) : (
@@ -138,13 +138,13 @@ export default async function RefersPage() {
             <Panel>
               <h2 className="mb-3 font-finger-paint text-2xl text-[#5C4A2E]">recent clicks</h2>
               {stats.recentClicks.length === 0 ? (
-                <p className="font-finger-paint text-base text-[#5C4A2E]/70">no clicks yet.</p>
+                <p className="rounded-md bg-[#E7E2C9] px-4 py-3 font-finger-paint text-base text-[#5C4A2E]/70">no clicks yet.</p>
               ) : (
                 <ul className="flex flex-col gap-2">
                   {stats.recentClicks.map((at, i) => (
                     <li
                       key={`${at}-${i}`}
-                      className="flex items-center justify-between rounded-md bg-[#F4F0DC] px-4 py-3 font-finger-paint text-sm text-[#5C4A2E]"
+                      className="flex items-center justify-between rounded-md bg-[#E7E2C9] px-4 py-3 font-finger-paint text-sm text-[#5C4A2E]"
                     >
                       <span>someone opened your link</span>
                       <span className="text-[#5C4A2E]/60">

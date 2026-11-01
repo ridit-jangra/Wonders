@@ -10,6 +10,7 @@ import LocalTime from "@/app/dashboard/components/LocalTime";
 import CopyLink from "./CopyLink";
 import PinHero from "./PinHero";
 import Panel from "./Panel";
+import TopBlur from "@/app/dashboard/components/TopBlur";
 
 export const metadata = { title: "Refers - Wonders" };
 
@@ -50,6 +51,7 @@ export default async function RefersPage() {
       <div className="pointer-events-none fixed top-0 right-[2%] bottom-0 left-0 -z-10 hidden md:left-[calc(100vh*554/1080-10vh)] md:block">
         <img src="/new-or-edit-projects-template.png" alt="" className="h-full w-full object-fill" />
       </div>
+      <TopBlur />
       <Sidebar />
       <Profile />
       <main className="relative min-w-0 flex-1 bg-[#F0EBD1] px-6 pb-10 pt-24 sm:px-10 md:bg-transparent md:py-16 md:pl-4 md:pr-14 lg:py-24">

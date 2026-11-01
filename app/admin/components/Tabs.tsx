@@ -13,18 +13,20 @@ export default function Tabs({
   variant = "underline",
   sticky = false,
   panelClassName = "",
+  fill = false,
 }: {
   tabs: TabItem[];
   variant?: "underline" | "segmented";
   sticky?: boolean;
   panelClassName?: string;
+  fill?: boolean;
 }) {
   const [active, setActive] = useState(tabs[0]?.key ?? "");
 
   return (
-    <div>
+    <div className={fill ? "flex h-full min-h-0 flex-col" : undefined}>
       <div
-        className={`${variant === "segmented" ? "hc-segmented" : "hc-tabs"} ${sticky ? "hc-tabs-sticky" : ""}`}
+        className={`${fill ? "shrink-0" : ""} ${variant === "segmented" ? "hc-segmented" : "hc-tabs"} ${sticky ? "hc-tabs-sticky" : ""}`}
         role="tablist"
       >
         {tabs.map((tab) => (
@@ -40,9 +42,14 @@ export default function Tabs({
           </button>
         ))}
       </div>
-      <div className={panelClassName}>
+      <div className={fill ? "min-h-0 flex-1 overflow-y-auto" : panelClassName}>
         {tabs.map((tab) => (
-          <div key={tab.key} role="tabpanel" hidden={tab.key !== active}>
+          <div
+            key={tab.key}
+            role="tabpanel"
+            hidden={tab.key !== active}
+            className={fill ? "h-full [&>*:only-child]:min-h-full" : undefined}
+          >
             {tab.content}
           </div>
         ))}

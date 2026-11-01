@@ -303,7 +303,7 @@ export default async function AdminReviewPanelPage({
     ) : null;
 
   const reviewTab = (
-    <div className="flex flex-col gap-4 pt-4">
+    <div className="flex flex-col gap-4 pt-4 [&>*:only-child]:flex-1">
       {project.status === "in_review" && (
         <Card>
           <h3 className="hc-heading text-base">First pass</h3>
@@ -595,8 +595,8 @@ export default async function AdminReviewPanelPage({
         </Card>
       </div>
 
-      <aside className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto lg:pr-1">
-        <Tabs tabs={rightTabs} />
+      <aside className="min-w-0 lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)] lg:self-start">
+        <Tabs tabs={rightTabs} fill />
       </aside>
     </ResizableSplit>
   );

@@ -12,10 +12,12 @@ export default function Tabs({
   tabs,
   variant = "underline",
   sticky = false,
+  panelClassName = "",
 }: {
   tabs: TabItem[];
   variant?: "underline" | "segmented";
   sticky?: boolean;
+  panelClassName?: string;
 }) {
   const [active, setActive] = useState(tabs[0]?.key ?? "");
 
@@ -38,11 +40,13 @@ export default function Tabs({
           </button>
         ))}
       </div>
-      {tabs.map((tab) => (
-        <div key={tab.key} role="tabpanel" hidden={tab.key !== active}>
-          {tab.content}
-        </div>
-      ))}
+      <div className={panelClassName}>
+        {tabs.map((tab) => (
+          <div key={tab.key} role="tabpanel" hidden={tab.key !== active}>
+            {tab.content}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

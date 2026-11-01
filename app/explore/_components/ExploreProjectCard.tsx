@@ -46,7 +46,7 @@ function StackedCard({ project }: { project: ExploreProject }) {
           {TAG[project.tag]}
         </span>
       </div>
-      <p className="line-clamp-4 font-poppins text-sm text-[#5C4A2E]">{project.description}</p>
+      <p className="line-clamp-4 font-finger-paint text-sm text-[#5C4A2E]">{project.description}</p>
       {(project.repo_url || project.demo_url) && (
         <div className="flex gap-3">
           {project.repo_url && (
@@ -96,7 +96,7 @@ function WideCard({ project }: { project: ExploreProject }) {
           {project.name}
         </h3>
       </div>
-      <p className="absolute top-[26%] left-[43%] h-[39%] w-[56%] overflow-hidden font-poppins text-xs text-[#5C4A2E]">
+      <p className="absolute top-[26%] left-[43%] h-[39%] w-[56%] overflow-hidden font-finger-paint text-xs text-[#5C4A2E]">
         {project.description}
       </p>
       {project.repo_url && (

@@ -41,7 +41,7 @@ export default function ProjectCard({
           {project.title}
         </h3>
       </div>
-      <p className="absolute top-[66%] left-[14%] right-[6%] h-[24%] overflow-hidden font-poppins text-xs text-[#5C4A2E]">
+      <p className="absolute top-[66%] left-[14%] right-[6%] h-[24%] overflow-hidden font-finger-paint text-xs text-[#5C4A2E]">
         {project.description}
       </p>
       <span className="absolute bottom-[5%] right-[9%] font-finger-paint text-[10px] text-[#7A6B4A]">

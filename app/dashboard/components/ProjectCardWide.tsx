@@ -69,7 +69,7 @@ export default function ProjectCardWide({
           {project.title}
         </h3>
       </div>
-      <p className="absolute top-[26%] left-[43%] h-[39%] w-[56%] overflow-hidden font-poppins text-xs text-[#5C4A2E]">
+      <p className="absolute top-[26%] left-[43%] h-[39%] w-[56%] overflow-hidden font-finger-paint text-xs text-[#5C4A2E]">
         {project.description}
       </p>
       {editable ? (

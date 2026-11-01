@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
 import { getSessionProfile } from "@/lib/profiles";
+import { canUseReferrals } from "@/lib/referrals";
 import { getProjects } from "@/lib/projects";
 import Sidebar from "@/app/dashboard/components/Sidebar";
 import { Profile } from "@/app/dashboard/components/Profile";
@@ -33,7 +34,7 @@ export default async function ProjectsPage() {
         src="/bg-effect-4.png"
         alt=""
       />
-      <Sidebar />
+      <Sidebar showRefers={await canUseReferrals(profile.slack_id)} />
       <Profile />
       <main className="relative min-w-0 flex-1 pr-6 pt-20 md:pr-10 md:pt-10">
         <h1 className="font-finger-paint text-4xl text-[#BFD8A8]">

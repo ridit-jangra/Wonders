@@ -1,9 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { cookies, headers } from "next/headers";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
 import { getSessionProfile } from "@/lib/profiles";
-import { getReferralStats, getReferredBy, REFERRALS_FOR_PIN } from "@/lib/referrals";
+import { canUseReferrals, getReferralStats, getReferredBy, REFERRALS_FOR_PIN } from "@/lib/referrals";
 import Sidebar from "@/app/dashboard/components/Sidebar";
 import { Profile } from "@/app/dashboard/components/Profile";
 import LocalTime from "@/app/dashboard/components/LocalTime";
@@ -35,6 +35,7 @@ export default async function RefersPage() {
   if (!session) redirect("/login");
   const profile = await getSessionProfile(session);
   if (!profile?.interest) redirect("/onboarding");
+  if (!(await canUseReferrals(profile.slack_id))) notFound();
 
   const [stats, referredBy, origin] = await Promise.all([
     getReferralStats(profile.id),
@@ -52,7 +53,7 @@ export default async function RefersPage() {
         <img src="/new-or-edit-projects-template.png" alt="" className="h-full w-full object-fill" />
       </div>
       <TopBlur />
-      <Sidebar />
+      <Sidebar showRefers />
       <Profile />
       <main className="relative min-w-0 flex-1 bg-[#F0EBD1] px-6 pb-10 pt-24 sm:px-10 md:bg-transparent md:py-16 md:pl-4 md:pr-14 lg:py-24">
         <div className="flex flex-col gap-6 md:max-w-[90%]">

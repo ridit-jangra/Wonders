@@ -1,6 +1,8 @@
 import "server-only";
 import crypto from "node:crypto";
 import { sql } from "@/lib/db";
+import { getStaffAccess } from "@/lib/admin";
+import { isStaff } from "@/lib/security/roles";
 
 export const REFERRAL_COOKIE = "wonders_ref";
 export const REFERRAL_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
@@ -21,13 +23,18 @@ export function visitorHash(ip: string, userAgent: string) {
     .slice(0, 32);
 }
 
+export async function canUseReferrals(slackId: string) {
+  return isStaff(await getStaffAccess(slackId));
+}
+
 export async function findReferrerBySlug(slug: string) {
   if (!isReferralSlug(slug)) return null;
   const [row] = await sql<{ id: string; slack_id: string; name: string }[]>`
     select id, slack_id, coalesce(nullif(slack_display_name, ''), nullif(first_name, ''), 'a friend') as name
     from profiles where referral_slug = ${slug}
   `;
-  return row ?? null;
+  if (!row || !(await canUseReferrals(row.slack_id))) return null;
+  return row;
 }
 
 export async function recordClick(referrerId: string, hash: string) {

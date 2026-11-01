@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
 import { getSessionProfile } from "@/lib/profiles";
+import { canUseReferrals } from "@/lib/referrals";
 import Sidebar from "./components/Sidebar";
 import TopBlur from "./components/TopBlur";
 import { Profile } from "./components/Profile";
@@ -33,7 +34,7 @@ export default async function DashLayout({
         alt=""
       />
       <TopBlur />
-      <Sidebar />
+      <Sidebar showRefers={await canUseReferrals(profile.slack_id)} />
       <main className="relative min-w-0 flex-1">{children}</main>
       <Profile />
     </div>

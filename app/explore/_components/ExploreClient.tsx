@@ -19,7 +19,7 @@ interface Project {
 
 type Tab = "wonders";
 
-export default function ExploreClient({ loggedIn }: { loggedIn: boolean }) {
+export default function ExploreClient({ loggedIn, showRefers = false }: { loggedIn: boolean; showRefers?: boolean }) {
   const [tab, setTab] = useState<Tab>("wonders");
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,7 +44,7 @@ export default function ExploreClient({ loggedIn }: { loggedIn: boolean }) {
         src="/bg-effect-4.png"
         alt=""
       />
-      {loggedIn && <Sidebar />}
+      {loggedIn && <Sidebar showRefers={showRefers} />}
       <main
         className={`relative min-w-0 flex-1 pr-6 md:pr-10 md:pt-10 ${loggedIn ? "pt-20 pl-6 md:pl-0" : "pt-10 pl-6 md:pl-10"}`}
       >

@@ -85,11 +85,11 @@ export default async function RefersPage() {
           <Panel>
             <h2 className="mb-4 font-finger-paint text-2xl text-[#5C4A2E]">how it works</h2>
             <ol className="grid gap-3 md:grid-cols-3">
-              {[
+              {([
                 ["1", "share your link", "send it anywhere: slack, discord, your group chat."],
                 ["2", "they sign up", "a brand new player logs in, gets their ID verified by Hack Club and finishes onboarding."],
                 ["3", "everyone gets stuff", <>they get stickers, you get a pin after <span className="font-poppins">{REFERRALS_FOR_PIN}</span> friends.</>],
-              ].map(([n, title, text]) => (
+              ] as [string, string, React.ReactNode][]).map(([n, title, text]) => (
                 <li key={n} className="rounded-2xl bg-[#F4F0DC] p-4">
                   <span className="font-finger-paint text-3xl text-[#c9a227]">{n}</span>
                   <p className="font-finger-paint text-lg text-[#5C4A2E]">{title}</p>

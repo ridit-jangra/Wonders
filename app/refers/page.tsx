@@ -53,7 +53,7 @@ export default async function RefersPage() {
       <Sidebar />
       <Profile />
       <main className="relative min-w-0 flex-1 bg-[#F0EBD1] px-6 pb-10 pt-24 sm:px-10 md:bg-transparent md:py-16 md:pl-4 md:pr-14 lg:py-24">
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6 md:max-w-[90%]">
           <h1 className="font-finger-paint text-3xl text-[#5C4A2E] sm:text-4xl lg:text-5xl">Refers</h1>
 
           {referredBy && (

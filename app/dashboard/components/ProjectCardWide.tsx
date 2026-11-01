@@ -97,7 +97,7 @@ export default function ProjectCardWide({
           </span>
         </LinkPending>
       </Link>
-      <span className="absolute bottom-[18%] right-[2%] font-finger-paint text-[10px] text-[#7A6B4A]">
+      <span className="absolute bottom-[12%] right-[2%] font-finger-paint text-[13px] text-[#7A6B4A]">
         {STATUS_LABEL[project.status]}
       </span>
     </div>

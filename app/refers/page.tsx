@@ -30,7 +30,7 @@ function Panel({ children, className = "" }: { children: React.ReactNode; classN
 function Stat({ value, label }: { value: number; label: string }) {
   return (
     <div className="flex flex-1 flex-col items-center rounded-2xl bg-[#F4F0DC] px-4 py-4">
-      <span className="font-finger-paint text-4xl text-[#5C4A2E]">{value}</span>
+      <span className="font-poppins text-4xl font-semibold text-[#5C4A2E]">{value}</span>
       <span className="font-finger-paint text-sm text-[#5C4A2E]/70">{label}</span>
     </div>
   );
@@ -88,7 +88,7 @@ export default async function RefersPage() {
               {[
                 ["1", "share your link", "send it anywhere: slack, discord, your group chat."],
                 ["2", "they sign up", "a brand new player logs in, gets their ID verified by Hack Club and finishes onboarding."],
-                ["3", "everyone gets stuff", `they get stickers, you get a pin after ${REFERRALS_FOR_PIN} friends.`],
+                ["3", "everyone gets stuff", <>they get stickers, you get a pin after <span className="font-poppins">{REFERRALS_FOR_PIN}</span> friends.</>],
               ].map(([n, title, text]) => (
                 <li key={n} className="rounded-2xl bg-[#F4F0DC] p-4">
                   <span className="font-finger-paint text-3xl text-[#c9a227]">{n}</span>

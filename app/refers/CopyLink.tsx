@@ -35,14 +35,14 @@ export default function CopyLink({ url }: { url: string }) {
         <button
           type="button"
           onClick={copy}
-          className="flex-1 rounded-md bg-[#5C4A2E] px-6 py-3 font-finger-paint text-lg text-[#E7E2C9] transition hover:-translate-y-0.5 hover:bg-[#4a3b24] sm:flex-none"
+          className={`flex-1 rounded-md px-6 py-3 font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:flex-none ${copied ? "bg-[#D1E4B5]" : "bg-[#A8C7E0]"}`}
         >
           {copied ? "copied :D" : "copy link"}
         </button>
         <button
           type="button"
           onClick={share}
-          className="rounded-md border-2 border-[#5C4A2E] px-5 py-3 font-finger-paint text-lg text-[#5C4A2E] transition hover:-translate-y-0.5 sm:hidden"
+          className="rounded-md bg-[#F2B3AD] px-5 py-3 font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:hidden"
         >
           share
         </button>

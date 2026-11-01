@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
+import { Icon } from "./ui";
 
 const MIN_AUDIT_LENGTH = 20;
 const MIN_FEEDBACK_LENGTH = 10;
@@ -276,9 +277,9 @@ export default function ReviewPassForm({
       </div>
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <StepPill number={1} label="Submission" active={step === 1} disabled={false} onClick={() => setStep(1)} />
-        <span className="hc-muted hc-arrow">-&gt;</span>
+        <Icon glyph="view-forward" size={18} className="hc-muted" />
         <StepPill number={2} label="Audit notes" active={step === 2} disabled={false} onClick={() => setStep(2)} />
-        <span className="hc-muted hc-arrow">-&gt;</span>
+        <Icon glyph="view-forward" size={18} className="hc-muted" />
         <StepPill number={3} label="Verdict" active={step === 3} disabled={false} onClick={() => setStep(3)} />
       </div>
 
@@ -305,7 +306,7 @@ export default function ReviewPassForm({
 
         <div className="flex justify-end">
           <button type="button" className="hc-btn" onClick={() => setStep(2)}>
-            Next: Audit notes <span className="hc-arrow">-&gt;</span>
+            Next: Audit notes <Icon glyph="view-forward" size={16} className="inline-block align-middle" />
           </button>
         </div>
       </div>
@@ -357,7 +358,7 @@ export default function ReviewPassForm({
             <span className="hc-arrow">&lt;-</span> Back
           </button>
           <button type="button" className="hc-btn" onClick={() => setStep(3)}>
-            Next: Verdict <span className="hc-arrow">-&gt;</span>
+            Next: Verdict <Icon glyph="view-forward" size={16} className="inline-block align-middle" />
           </button>
         </div>
       </div>

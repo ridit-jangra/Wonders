@@ -509,7 +509,7 @@ export function HistoryTimeline({
         <li key={entry.id}>
           <div className="flex flex-wrap items-center gap-2">
             {entry.from_status ? <StatusBadge status={entry.from_status} /> : <Badge>New</Badge>}
-            <Muted>→</Muted>
+            <Icon glyph="view-forward" size={18} className="hc-muted" />
             <StatusBadge status={entry.to_status} />
             {linkProjects && (
               <TextLink href={`/admin/review/${entry.project_id}`} className="hc-muted">

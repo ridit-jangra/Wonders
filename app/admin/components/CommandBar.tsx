@@ -25,6 +25,7 @@ function isTypingTarget(target: EventTarget | null) {
 export default function CommandBar({ items }: { items: CommandItem[] }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [index, setIndex] = useState(0);
@@ -79,6 +80,13 @@ export default function CommandBar({ items }: { items: CommandItem[] }) {
     }
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return;
+    listRef.current
+      ?.querySelector("[data-active]")
+      ?.scrollIntoView({ block: "nearest" });
+  }, [open, index]);
+
   return (
     <>
       <button type="button" className="hc-cmd-trigger" onClick={show}>
@@ -119,7 +127,7 @@ export default function CommandBar({ items }: { items: CommandItem[] }) {
                 }
               }}
             />
-            <ul className="hc-cmd-list">
+            <ul ref={listRef} className="hc-cmd-list">
               {results.length === 0 && <li className="hc-cmd-empty">Nothing matches</li>}
               {results.map((item, i) => (
                 <li key={item.href}>

@@ -4,7 +4,7 @@ import { findOtherYswsEntries } from "@/lib/ysws";
 import { SECOND_PASS_CHECKS, type ProjectReview } from "@/lib/reviews";
 import type { JournalEntry } from "@/lib/journal";
 import Markdown from "../../components/Markdown";
-import { Badge, EmptyState, Mono, Muted, TextLink } from "../../components/ui";
+import { Badge, EmptyState, Icon, Mono, Muted, TextLink } from "../../components/ui";
 import PaginatedTable from "../../components/PaginatedTable";
 
 function formatDate(value: string | number) {
@@ -50,7 +50,7 @@ export async function CommitsPanel({ githubUrl }: { githubUrl: string | null }) 
     <div>
       <p className="hc-caption border-b border-[var(--border)] px-4 py-3 text-sm">
         <Mono>{result.repo}</Mono> · {result.commits.length}
-        {result.commits.length === 100 ? "+" : ""} commits · {formatDate(oldest.date)} → {formatDate(newest.date)}
+        {result.commits.length === 100 ? "+" : ""} commits · {formatDate(oldest.date)} <Icon glyph="view-forward" size={14} className="inline-block align-middle" /> {formatDate(newest.date)}
       </p>
       <PaginatedTable
         headers={["When", "Commit", "Message", "Author"]}

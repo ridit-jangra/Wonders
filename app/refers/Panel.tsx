@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 export default function Panel({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <section className={`@container relative rounded-3xl bg-[#D7CFAC] px-5 pb-14 pt-5 md:px-7 md:pt-7 ${className}`}>
+    <section className={`@container relative rounded-lg bg-[#D7CFAC] px-5 pb-14 pt-5 md:px-7 md:pt-7 ${className}`}>
       <img
         src="/container-note.png"
         alt=""

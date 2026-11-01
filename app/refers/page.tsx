@@ -22,7 +22,7 @@ async function siteOrigin() {
 
 function Stat({ value, label }: { value: number; label: string }) {
   return (
-    <div className="flex flex-1 flex-col items-center rounded-2xl bg-[#F4F0DC] px-4 py-4">
+    <div className="flex flex-1 flex-col items-center rounded-md bg-[#F4F0DC] px-4 py-4">
       <span className="font-poppins text-4xl font-semibold text-[#5C4A2E]">{value}</span>
       <span className="font-finger-paint text-sm text-[#5C4A2E]/70">{label}</span>
     </div>
@@ -54,7 +54,7 @@ export default async function RefersPage() {
           <h1 className="font-finger-paint text-4xl text-[#BFD8A8]">Refers</h1>
 
           {referredBy && (
-            <div className="rounded-3xl bg-[#BFD8A8]/90 p-5 md:p-7">
+            <div className="rounded-lg bg-[#BFD8A8]/90 p-5 md:p-7">
               <p className="font-finger-paint text-xl text-[#2f4a24]">
                 {referredBy.name} invited you!{" "}
                 {referredBy.sticker_sent_at
@@ -83,7 +83,7 @@ export default async function RefersPage() {
                 ["2", "they sign up", "a brand new player logs in, gets their ID verified by Hack Club and finishes onboarding."],
                 ["3", "everyone gets stuff", <>they get stickers, you get a pin after <span className="font-poppins">{REFERRALS_FOR_PIN}</span> friends.</>],
               ] as [string, string, React.ReactNode][]).map(([n, title, text]) => (
-                <li key={n} className="rounded-2xl bg-[#F4F0DC] p-4">
+                <li key={n} className="rounded-md bg-[#F4F0DC] p-4">
                   <span className="font-finger-paint text-3xl text-[#c9a227]">{n}</span>
                   <p className="font-finger-paint text-lg text-[#5C4A2E]">{title}</p>
                   <p className="font-finger-paint text-sm text-[#5C4A2E]/70">{text}</p>
@@ -107,7 +107,7 @@ export default async function RefersPage() {
               ) : (
                 <ul className="flex flex-col gap-2">
                   {stats.referred.map((r) => (
-                    <li key={r.id} className="flex items-center gap-3 rounded-2xl bg-[#F4F0DC] p-3">
+                    <li key={r.id} className="flex items-center gap-3 rounded-md bg-[#F4F0DC] p-3">
                       {r.avatar ? (
                         <img src={r.avatar} alt="" className="h-10 w-10 rounded-full" />
                       ) : (
@@ -141,7 +141,7 @@ export default async function RefersPage() {
                   {stats.recentClicks.map((at, i) => (
                     <li
                       key={`${at}-${i}`}
-                      className="flex items-center justify-between rounded-2xl bg-[#F4F0DC] px-4 py-3 font-finger-paint text-sm text-[#5C4A2E]"
+                      className="flex items-center justify-between rounded-md bg-[#F4F0DC] px-4 py-3 font-finger-paint text-sm text-[#5C4A2E]"
                     >
                       <span>someone opened your link</span>
                       <span className="text-[#5C4A2E]/60">

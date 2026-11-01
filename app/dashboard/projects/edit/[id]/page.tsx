@@ -313,7 +313,7 @@ export default async function EditProjectPage({
 
     revalidatePath("/dashboard");
     revalidatePath("/wonders");
-    redirect("/wonders");
+    redirect(`/dashboard/projects/edit/${id}`);
   }
 
   async function unshipProjectAction() {

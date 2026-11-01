@@ -55,8 +55,8 @@ export default async function RefersPage() {
       <img className="fixed inset-0 -z-10 h-full w-full object-cover" src="/bg-effect-4.png" alt="" />
       <Sidebar />
       <Profile />
-      <main className="relative min-w-0 flex-1 px-4 pb-16 pt-20 md:px-10 md:pt-10">
-        <div className="mx-auto flex max-w-4xl flex-col gap-6">
+      <main className="relative min-w-0 flex-1 pb-16 pl-4 pr-4 pt-20 md:pl-0 md:pr-10 md:pt-10">
+        <div className="flex flex-col gap-6">
           <h1 className="font-finger-paint text-4xl text-[#BFD8A8]">Refers</h1>
 
           {referredBy && (
@@ -82,8 +82,8 @@ export default async function RefersPage() {
                   bring {REFERRALS_FOR_PIN} friends, get a Hack Club pin
                 </h2>
                 <p className="font-finger-paint text-base text-[#5C4A2E]/80">
-                  everyone you refer gets free stickers from us too. only brand new players count: your friend
-                  can&apos;t already have a Wonders account.
+                  everyone you refer gets free stickers from us too. only brand new players with an ID verified by
+                  Hack Club count, and they can&apos;t already have a Wonders account.
                 </p>
                 <div className="mt-1 flex items-center justify-center gap-2 md:justify-start">
                   {Array.from({ length: REFERRALS_FOR_PIN }, (_, i) => (
@@ -124,7 +124,7 @@ export default async function RefersPage() {
             <ol className="grid gap-3 md:grid-cols-3">
               {[
                 ["1", "share your link", "send it anywhere: slack, discord, your group chat."],
-                ["2", "they sign up", "a brand new player logs in and finishes onboarding."],
+                ["2", "they sign up", "a brand new player logs in, gets their ID verified by Hack Club and finishes onboarding."],
                 ["3", "everyone gets stuff", `they get stickers, you get a pin after ${REFERRALS_FOR_PIN} friends.`],
               ].map(([n, title, text]) => (
                 <li key={n} className="rounded-2xl bg-[#F4F0DC] p-4">
@@ -168,7 +168,7 @@ export default async function RefersPage() {
                           r.counted ? "bg-[#86c77a] text-[#17301a]" : "bg-[#8C8368]/25 text-[#5C4A2E]"
                         }`}
                       >
-                        {r.counted ? "counted" : "setting up"}
+                        {r.counted ? "counted" : r.verified ? "setting up" : "needs ID check"}
                       </span>
                     </li>
                   ))}

@@ -6,7 +6,7 @@ export const REFERRAL_COOKIE = "wonders_ref";
 export const REFERRAL_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
 export const REFERRALS_FOR_PIN = 5;
 
-const SLUG_PATTERN = /^[a-f0-9]{10}$/;
+const SLUG_PATTERN = /^[a-f0-9]{5,10}$/;
 
 export function isReferralSlug(value: string | undefined | null): value is string {
   return Boolean(value && SLUG_PATTERN.test(value));
@@ -68,6 +68,7 @@ export interface ReferralStats {
     avatar: string | null;
     joinedAt: string;
     counted: boolean;
+    verified: boolean;
   }[];
   recentClicks: string[];
   qualified: number;
@@ -83,14 +84,15 @@ export async function getReferralStats(profileId: string): Promise<ReferralStats
     from referral_clicks where referrer_id = ${profileId}
   `;
   const referred = await sql<
-    { id: string; name: string; avatar: string | null; joined_at: string; counted: boolean }[]
+    { id: string; name: string; avatar: string | null; joined_at: string; counted: boolean; verified: boolean }[]
   >`
     select
       r.id,
       coalesce(nullif(p.slack_display_name, ''), nullif(p.first_name, ''), 'new player') as name,
       p.slack_avatar_url as avatar,
       r.created_at as joined_at,
-      (p.interest is not null and p.hca_ysws_eligible is not false) as counted
+      (p.interest is not null and p.hca_verification_status = 'verified' and p.hca_ysws_eligible is not false) as counted,
+      (p.hca_verification_status = 'verified') as verified
     from referrals r
     join profiles p on p.id = r.referred_id
     where r.referrer_id = ${profileId}
@@ -111,6 +113,7 @@ export async function getReferralStats(profileId: string): Promise<ReferralStats
       avatar: r.avatar,
       joinedAt: r.joined_at,
       counted: r.counted,
+      verified: r.verified,
     })),
     recentClicks: recent.map((r) => r.created_at),
     qualified: referred.filter((r) => r.counted).length,
@@ -154,7 +157,7 @@ export async function listPinsDue(): Promise<PinDue[]> {
     join profiles rp on rp.id = r.referred_id
     where p.referral_pin_sent_at is null
       and rp.interest is not null
-      and rp.hca_ysws_eligible is not false
+      and rp.hca_verification_status = 'verified' and rp.hca_ysws_eligible is not false
     group by p.id
     having count(*) >= ${REFERRALS_FOR_PIN}
     order by min(r.created_at)
@@ -170,7 +173,7 @@ export async function listStickersDue(): Promise<StickerDue[]> {
     join profiles p on p.id = r.referrer_id
     where r.sticker_sent_at is null
       and rp.interest is not null
-      and rp.hca_ysws_eligible is not false
+      and rp.hca_verification_status = 'verified' and rp.hca_ysws_eligible is not false
     order by r.created_at
   `;
 }

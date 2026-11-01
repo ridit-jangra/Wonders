@@ -1,3 +1,21 @@
+create or replace function gen_referral_slug() returns text language plpgsql as $$
+declare
+  candidate text;
+  digits int := 5;
+  tries int := 0;
+begin
+  loop
+    candidate := lpad((floor(random() * power(10, digits)))::bigint::text, digits, '0');
+    exit when not exists (select 1 from profiles where referral_slug = candidate);
+    tries := tries + 1;
+    if tries >= 20 then
+      digits := digits + 1;
+      tries := 0;
+    end if;
+  end loop;
+  return candidate;
+end $$;
+
 create table if not exists profiles (
   id uuid primary key default gen_random_uuid(),
   slack_id text not null unique,
@@ -22,7 +40,7 @@ create table if not exists profiles (
   hackatime_token text,
   hackatime_connected_at timestamptz,
   sessions_valid_after timestamptz,
-  referral_slug text not null unique default substr(md5(random()::text || clock_timestamp()::text), 1, 10),
+  referral_slug text not null unique default gen_referral_slug(),
   referral_pin_sent_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -180,7 +198,7 @@ create table if not exists project_journal (
 create index if not exists project_journal_project_id_idx on project_journal (project_id, created_at desc);
 
 alter table profiles add column if not exists referral_slug text not null unique
-  default substr(md5(random()::text || clock_timestamp()::text), 1, 10);
+  default gen_referral_slug();
 alter table profiles add column if not exists referral_pin_sent_at timestamptz;
 
 create table if not exists referral_clicks (

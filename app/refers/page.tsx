@@ -70,12 +70,17 @@ export default async function RefersPage() {
             </Panel>
           )}
 
-          <Panel className="overflow-hidden">
-            <div className="flex flex-col items-center gap-6 md:flex-row">
+          <Panel className="relative overflow-hidden md:p-0">
+            <img
+              src="/hc-pin-container.png"
+              alt=""
+              className="pointer-events-none absolute inset-0 hidden h-full w-full object-cover object-left md:block"
+            />
+            <div className="relative flex flex-col items-center gap-6 md:min-h-64 md:flex-row md:justify-center md:py-10 md:pl-[30%] md:pr-[9%]">
               <img
                 src="/hc-pin.png"
                 alt="Hack Club enamel pin"
-                className="w-64 shrink-0 -rotate-6 drop-shadow-[0_10px_16px_rgba(60,40,10,0.35)] transition hover:rotate-0 md:w-72"
+                className="w-64 shrink-0 -rotate-6 drop-shadow-[0_10px_16px_rgba(60,40,10,0.35)] md:hidden"
               />
               <div className="flex flex-col gap-3 text-center md:text-left">
                 <h2 className="font-finger-paint text-3xl leading-tight text-[#5C4A2E]">

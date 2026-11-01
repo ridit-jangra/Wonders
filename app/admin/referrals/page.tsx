@@ -7,6 +7,7 @@ import {
   listStickersDue,
   markPinSent,
   markStickerSent,
+  refreshPendingVerifications,
   REFERRALS_FOR_PIN,
   referralTotals,
 } from "@/lib/referrals";
@@ -25,6 +26,7 @@ import {
 
 export default async function AdminReferralsPage() {
   await requireAccess(canFulfill);
+  await refreshPendingVerifications();
 
   const [pins, stickers, totals] = await Promise.all([
     listPinsDue(),

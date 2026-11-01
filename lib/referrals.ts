@@ -207,3 +207,49 @@ export async function referralTotals() {
   `;
   return row;
 }
+
+const CHECK_URL = "https://auth.hackclub.com/api/external/check";
+
+const CHECK_RESULTS: Record<string, { status: string; eligible: boolean | null }> = {
+  verified_eligible: { status: "verified", eligible: true },
+  verified_but_over_18: { status: "verified", eligible: false },
+  pending: { status: "pending", eligible: null },
+  needs_submission: { status: "needs_submission", eligible: null },
+  rejected: { status: "ineligible", eligible: false },
+};
+
+async function refreshVerification(profileId: string, slackId: string) {
+  try {
+    const res = await fetch(`${CHECK_URL}?slack_id=${encodeURIComponent(slackId)}`, {
+      signal: AbortSignal.timeout(4000),
+      cache: "no-store",
+    });
+    if (!res.ok) return;
+    const data = (await res.json()) as { result?: string };
+    const mapped = data.result ? CHECK_RESULTS[data.result] : undefined;
+    if (!mapped) return;
+    await sql`
+      update profiles
+      set hca_verification_status = ${mapped.status}, hca_ysws_eligible = ${mapped.eligible}
+      where id = ${profileId}
+        and (hca_verification_status is distinct from ${mapped.status}
+          or hca_ysws_eligible is distinct from ${mapped.eligible})
+    `;
+  } catch {
+    return;
+  }
+}
+
+export async function refreshPendingVerifications(referrerId?: string) {
+  const rows = await sql<{ id: string; slack_id: string }[]>`
+    select p.id, p.slack_id
+    from referrals r
+    join profiles p on p.id = r.referred_id
+    where p.hca_verification_status is distinct from 'verified'
+      and p.hca_verification_status is distinct from 'ineligible'
+      and (${referrerId ?? null}::uuid is null or r.referrer_id = ${referrerId ?? null})
+    order by r.created_at desc
+    limit 25
+  `;
+  await Promise.all(rows.map((row) => refreshVerification(row.id, row.slack_id)));
+}

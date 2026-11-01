@@ -3,7 +3,13 @@ import { notFound, redirect } from "next/navigation";
 import { cookies, headers } from "next/headers";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
 import { getSessionProfile } from "@/lib/profiles";
-import { canUseReferrals, getReferralStats, getReferredBy, REFERRALS_FOR_PIN } from "@/lib/referrals";
+import {
+  canUseReferrals,
+  getReferralStats,
+  getReferredBy,
+  refreshPendingVerifications,
+  REFERRALS_FOR_PIN,
+} from "@/lib/referrals";
 import Sidebar from "@/app/dashboard/components/Sidebar";
 import { Profile } from "@/app/dashboard/components/Profile";
 import LocalTime from "@/app/dashboard/components/LocalTime";
@@ -37,6 +43,7 @@ export default async function RefersPage() {
   if (!profile?.interest) redirect("/onboarding");
   if (!(await canUseReferrals(profile.slack_id))) notFound();
 
+  await refreshPendingVerifications(profile.id);
   const [stats, referredBy, origin] = await Promise.all([
     getReferralStats(profile.id),
     getReferredBy(profile.id),

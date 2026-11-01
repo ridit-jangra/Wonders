@@ -537,7 +537,7 @@ export default async function AdminReviewPanelPage({
         <Card padding="flush">
           <Tabs
             sticky
-            panelClassName="lg:h-[calc(100vh-11rem)] lg:overflow-y-auto"
+            panelClassName="lg:h-[34.25rem] lg:overflow-y-auto"
             tabs={[
               {
                 key: "commits",

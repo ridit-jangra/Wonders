@@ -1185,11 +1185,6 @@
 .hc-review .hc-markdown h2 { font-size: 17px; }
 .hc-review .hc-markdown h3 { font-size: 15px; }
 
-.admin-shell:has(.hc-review) .hc-main,
-.admin-shell:has(.hc-review) .hc-topbar-inner {
-  max-width: 1840px;
-}
-
 .hc-btn-octicon {
   gap: 7px;
 }

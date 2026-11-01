@@ -56,7 +56,7 @@ export default async function AdminLayout({
   return (
     <div className={`admin-shell ${adminFontVariables}`} {...staffSettingsAttributes(settings)}>
       <header className="hc-topbar sticky top-0 z-10">
-        <div className="hc-topbar-inner mx-auto flex h-14 max-w-[1440px] items-center gap-6 px-6">
+        <div className="hc-topbar-inner mx-auto flex h-14 max-w-[1840px] items-center gap-6 px-6">
           <Link href="/admin" className="flex shrink-0 items-center gap-2">
             <img
               src="/favicon.png"
@@ -87,7 +87,7 @@ export default async function AdminLayout({
           </div>
         </div>
       </header>
-      <main className="hc-main mx-auto max-w-[1440px] px-6 py-8">{children}</main>
+      <main className="hc-main mx-auto max-w-[1840px] px-6 py-8">{children}</main>
     </div>
   );
 }

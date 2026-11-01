@@ -9,6 +9,7 @@ import { Profile } from "@/app/dashboard/components/Profile";
 import LocalTime from "@/app/dashboard/components/LocalTime";
 import CopyLink from "./CopyLink";
 import PinHero from "./PinHero";
+import Panel from "./Panel";
 
 export const metadata = { title: "Refers - Wonders" };
 
@@ -17,14 +18,6 @@ async function siteOrigin() {
   const host = h.get("x-forwarded-host") ?? h.get("host");
   if (process.env.NODE_ENV === "production" || !host) return "https://wonders.hackclub.com";
   return `http://${host}`;
-}
-
-function Panel({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return (
-    <section className={`rounded-3xl border-2 border-[#8C8368]/30 bg-[#E7E2C9] p-5 md:p-7 ${className}`}>
-      {children}
-    </section>
-  );
 }
 
 function Stat({ value, label }: { value: number; label: string }) {
@@ -61,14 +54,14 @@ export default async function RefersPage() {
           <h1 className="font-finger-paint text-4xl text-[#BFD8A8]">Refers</h1>
 
           {referredBy && (
-            <Panel className="bg-[#BFD8A8]/90">
+            <div className="rounded-3xl bg-[#BFD8A8]/90 p-5 md:p-7">
               <p className="font-finger-paint text-xl text-[#2f4a24]">
                 {referredBy.name} invited you!{" "}
                 {referredBy.sticker_sent_at
                   ? "your stickers are on their way :D"
                   : "we're sending you a pack of stickers :3"}
               </p>
-            </Panel>
+            </div>
           )}
 
           <PinHero progress={progress} left={left} pinSent={Boolean(stats.pinSentAt)} />

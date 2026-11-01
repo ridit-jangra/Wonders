@@ -89,7 +89,7 @@ export function Badge({
   icon?: GlyphName;
 }) {
   return (
-    <span className="hc-badge" data-tone={tone}>
+    <span className="hc-badge" data-tone={tone} data-icon={icon ? true : undefined}>
       {icon && <Icon glyph={icon} size={16} />}
       {children}
     </span>

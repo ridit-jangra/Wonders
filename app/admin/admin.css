@@ -40,7 +40,7 @@
   --hc-red: #ec3750;
   --hc-orange: #ff8c37;
   --hc-yellow: #f1c40f;
-  --hc-green: #33d6a6;
+  --hc-green: #86c77a;
   --hc-cyan: #5bc0de;
   --hc-blue: #338eda;
   --hc-purple: #a633d6;
@@ -337,7 +337,7 @@
 
 .hc-btn-success {
   background: var(--hc-green);
-  color: var(--hc-white);
+  color: #17301a;
 }
 
 .hc-btn-danger {

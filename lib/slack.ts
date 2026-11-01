@@ -8,29 +8,34 @@ function getBotToken() {
   return token;
 }
 
-function getChannelId() {
-  const channelId = process.env.SLACK_CHANNEL_ID;
-  if (!channelId) throw new Error("SLACK_CHANNEL_ID env var is not set");
-  return channelId;
+function getChannelIds() {
+  const ids = (process.env.SLACK_CHANNEL_ID ?? "")
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean);
+  if (ids.length === 0) throw new Error("SLACK_CHANNEL_ID env var is not set");
+  return ids;
 }
 
 export async function inviteToChannel(slackUserId: string): Promise<void> {
-  const res = await fetch(`${SLACK_API_BASE}/conversations.invite`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${getBotToken()}`,
-      "Content-Type": "application/json; charset=utf-8",
-    },
-    body: JSON.stringify({
-      channel: getChannelId(),
-      users: slackUserId,
-    }),
-  });
+  const token = getBotToken();
+  await Promise.all(
+    getChannelIds().map(async (channel) => {
+      const res = await fetch(`${SLACK_API_BASE}/conversations.invite`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json; charset=utf-8",
+        },
+        body: JSON.stringify({ channel, users: slackUserId }),
+      });
 
-  const data = await res.json();
-  if (!data.ok && data.error !== "already_in_channel") {
-    console.error("Slack invite failed:", data.error);
-  }
+      const data = await res.json();
+      if (!data.ok && data.error !== "already_in_channel") {
+        console.error("Slack invite failed:", channel, data.error);
+      }
+    }),
+  );
 }
 
 export async function fetchSlackProfile(

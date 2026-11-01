@@ -44,6 +44,7 @@ import {
 import AutoCheckCard from "../../components/AutoCheckCard";
 import Markdown from "../../components/Markdown";
 import Tabs from "../../components/Tabs";
+import ResizableSplit from "../../components/ResizableSplit";
 import ReviewPassForm, { type DraftInput, type DraftResult } from "../../components/ReviewPassForm";
 import { listJournalAdmin } from "@/lib/journal";
 import { CommitsPanel, HackatimePanel, JournalPanel, PanelLoading, PastReviewsPanel, YswsPanel } from "./panels";
@@ -454,7 +455,7 @@ export default async function AdminReviewPanelPage({
   ];
 
   return (
-    <div className="hc-review grid gap-6 lg:grid-cols-[minmax(0,1fr)_460px] xl:gap-8">
+    <ResizableSplit>
       <div className="flex min-w-0 flex-col gap-6">
         <div>
           <ButtonLink href="/admin/review" variant="ghost" size="sm" icon="view-back">
@@ -597,7 +598,7 @@ export default async function AdminReviewPanelPage({
       <aside className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto lg:pr-1">
         <Tabs tabs={rightTabs} />
       </aside>
-    </div>
+    </ResizableSplit>
   );
 }
 

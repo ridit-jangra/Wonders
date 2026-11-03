@@ -2,8 +2,6 @@ import "server-only";
 
 const HCB_BASE = "https://hcb.hackclub.com";
 
-let cachedToken: { token: string; expiresAt: number } | null = null;
-
 export function hcbOrgId(): string | null {
   return process.env.HCB_ORG_ID?.trim() || null;
 }
@@ -14,40 +12,7 @@ export function hcbMaxGrantCents(): number {
 }
 
 export function isHcbConfigured(): boolean {
-  if (!hcbOrgId()) return false;
-  return Boolean(
-    process.env.HCB_ACCESS_TOKEN || (process.env.HCB_CLIENT_ID && process.env.HCB_CLIENT_SECRET),
-  );
-}
-
-async function accessToken(): Promise<string | null> {
-  if (process.env.HCB_ACCESS_TOKEN) return process.env.HCB_ACCESS_TOKEN;
-  const clientId = process.env.HCB_CLIENT_ID;
-  const clientSecret = process.env.HCB_CLIENT_SECRET;
-  if (!clientId || !clientSecret) return null;
-  if (cachedToken && cachedToken.expiresAt > Date.now() + 60_000) return cachedToken.token;
-
-  const res = await fetch(`${HCB_BASE}/api/v4/oauth/token`, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      grant_type: "client_credentials",
-      client_id: clientId,
-      client_secret: clientSecret,
-      scope: process.env.HCB_SCOPE || "read write",
-    }),
-  });
-  if (!res.ok) {
-    console.error("HCB token request failed:", res.status);
-    return null;
-  }
-  const data = (await res.json()) as { access_token?: string; expires_in?: number };
-  if (!data.access_token) return null;
-  cachedToken = {
-    token: data.access_token,
-    expiresAt: Date.now() + (data.expires_in ?? 7200) * 1000,
-  };
-  return cachedToken.token;
+  return Boolean(hcbOrgId() && process.env.HCB_ACCESS_TOKEN);
 }
 
 export async function createCardGrant(input: {
@@ -59,7 +24,7 @@ export async function createCardGrant(input: {
   oneTimeUse: boolean;
 }): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   const org = hcbOrgId();
-  const token = await accessToken();
+  const token = process.env.HCB_ACCESS_TOKEN;
   if (!org || !token) return { ok: false, error: "not_configured" };
 
   try {

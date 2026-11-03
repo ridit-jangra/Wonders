@@ -99,7 +99,8 @@ export default async function EditProjectPage({
   }
 
   const isBanned = Boolean(project.banned_at);
-  const editable = (project.status === "building" || project.status === "rejected") && !isBanned;
+  const liveEdit = (project.status === "shipped" || project.status === "fulfillment_started") && !isBanned;
+  const editable = ((project.status === "building" || project.status === "rejected") && !isBanned) || liveEdit;
   const underReview = project.status === "in_review" || project.status === "second_pass";
   const lockedLabel = isBanned ? "banned :(" : underReview ? "in review :3" : "shipped :D";
 
@@ -217,7 +218,10 @@ export default async function EditProjectPage({
     if (
       !existing ||
       existing.profile_id !== currentProfile.id ||
-      (existing.status !== "building" && existing.status !== "rejected")
+      (existing.status !== "building" &&
+        existing.status !== "rejected" &&
+        existing.status !== "shipped" &&
+        existing.status !== "fulfillment_started")
     ) {
       return { ok: false };
     }
@@ -596,33 +600,47 @@ export default async function EditProjectPage({
               <AutoSave action={autosaveProject} />
             </div>
             <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:justify-end">
-              <DeleteProjectButton
-                action={deleteProjectAction}
-                label="Delete it :("
-                className="w-full rounded-md bg-[#F2B3AD] px-4 py-2 font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-48"
-              />
+              {liveEdit ? (
+                <button
+                  type="button"
+                  disabled
+                  className="w-full cursor-not-allowed rounded-md bg-[#F2B3AD] px-4 py-2 font-finger-paint text-lg text-black/40 opacity-60 sm:w-48"
+                >
+                  {lockedLabel}
+                </button>
+              ) : (
+                <DeleteProjectButton
+                  action={deleteProjectAction}
+                  label="Delete it :("
+                  className="w-full rounded-md bg-[#F2B3AD] px-4 py-2 font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-48"
+                />
+              )}
               <SubmitButton
                 pendingLabel="saving it... :3"
                 className="w-full rounded-md bg-[#D1E4B5] px-4 py-2 font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-48"
               >
                 Save it :3
               </SubmitButton>
-              <ShipDialogButton
-                shipAction={shipProjectAction}
-                isReship={isReship}
-                disabled={missingForShip.length > 0}
-                initialIso={phoneStart?.iso ?? "US"}
-                initialNumber={phoneStart?.number ?? ""}
-                fromAuth={phonePrefill.fromAuth}
-                className="w-full rounded-md bg-[#A8C7E0] px-4 py-2 font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-48"
-              />
+              {!liveEdit && (
+                <ShipDialogButton
+                  shipAction={shipProjectAction}
+                  isReship={isReship}
+                  disabled={missingForShip.length > 0}
+                  initialIso={phoneStart?.iso ?? "US"}
+                  initialNumber={phoneStart?.number ?? ""}
+                  fromAuth={phonePrefill.fromAuth}
+                  className="w-full rounded-md bg-[#A8C7E0] px-4 py-2 font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-48"
+                />
+              )}
             </div>
             <p
               className={`mt-3 text-right font-finger-paint text-base ${
-                missingForShip.length > 0 ? "text-[#A33B32]" : "text-[#5C4A2E]/70"
+                !liveEdit && missingForShip.length > 0 ? "text-[#A33B32]" : "text-[#5C4A2E]/70"
               }`}
             >
-              {missingForShip.length > 0
+              {liveEdit
+                ? "it's already shipped, so your edits show up right away :3"
+                : missingForShip.length > 0
                 ? `add ${missingForShip.join(", ")} before you can ${isReship ? "reship" : "ship"} it`
                 : isReship
                   ? "fixed it up? reship it for review :3"

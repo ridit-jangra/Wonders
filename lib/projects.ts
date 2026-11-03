@@ -107,7 +107,7 @@ export async function updateProject(
       updated_at = now()
     where id = ${id}
       and profile_id = ${profileId}
-      and status in ('building', 'rejected')
+      and status in ('building', 'rejected', 'shipped', 'fulfillment_started')
       and banned_at is null
   `;
 }

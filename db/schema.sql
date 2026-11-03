@@ -70,6 +70,7 @@ create table if not exists projects (
   hackatime_projects text[] not null default '{}',
   hackatime_seconds integer,
   hackatime_seconds_prev integer,
+  airtable_record_ids text[] not null default '{}',
   hcb_grant_id text,
   hcb_grant_cents integer,
   hcb_grant_sent_at timestamptz,
@@ -254,7 +255,19 @@ alter table projects add column if not exists hcb_grant_id text;
 alter table projects add column if not exists hcb_grant_cents integer;
 alter table projects add column if not exists hcb_grant_sent_at timestamptz;
 
+create table if not exists review_macros (
+  id bigint generated always as identity primary key,
+  title text not null,
+  body text not null,
+  created_by text not null,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists staff_notices (
   key text primary key,
   sent_at timestamptz not null default now()
 );
+
+alter table projects add column if not exists airtable_record_ids text[] not null default '{}';
+update projects set airtable_record_ids = array[airtable_record_id]
+  where airtable_record_id is not null and airtable_record_ids = '{}';

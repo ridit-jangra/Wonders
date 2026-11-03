@@ -128,3 +128,59 @@ export async function fetchHackatimeProjects(
     return null;
   }
 }
+
+export interface HackatimeAirtableInfo {
+  userId: string;
+  ranges: string;
+}
+
+function formatRangeDate(unixSeconds: number): string {
+  const d = new Date(unixSeconds * 1000);
+  return `${d.getUTCMonth() + 1}/${d.getUTCDate()}/${d.getUTCFullYear()}`;
+}
+
+export async function fetchHackatimeAirtableInfo(
+  slackId: string | null | undefined,
+  linkedProjects: string[],
+): Promise<HackatimeAirtableInfo> {
+  const empty: HackatimeAirtableInfo = { userId: "", ranges: "" };
+  if (!slackId) return empty;
+  const id = encodeURIComponent(slackId);
+
+  let userId = "";
+  try {
+    const res = await fetch(`${HACKATIME_SITE}/api/v1/users/${id}/stats?features=projects`, {
+      signal: AbortSignal.timeout(10000),
+      cache: "no-store",
+    });
+    if (res.ok) {
+      const body = (await res.json()) as { data?: { user_id?: unknown } };
+      if (body.data?.user_id != null) userId = String(body.data.user_id);
+    }
+  } catch {}
+
+  const parts = await Promise.all(
+    linkedProjects.map(async (name) => {
+      try {
+        const res = await fetch(
+          `${HACKATIME_SITE}/api/v1/users/${id}/heartbeats/spans?filter_by_project=${encodeURIComponent(name)}`,
+          { signal: AbortSignal.timeout(8000), cache: "no-store" },
+        );
+        if (!res.ok) return null;
+        const body = (await res.json()) as { spans?: { start_time?: unknown; end_time?: unknown }[] };
+        let first = Infinity;
+        let last = 0;
+        for (const span of body.spans ?? []) {
+          first = Math.min(first, Number(span.start_time) || Infinity);
+          last = Math.max(last, Number(span.end_time) || 0);
+        }
+        if (!Number.isFinite(first) || last <= 0) return null;
+        return `${name} ${formatRangeDate(first)}-${formatRangeDate(last)}`;
+      } catch {
+        return null;
+      }
+    }),
+  );
+
+  return { userId, ranges: parts.filter((part): part is string => part !== null).join(", ") };
+}

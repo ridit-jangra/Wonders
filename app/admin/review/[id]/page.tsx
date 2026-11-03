@@ -276,7 +276,9 @@ export default async function AdminReviewPanelPage({
 
       if (toStatus === "shipped" || toStatus === "fulfillment_started") {
         after(async () => {
-          const result = await pushWonderToAirtable(Number(id));
+          const result = await pushWonderToAirtable(Number(id), {
+            forceNew: existing.hackatime_seconds_prev !== null,
+          });
           await writeAudit({
             actor: admin.slackId,
             action: result.ok ? "airtable.push" : "airtable.push_failed",

@@ -4,6 +4,13 @@ import { hasRecentAuth, reauthUrl, requireAccess } from "@/lib/admin";
 import { getProfileIdentityAdmin } from "@/lib/profiles";
 import { writeAudit } from "@/lib/audit";
 import { checkRateLimit } from "@/lib/rate-limit";
+import {
+  airtableRecordUrl,
+  fetchSubmissionStates,
+  isWonderInUnified,
+  pushAllMissingToAirtable,
+  summarizeUnified,
+} from "@/lib/airtable";
 import { createCardGrant, hcbMaxGrantCents, isHcbConfigured } from "@/lib/hcb";
 import { formatDollars, parseGrantInput } from "@/lib/hcb-grant";
 import ShippingInfo, { type ShippingResult } from "../components/ShippingInfo";
@@ -42,6 +49,10 @@ import {
 
 const PER_PAGE = 25;
 
+async function notInUnified(id: string): Promise<boolean> {
+  return !(await isWonderInUnified(Number(id)));
+}
+
 const GRANT_NOTICE: Record<string, string> = {
   sent: "Grant sent.",
   failed: "HCB refused the grant, nothing was sent. Check the HCB connection and try again.",
@@ -50,15 +61,16 @@ const GRANT_NOTICE: Record<string, string> = {
   locked: "Verify it's you again to send grants.",
   limited: "Too many tries, wait a minute.",
   notconfigured: "HCB isn't connected yet.",
+  notunified: "This wonder isn't in the Unified YSWS database yet.",
 };
 
 export default async function AdminFulfillmentPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; grant?: string; wonder?: string }>;
+  searchParams: Promise<{ page?: string; grant?: string; wonder?: string; airtable?: string }>;
 }) {
   const admin = await requireAccess(canFulfill);
-  const { page, grant: grantOutcome, wonder: grantWonder } = await searchParams;
+  const { page, grant: grantOutcome, wonder: grantWonder, airtable: airtableOutcome } = await searchParams;
   const hcbReady = isHcbConfigured();
   const canSendGrant = hcbReady && (await hasRecentAuth(admin.slackId));
   const currentPage = Math.max(1, parseInt(page ?? "1", 10) || 1);
@@ -68,6 +80,7 @@ export default async function AdminFulfillmentPage({
     limit: PER_PAGE,
     offset: (currentPage - 1) * PER_PAGE,
   });
+  const unifiedStates = await fetchSubmissionStates(projects.flatMap((p) => p.airtable_record_ids));
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
 
   async function loadShipping(profileId: string): Promise<ShippingResult> {
@@ -119,6 +132,7 @@ export default async function AdminFulfillmentPage({
 
     if (!(await checkRateLimit("hcb-grant", actor.slackId, 10, 60)).allowed) back("limited");
     if (!isHcbConfigured()) back("notconfigured");
+    if (await notInUnified(id)) back("notunified");
     if (!(await hasRecentAuth(actor.slackId))) back("locked");
 
     const existing = await getProjectWithOwner(id);
@@ -174,6 +188,23 @@ export default async function AdminFulfillmentPage({
     back("sent");
   }
 
+  async function pushAllMissing() {
+    "use server";
+
+    const actor = await requireAccess(canFulfill);
+    if (!(await checkRateLimit("airtable-push-all", actor.slackId, 3, 60)).allowed) {
+      redirect("/admin/fulfillment?airtable=limited");
+    }
+    const result = await pushAllMissingToAirtable();
+    await writeAudit({
+      actor: actor.slackId,
+      action: "airtable.push_all",
+      detail: result,
+    });
+    revalidatePath("/admin/fulfillment");
+    redirect(`/admin/fulfillment?airtable=${result.pushed}-${result.failed}`);
+  }
+
   async function saveReward(formData: FormData) {
     "use server";
 
@@ -196,6 +227,7 @@ export default async function AdminFulfillmentPage({
 
     const existing = await getProjectWithOwner(id);
     if (!existing) return;
+    if (await notInUnified(id)) return;
 
     const started = await startFulfillment(id);
     if (started) {
@@ -223,6 +255,7 @@ export default async function AdminFulfillmentPage({
 
     const existing = await getProjectWithOwner(id);
     if (!existing) return;
+    if (await notInUnified(id)) return;
 
     const ordered = await markRewardOrdered(id);
     if (ordered) {
@@ -241,6 +274,7 @@ export default async function AdminFulfillmentPage({
 
     const existing = await getProjectWithOwner(id);
     if (!existing) return;
+    if (await notInUnified(id)) return;
 
     const sent = await markRewardSent(id);
     if (sent) {
@@ -259,6 +293,7 @@ export default async function AdminFulfillmentPage({
 
     const existing = await getProjectWithOwner(id);
     if (!existing || !existing.reward) return;
+    if (await notInUnified(id)) return;
 
     const fulfilled = await fulfillProject(id, admin.slackId);
     if (fulfilled) {
@@ -283,10 +318,33 @@ export default async function AdminFulfillmentPage({
         title="Fulfillment"
         count={total}
         description="Published wonders working through their reward order."
+        actions={
+          <form action={pushAllMissing}>
+            <ActionButton pendingLabel="Pushing…" variant="outline" icon="send">
+              Push all missing to Airtable
+            </ActionButton>
+          </form>
+        }
       />
 
+      {airtableOutcome && (
+        <div className="mb-4">
+          <Callout tone={airtableOutcome === "limited" ? "warning" : "info"} icon="important">
+            {airtableOutcome === "limited"
+              ? "Too many tries, wait a minute."
+              : `Pushed ${airtableOutcome.split("-")[0]} wonder(s) to Airtable, ${airtableOutcome.split("-")[1] ?? 0} failed.`}
+          </Callout>
+        </div>
+      )}
+
       <div className="flex flex-col gap-4">
-        {projects.map((project) => (
+        {projects.map((project) => {
+          const unified = summarizeUnified(project.airtable_record_ids, unifiedStates);
+          const inUnified = unified.state === "unified";
+          const recordUrl = project.airtable_record_ids.length
+            ? airtableRecordUrl(project.airtable_record_ids[project.airtable_record_ids.length - 1])
+            : null;
+          return (
           <Card key={project.id}>
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="min-w-0">
@@ -295,6 +353,10 @@ export default async function AdminFulfillmentPage({
                     {project.title}
                   </TextLink>
                   <StatusBadge status={project.status} />
+                  {unified.state === "unified" && <Badge tone="success">In Unified YSWS</Badge>}
+                  {unified.state === "waiting" && <Badge tone="warning">Waiting on Airtable</Badge>}
+                  {unified.state === "not_pushed" && <Badge tone="danger">Not in Airtable</Badge>}
+                  {unified.state === "error" && <Badge tone="danger">Airtable check failed</Badge>}
                   {project.status === "fulfillment_started" && project.reward_sent_at && (
                     <Badge tone="info">On its way</Badge>
                   )}
@@ -364,6 +426,8 @@ export default async function AdminFulfillmentPage({
                   </p>
                 ) : !hcbReady ? (
                   <p className="hc-caption text-sm">HCB isn&apos;t connected yet. Set the HCB env vars to turn this on.</p>
+                ) : !inUnified ? (
+                  <p className="hc-caption text-sm">Available once this wonder is in the Unified YSWS database.</p>
                 ) : !canSendGrant ? (
                   <p className="hc-caption text-sm">
                     <TextLink href={reauthUrl("/admin/fulfillment")}>Verify it&apos;s you</TextLink> to send grants.
@@ -421,7 +485,7 @@ export default async function AdminFulfillmentPage({
               {project.status === "shipped" && (
                 <form action={beginFulfillment}>
                   <input type="hidden" name="id" value={project.id} />
-                  <ActionButton pendingLabel="Starting…" icon="package">
+                  <ActionButton pendingLabel="Starting…" icon="package" disabled={!inUnified}>
                     Start fulfillment
                   </ActionButton>
                 </form>
@@ -430,7 +494,7 @@ export default async function AdminFulfillmentPage({
               {project.status === "fulfillment_started" && !project.reward_ordered_at && (
                 <form action={markOrdered}>
                   <input type="hidden" name="id" value={project.id} />
-                  <ActionButton pendingLabel="Marking…" variant="outline" icon="package">
+                  <ActionButton pendingLabel="Marking…" variant="outline" icon="package" disabled={!inUnified}>
                     Mark ordered
                   </ActionButton>
                 </form>
@@ -441,7 +505,7 @@ export default async function AdminFulfillmentPage({
                 !project.reward_sent_at && (
                   <form action={markSent}>
                     <input type="hidden" name="id" value={project.id} />
-                    <ActionButton pendingLabel="Marking…" variant="outline" icon="send">
+                    <ActionButton pendingLabel="Marking…" variant="outline" icon="send" disabled={!inUnified}>
                       Mark on its way
                     </ActionButton>
                   </form>
@@ -454,13 +518,29 @@ export default async function AdminFulfillmentPage({
                     pendingLabel="Marking…"
                     variant="success"
                     icon="check-circle"
-                    disabled={!project.reward}
+                    disabled={!project.reward || !inUnified}
                   >
                     Mark fulfilled
                   </ActionButton>
                 </form>
               )}
             </div>
+
+            {!inUnified && (
+              <p className="hc-caption mt-2 flex items-center gap-1 text-sm">
+                <Icon glyph="important" size={18} />
+                {unified.state === "not_pushed"
+                  ? "Not in Airtable yet. Use Push all missing, or push it from its review page."
+                  : unified.state === "error"
+                    ? `Couldn't check Airtable (${unified.error}).`
+                    : "Waiting for this wonder to reach the Unified YSWS database (status 2–Submitted in Airtable)."}
+                {recordUrl && (
+                  <TextLink href={recordUrl} external>
+                    Open record
+                  </TextLink>
+                )}
+              </p>
+            )}
 
             {project.status === "fulfillment_started" && !project.reward && (
               <p className="hc-caption mt-2 flex items-center gap-1 text-sm">
@@ -469,7 +549,8 @@ export default async function AdminFulfillmentPage({
               </p>
             )}
           </Card>
-        ))}
+          );
+        })}
 
         {projects.length === 0 && (
           <Card>

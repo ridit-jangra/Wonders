@@ -11,6 +11,8 @@ const base = {
   imageUrl: "",
   hours: null,
   hackatimeProjects: [],
+  hackatimeRanges: "",
+  submitterHackatimeId: "",
   technicalNotes: "",
   additionalNotes: "",
   birthday: "",
@@ -42,6 +44,18 @@ describe("airtable fields", () => {
     expect(fields["Optional - Override Hours Spent"]).toBeUndefined();
     expect(fields.Screenshot).toBeUndefined();
     expect(fields.Birthday).toBeUndefined();
+  });
+  test("hackatime ranges and id", () => {
+    const fields = buildAirtableFields({
+      ...base,
+      hackatimeProjects: ["a"],
+      hackatimeRanges: "a 7/20/2026-7/22/2026",
+      submitterHackatimeId: "42",
+    });
+    expect(fields["Justification - Hackatime Project Name(s) + Date Range(s)"]).toBe("a 7/20/2026-7/22/2026");
+    expect(fields["Justification - Submitter Hackatime ID"]).toBe("42");
+    const fallback = buildAirtableFields({ ...base, hackatimeProjects: ["a", "b"] });
+    expect(fallback["Justification - Hackatime Project Name(s) + Date Range(s)"]).toBe("a, b");
   });
   test("helpers", () => {
     expect(githubUsernameFromRepoUrl("https://github.com/ada/thing")).toBe("ada");

@@ -181,6 +181,7 @@ export interface ProjectOwner {
 }
 
 export interface ProjectWithOwner extends Project {
+  airtable_record_ids: string[];
   hcb_grant_id: string | null;
   hcb_grant_cents: number | null;
   hcb_grant_sent_at: string | null;
@@ -206,7 +207,7 @@ const ADMIN_COLUMNS = () => sql`
   p.id, p.profile_id, p.title, p.description, p.image_url, p.link_url,
   p.github_url, p.status, p.reviewer_note, p.reward, p.hackatime_projects,
   p.hackatime_seconds, p.hackatime_seconds_prev, p.created_at,
-  p.hcb_grant_id, p.hcb_grant_cents, p.hcb_grant_sent_at,
+  p.airtable_record_ids, p.hcb_grant_id, p.hcb_grant_cents, p.hcb_grant_sent_at,
   p.fulfilled_at, p.fulfilled_by, p.reward_ordered_at, p.reward_sent_at,
   p.on_hold, p.hold_reason,
   p.banned_at, p.ban_reason, p.banned_by, p.unship_reason,

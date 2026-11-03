@@ -18,6 +18,7 @@ export type FieldName =
   | "Screenshot"
   | "Optional - Override Hours Spent"
   | "Justification - Hackatime Project Name(s) + Date Range(s)"
+  | "Justification - Submitter Hackatime ID"
   | "Justification - Specific Technical Features"
   | "Justification - Additional Justification";
 
@@ -31,6 +32,8 @@ export interface AirtableInput {
   imageUrl: string;
   hours: number | null;
   hackatimeProjects: string[];
+  hackatimeRanges: string;
+  submitterHackatimeId: string;
   technicalNotes: string;
   additionalNotes: string;
   birthday: string;
@@ -97,8 +100,12 @@ export function buildAirtableFields(input: AirtableInput): Partial<Record<FieldN
   if (input.imageUrl) {
     fields.Screenshot = [{ url: input.imageUrl }];
   }
-  if (input.hackatimeProjects.length > 0) {
-    fields["Justification - Hackatime Project Name(s) + Date Range(s)"] = input.hackatimeProjects.join(", ");
+  const hackatimeText = input.hackatimeRanges || input.hackatimeProjects.join(", ");
+  if (hackatimeText) {
+    fields["Justification - Hackatime Project Name(s) + Date Range(s)"] = hackatimeText;
+  }
+  if (input.submitterHackatimeId) {
+    fields["Justification - Submitter Hackatime ID"] = input.submitterHackatimeId;
   }
   if (input.technicalNotes) {
     fields["Justification - Specific Technical Features"] = input.technicalNotes;

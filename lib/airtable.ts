@@ -2,6 +2,7 @@ import "server-only";
 import { sql } from "@/lib/db";
 import { decryptPII } from "@/lib/crypto";
 import type { Project } from "@/lib/projects";
+import { fetchHackatimeAirtableInfo } from "@/lib/hackatime";
 import { absoluteImageUrl, buildAirtableFields, hoursFromSeconds, type AirtableInput } from "@/lib/airtable-fields";
 
 const BASE_ID = "appNO48Yez9uXr3WO";
@@ -17,8 +18,8 @@ async function loadInput(projectId: number): Promise<AirtableInput | null> {
   const [row] = await sql`
     select
       p.github_url, p.link_url, p.description, p.image_url, p.hackatime_seconds,
-      p.hackatime_projects,
-      o.email, o.first_name, o.last_name, o.birthday, o.address_line1,
+      p.hackatime_projects, p.hackatime_seconds_prev,
+      o.slack_id, o.email, o.first_name, o.last_name, o.birthday, o.address_line1,
       o.address_line2, o.address_city, o.address_state, o.address_country,
       o.address_postal,
       (
@@ -37,6 +38,12 @@ async function loadInput(projectId: number): Promise<AirtableInput | null> {
   if (!row) {
     return null;
   }
+  const linked: string[] = row.hackatime_projects ?? [];
+  const hackatime = await fetchHackatimeAirtableInfo(row.slack_id, linked);
+  const newSeconds =
+    row.hackatime_seconds === null || row.hackatime_seconds === undefined
+      ? null
+      : Math.max(0, Number(row.hackatime_seconds) - (Number(row.hackatime_seconds_prev) || 0));
   return {
     repoUrl: row.github_url ?? "",
     demoUrl: row.link_url ?? "",
@@ -45,8 +52,10 @@ async function loadInput(projectId: number): Promise<AirtableInput | null> {
     email: row.email ?? "",
     description: row.description ?? "",
     imageUrl: absoluteImageUrl(row.image_url),
-    hours: hoursFromSeconds(row.hackatime_seconds),
-    hackatimeProjects: row.hackatime_projects ?? [],
+    hours: hoursFromSeconds(newSeconds),
+    hackatimeProjects: linked,
+    hackatimeRanges: hackatime.ranges,
+    submitterHackatimeId: hackatime.userId,
     technicalNotes: row.technical_notes ?? "",
     additionalNotes: row.additional_notes ?? "",
     birthday: normalizeBirthday(decryptPII(row.birthday)),
@@ -61,7 +70,10 @@ async function loadInput(projectId: number): Promise<AirtableInput | null> {
 
 export type PushResult = { ok: true; recordId: string } | { ok: false; error: string };
 
-export async function pushWonderToAirtable(projectId: number): Promise<PushResult> {
+export async function pushWonderToAirtable(
+  projectId: number,
+  opts: { forceNew?: boolean } = {},
+): Promise<PushResult> {
   const token = process.env.AIRTABLE_PAT;
   if (!token) {
     return recordFailure(projectId, "AIRTABLE_PAT is not set");
@@ -75,7 +87,7 @@ export async function pushWonderToAirtable(projectId: number): Promise<PushResul
     const [existing] = await sql<{ airtable_record_id: string | null }[]>`
       select airtable_record_id from projects where id = ${projectId}
     `;
-    const recordId = existing?.airtable_record_id ?? null;
+    const recordId = opts.forceNew ? null : (existing?.airtable_record_id ?? null);
     const base = `https://api.airtable.com/v0/${BASE_ID}/${TABLE_ID}`;
     const res = await fetch(recordId ? `${base}/${recordId}` : base, {
       method: recordId ? "PATCH" : "POST",
@@ -94,6 +106,10 @@ export async function pushWonderToAirtable(projectId: number): Promise<PushResul
     await sql`
       update projects set
         airtable_record_id = ${body.id},
+        airtable_record_ids = case
+          when ${body.id} = any(airtable_record_ids) then airtable_record_ids
+          else array_append(airtable_record_ids, ${body.id}::text)
+        end,
         airtable_pushed_at = now(),
         airtable_error = null
       where id = ${projectId}
@@ -124,4 +140,123 @@ export async function getAirtableState(projectId: number): Promise<AirtableState
     from projects where id = ${projectId}
   `;
   return row ?? null;
+}
+
+export const AIRTABLE_STATUS_FIELD = "Automation - Status";
+export const AIRTABLE_SUBMITTED_STATUS = "2\u2013Submitted";
+const UNIFIED_ID_FIELD = "Automation - YSWS Record ID";
+const RECORD_ID_PATTERN = /^rec[A-Za-z0-9]{14}$/;
+const LOOKUP_CHUNK = 40;
+
+export type RecordLookup =
+  | { kind: "found"; submitted: boolean; unifiedId: string | null }
+  | { kind: "missing" }
+  | { kind: "error"; error: string };
+
+export function airtableRecordUrl(recordId: string): string | null {
+  return RECORD_ID_PATTERN.test(recordId)
+    ? `https://airtable.com/${BASE_ID}/${TABLE_ID}/${recordId}`
+    : null;
+}
+
+async function lookupChunk(token: string, ids: string[], out: Map<string, RecordLookup>) {
+  const formula = `OR(${ids.map((id) => `RECORD_ID()='${id}'`).join(",")})`;
+  const query = new URLSearchParams({ filterByFormula: formula, pageSize: "100" });
+  query.append("fields[]", AIRTABLE_STATUS_FIELD);
+  query.append("fields[]", UNIFIED_ID_FIELD);
+  try {
+    const res = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_ID}?${query}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+      cache: "no-store",
+    });
+    const body = (await res.json().catch(() => null)) as {
+      records?: { id: string; fields?: Record<string, unknown> }[];
+      error?: { message?: string };
+    } | null;
+    if (!res.ok || !body?.records) {
+      const error = body?.error?.message ?? `Airtable returned ${res.status}`;
+      for (const id of ids) out.set(id, { kind: "error", error });
+      return;
+    }
+    const seen = new Set<string>();
+    for (const record of body.records) {
+      seen.add(record.id);
+      const fields = record.fields ?? {};
+      const unified = fields[UNIFIED_ID_FIELD];
+      out.set(record.id, {
+        kind: "found",
+        submitted: fields[AIRTABLE_STATUS_FIELD] === AIRTABLE_SUBMITTED_STATUS,
+        unifiedId: typeof unified === "string" && RECORD_ID_PATTERN.test(unified.trim()) ? unified.trim() : null,
+      });
+    }
+    for (const id of ids) {
+      if (!seen.has(id)) out.set(id, { kind: "missing" });
+    }
+  } catch (err) {
+    const error = `Airtable request failed: ${(err as Error).message}`;
+    for (const id of ids) out.set(id, { kind: "error", error });
+  }
+}
+
+export async function fetchSubmissionStates(recordIds: string[]): Promise<Map<string, RecordLookup>> {
+  const out = new Map<string, RecordLookup>();
+  const token = process.env.AIRTABLE_PAT;
+  const valid: string[] = [];
+  for (const id of new Set(recordIds)) {
+    if (!RECORD_ID_PATTERN.test(id)) out.set(id, { kind: "missing" });
+    else if (!token) out.set(id, { kind: "error", error: "AIRTABLE_PAT is not set" });
+    else valid.push(id);
+  }
+  if (!token) return out;
+  for (let i = 0; i < valid.length; i += LOOKUP_CHUNK) {
+    await lookupChunk(token, valid.slice(i, i + LOOKUP_CHUNK), out);
+  }
+  return out;
+}
+
+export type UnifiedSummary =
+  | { state: "unified" }
+  | { state: "waiting" }
+  | { state: "not_pushed" }
+  | { state: "error"; error: string };
+
+export function summarizeUnified(recordIds: string[], states: Map<string, RecordLookup>): UnifiedSummary {
+  if (recordIds.length === 0) return { state: "not_pushed" };
+  let error: string | null = null;
+  for (const id of recordIds) {
+    const lookup = states.get(id);
+    if (lookup?.kind === "found" && lookup.submitted) return { state: "unified" };
+    if (lookup?.kind === "error") error = lookup.error;
+  }
+  return error ? { state: "error", error } : { state: "waiting" };
+}
+
+export async function isWonderInUnified(projectId: number): Promise<boolean> {
+  const [row] = await sql<{ airtable_record_ids: string[] }[]>`
+    select airtable_record_ids from projects where id = ${projectId}
+  `;
+  const ids = row?.airtable_record_ids ?? [];
+  if (ids.length === 0) return false;
+  const states = await fetchSubmissionStates(ids);
+  return summarizeUnified(ids, states).state === "unified";
+}
+
+export async function pushAllMissingToAirtable(): Promise<{ pushed: number; failed: number }> {
+  const rows = await sql<{ id: number }[]>`
+    select id from projects
+    where status in ('shipped', 'fulfillment_started', 'fulfilled')
+      and airtable_record_id is null
+      and banned_at is null
+    order by id
+  `;
+  let pushed = 0;
+  let failed = 0;
+  for (const row of rows) {
+    const result = await pushWonderToAirtable(row.id);
+    if (result.ok) pushed += 1;
+    else failed += 1;
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  return { pushed, failed };
 }

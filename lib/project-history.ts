@@ -109,3 +109,15 @@ export async function getProjectTimeline(
     order by created_at asc, id asc
   `;
 }
+
+export async function hasBeenShipped(projectId: ProjectId, profileId: string): Promise<boolean> {
+  const [row] = await sql<{ found: boolean }[]>`
+    select exists (
+      select 1 from project_history
+      where project_id = ${Number(projectId)}
+        and profile_id = ${profileId}
+        and to_status = 'in_review'
+    ) as found
+  `;
+  return row?.found ?? false;
+}

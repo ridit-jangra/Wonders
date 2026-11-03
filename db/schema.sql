@@ -221,3 +221,14 @@ create table if not exists referrals (
 );
 
 create index if not exists referrals_referrer_idx on referrals (referrer_id);
+
+create table if not exists review_claims (
+  project_id integer primary key references projects (id) on delete cascade,
+  claimed_by text not null,
+  claimed_at timestamptz not null default now(),
+  heartbeat_at timestamptz not null default now()
+);
+
+alter table projects add column if not exists airtable_record_id text;
+alter table projects add column if not exists airtable_pushed_at timestamptz;
+alter table projects add column if not exists airtable_error text;

@@ -9,7 +9,7 @@ import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
 import { getHackatimeToken, getSessionProfile, getSlackActors } from "@/lib/profiles";
 import { fetchHackatimeProjects } from "@/lib/hackatime";
 import { deleteProject, getProject, shipProject, unshipProject, updateProject } from "@/lib/projects";
-import { getProjectTimeline, recordProjectHistory } from "@/lib/project-history";
+import { getProjectTimeline, hasBeenShipped, recordProjectHistory } from "@/lib/project-history";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { notifyPlayer } from "@/lib/notifications";
 import { precheckEnabled, runPrecheck } from "@/lib/precheck/run";
@@ -100,6 +100,7 @@ export default async function EditProjectPage({
   const lockedLabel = underReview ? "in review :3" : "shipped :D";
 
   const timeline = await getProjectTimeline(project.id, profile.id);
+  const isReship = project.status === "rejected" || (await hasBeenShipped(project.id, profile.id));
   const journal = await listJournal(project.id, profile.id);
   const actors = await getSlackActors([
     profile.slack_id,
@@ -593,11 +594,11 @@ export default async function EditProjectPage({
               </SubmitButton>
               <SubmitButton
                 formAction={shipProjectAction}
-                pendingLabel="shipping it... :3"
+                pendingLabel={isReship ? "reshipping it... :3" : "shipping it... :3"}
                 disabled={missingForShip.length > 0}
                 className="w-full rounded-md bg-[#A8C7E0] px-4 py-2 font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-48"
               >
-                Ship it :D
+                {isReship ? "Reship it :D" : "Ship it :D"}
               </SubmitButton>
             </div>
             <p
@@ -606,8 +607,10 @@ export default async function EditProjectPage({
               }`}
             >
               {missingForShip.length > 0
-                ? `add ${missingForShip.join(", ")} before you can ship it`
-                : "done building? ship it for review :3"}
+                ? `add ${missingForShip.join(", ")} before you can ${isReship ? "reship" : "ship"} it`
+                : isReship
+                  ? "fixed it up? reship it for review :3"
+                  : "done building? ship it for review :3"}
             </p>
           </>
         ) : (

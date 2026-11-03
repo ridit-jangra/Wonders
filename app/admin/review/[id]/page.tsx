@@ -3,8 +3,14 @@ import { Suspense } from "react";
 import { LinkExternalIcon, MarkGithubIcon } from "@primer/octicons-react";
 import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { requireAccess } from "@/lib/admin";
-import { canReview } from "@/lib/security/roles";
+import { canFulfill, canReview } from "@/lib/security/roles";
+import { isOwnWonder } from "@/lib/security/own-wonder";
+import { claimBlockedBy, claimReview, clearClaim, releaseReview } from "@/lib/review-claims";
+import { getAirtableState, pushWonderToAirtable } from "@/lib/airtable";
+import { writeAudit } from "@/lib/audit";
+import { getSlackActors } from "@/lib/profiles";
 import {
   adminUpdateProject,
   firstPassReview,
@@ -45,6 +51,7 @@ import AutoCheckCard from "../../components/AutoCheckCard";
 import Markdown from "../../components/Markdown";
 import Tabs from "../../components/Tabs";
 import ResizableSplit from "../../components/ResizableSplit";
+import ReviewHeartbeat from "../../components/ReviewHeartbeat";
 import ReviewPassForm, { type DraftInput, type DraftResult } from "../../components/ReviewPassForm";
 import { listJournalAdmin } from "@/lib/journal";
 import { CommitsPanel, HackatimePanel, JournalPanel, PanelLoading, PastReviewsPanel, YswsPanel } from "./panels";
@@ -62,6 +69,20 @@ function revalidateReview(id: string) {
   revalidatePath(`/admin/review/${id}`);
 }
 
+async function reviewBlock(
+  slackId: string,
+  projectId: string,
+  ownerSlackId: string | null | undefined,
+): Promise<"own" | "claimed" | null> {
+  if (isOwnWonder(slackId, ownerSlackId)) {
+    return "own";
+  }
+  if (await claimBlockedBy(projectId, slackId)) {
+    return "claimed";
+  }
+  return null;
+}
+
 function optionalUrl(value: FormDataEntryValue | null): string | null {
   const text = String(value ?? "").trim();
   if (!text) {
@@ -76,7 +97,7 @@ export default async function AdminReviewPanelPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  await requireAccess(canReview);
+  const viewer = await requireAccess(canReview);
 
   const [project, history, reviews, journal] = await Promise.all([
     getProjectWithOwner(id),
@@ -103,6 +124,9 @@ export default async function AdminReviewPanelPage({
     const admin = await requireAccess(canReview);
     const existing = await getProjectWithOwner(id);
     if (!existing) {
+      return { ok: false, savedAt: null };
+    }
+    if (await reviewBlock(admin.slackId, id, existing.profile?.slack_id)) {
       return { ok: false, savedAt: null };
     }
 
@@ -145,6 +169,20 @@ export default async function AdminReviewPanelPage({
     const admin = await requireAccess(canReview);
     const existing = await getProjectWithOwner(id);
     if (!existing) notFound();
+
+    const blocked = await reviewBlock(admin.slackId, id, existing.profile?.slack_id);
+    if (blocked === "own") {
+      await writeAudit({
+        actor: admin.slackId,
+        action: "review.blocked_own",
+        target: id,
+        detail: { title: existing.title },
+      });
+      return;
+    }
+    if (blocked) {
+      return;
+    }
 
     let pass: "first" | "second" | null = null;
     if (existing.status === "in_review") {
@@ -204,6 +242,7 @@ export default async function AdminReviewPanelPage({
 
     if (ok) {
       await deleteReviewDraft(id, pass);
+      await clearClaim(id);
       await recordReview({
         projectId: id,
         pass,
@@ -231,6 +270,19 @@ export default async function AdminReviewPanelPage({
         event = "second_pass_approved";
       }
       notifyPlayer(existing.profile?.slack_id, event, { title: existing.title, note: feedback });
+
+      if (toStatus === "shipped") {
+        after(async () => {
+          const result = await pushWonderToAirtable(Number(id));
+          await writeAudit({
+            actor: admin.slackId,
+            action: result.ok ? "airtable.push" : "airtable.push_failed",
+            target: id,
+            detail: result.ok ? { recordId: result.recordId } : { error: result.error },
+            sensitive: true,
+          });
+        });
+      }
     }
 
     revalidateReview(id);
@@ -238,9 +290,12 @@ export default async function AdminReviewPanelPage({
 
   async function putOnHold(formData: FormData) {
     "use server";
-    await requireAccess(canReview);
+    const admin = await requireAccess(canReview);
     const existing = await getProjectWithOwner(id);
     if (!existing) notFound();
+    if (await reviewBlock(admin.slackId, id, existing.profile?.slack_id)) {
+      return;
+    }
 
     const reason = String(formData.get("hold_reason") ?? "").trim();
     if (!reason) {
@@ -253,9 +308,12 @@ export default async function AdminReviewPanelPage({
 
   async function releaseHold() {
     "use server";
-    await requireAccess(canReview);
+    const admin = await requireAccess(canReview);
     const existing = await getProjectWithOwner(id);
     if (!existing) notFound();
+    if (await reviewBlock(admin.slackId, id, existing.profile?.slack_id)) {
+      return;
+    }
 
     await setProjectHold(id, false, null);
     revalidateReview(id);
@@ -263,9 +321,12 @@ export default async function AdminReviewPanelPage({
 
   async function editSubmission(formData: FormData) {
     "use server";
-    await requireAccess(canReview);
+    const admin = await requireAccess(canReview);
     const existing = await getProjectWithOwner(id);
     if (!existing) notFound();
+    if (isOwnWonder(admin.slackId, existing.profile?.slack_id)) {
+      return;
+    }
 
     const title = String(formData.get("title") ?? "").trim();
     if (!title) {
@@ -283,7 +344,54 @@ export default async function AdminReviewPanelPage({
     revalidateReview(id);
   }
 
+  async function beatClaim(): Promise<{ held: boolean; holder: string }> {
+    "use server";
+    const admin = await requireAccess(canReview);
+    const existing = await getProjectWithOwner(id);
+    if (
+      !existing ||
+      (existing.status !== "in_review" && existing.status !== "second_pass") ||
+      isOwnWonder(admin.slackId, existing.profile?.slack_id)
+    ) {
+      return { held: false, holder: "" };
+    }
+    return claimReview(id, admin.slackId);
+  }
+
+  async function dropClaim() {
+    "use server";
+    const admin = await requireAccess(canReview);
+    await releaseReview(id, admin.slackId);
+  }
+
+  async function retryAirtable() {
+    "use server";
+    const admin = await requireAccess(canFulfill);
+    const existing = await getProjectWithOwner(id);
+    if (!existing || !["shipped", "fulfillment_started", "fulfilled"].includes(existing.status)) {
+      return;
+    }
+    const result = await pushWonderToAirtable(Number(id));
+    await writeAudit({
+      actor: admin.slackId,
+      action: result.ok ? "airtable.push" : "airtable.push_failed",
+      target: id,
+      detail: result.ok ? { recordId: result.recordId } : { error: result.error },
+      sensitive: true,
+    });
+    revalidateReview(id);
+  }
+
   const owner = project.profile;
+  const ownWonder = isOwnWonder(viewer.slackId, owner?.slack_id);
+  const claimHolder = ownWonder ? null : await claimBlockedBy(id, viewer.slackId);
+  const holderName = claimHolder
+    ? ((await getSlackActors([claimHolder]))[claimHolder]?.name ?? claimHolder)
+    : "";
+  const airtable =
+    canFulfill(viewer) && ["shipped", "fulfillment_started", "fulfilled"].includes(project.status)
+      ? await getAirtableState(Number(id))
+      : null;
   const ownerName = owner?.name || owner?.slack_display_name || owner?.email || "Unknown user";
   const isReviewable = project.status === "in_review" || project.status === "second_pass";
 
@@ -304,7 +412,18 @@ export default async function AdminReviewPanelPage({
 
   const reviewTab = (
     <div className="flex flex-col gap-4 pt-4 [&>*:only-child]:flex-1">
-      {project.status === "in_review" && (
+      {isReviewable && ownWonder && (
+        <Callout tone="danger" icon="forbidden">
+          This is your own wonder, so you can&apos;t review it. Another reviewer has to pick it up.
+        </Callout>
+      )}
+      {isReviewable && !ownWonder && claimHolder && (
+        <Callout tone="warning" icon="clock">
+          {holderName} is reviewing this right now. This page unlocks when they leave or go quiet for a few
+          minutes.
+        </Callout>
+      )}
+      {project.status === "in_review" && !ownWonder && !claimHolder && (
         <Card>
           <h3 className="hc-heading text-base">First pass</h3>
           <p className="hc-caption mt-1 mb-4 text-sm">
@@ -325,7 +444,7 @@ export default async function AdminReviewPanelPage({
         </Card>
       )}
 
-      {project.status === "second_pass" && (
+      {project.status === "second_pass" && !ownWonder && !claimHolder && (
         <Card>
           <h3 className="hc-heading text-base">Second pass</h3>
           <p className="hc-caption mt-1 mb-4 text-sm">
@@ -414,7 +533,7 @@ export default async function AdminReviewPanelPage({
 
   const actionsTab = (
     <div className="flex flex-col gap-4 pt-4">
-      {isReviewable && (
+      {isReviewable && !ownWonder && (
       <Card>
         <CardHeader title={project.on_hold ? "On hold" : "Put this review on hold"} icon="important" />
         {project.on_hold ? (
@@ -441,10 +560,31 @@ export default async function AdminReviewPanelPage({
         )}
       </Card>
       )}
+      {airtable && (
+        <Card>
+          <CardHeader title="Airtable" icon="send" />
+          <form action={retryAirtable} className="flex flex-col gap-3">
+            {airtable.airtable_pushed_at ? (
+              <Callout tone="info">Pushed to the YSWS base ({airtable.airtable_record_id}).</Callout>
+            ) : (
+              <Callout tone={airtable.airtable_error ? "danger" : "warning"}>
+                {airtable.airtable_error ? `Push failed: ${airtable.airtable_error}` : "Not pushed yet."}
+              </Callout>
+            )}
+            <div className="[&>button]:w-full">
+              <ActionButton pendingLabel="Pushing…">
+                {airtable.airtable_pushed_at ? "Push again" : "Push to Airtable"}
+              </ActionButton>
+            </div>
+          </form>
+        </Card>
+      )}
+      {!ownWonder && (
       <Card>
         <CardHeader title="Edit submission" icon="edit" />
         <EditSubmissionForm project={project} action={editSubmission} />
       </Card>
+      )}
     </div>
   );
 
@@ -457,6 +597,9 @@ export default async function AdminReviewPanelPage({
   return (
     <ResizableSplit>
       <div className="flex min-w-0 flex-col gap-6">
+        {isReviewable && !ownWonder && (
+          <ReviewHeartbeat beat={beatClaim} release={dropClaim} blocked={!!claimHolder} />
+        )}
         <div>
           <ButtonLink href="/admin/review" variant="ghost" size="sm" icon="view-back">
             Review queue

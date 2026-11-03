@@ -205,6 +205,14 @@ export async function listAllProjects(opts: {
   offset: number;
 }): Promise<{ projects: ProjectWithOwner[]; total: number }> {
   const statuses = opts.status ? [opts.status].flat() : null;
+  const isQueue = !!statuses && statuses.every((s) => s === "in_review" || s === "second_pass");
+  const orderBy = isQueue
+    ? sql`order by coalesce(
+        (select min(h.created_at) from project_history h
+          where h.project_id = p.id and h.to_status = 'in_review'),
+        p.created_at
+      ) asc, p.id asc`
+    : sql`order by p.created_at desc`;
   const where = sql`
     where not (
       p.ai_review_status = 'pending'
@@ -219,7 +227,7 @@ export async function listAllProjects(opts: {
       select ${ADMIN_COLUMNS()}
       from projects p join profiles o on o.id = p.profile_id
       ${where}
-      order by p.created_at desc
+      ${orderBy}
       limit ${opts.limit} offset ${opts.offset}
     `,
     sql<{ total: number }[]>`

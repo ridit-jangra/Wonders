@@ -44,4 +44,4 @@ Next.js 16 here has breaking changes, so read `AGENTS.md` before touching framew
 
 ![the end of the page](public/screenshots/footer.png)
 
-Noww go a wonder :3
+Noww go make something wonderful :3

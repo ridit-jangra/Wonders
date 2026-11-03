@@ -244,7 +244,7 @@ export async function getProfileIdentityAdmin(
   const [data] = await sql`
     select
       hca_id, first_name, last_name, slack_display_name, slack_avatar_url,
-      birthday, phone, address_line1, address_line2, address_city,
+      birthday, phone, shipping_phone, address_line1, address_line2, address_city,
       address_state, address_country, address_postal,
       hca_verification_status, hca_ysws_eligible
     from profiles where id = ${id}
@@ -258,7 +258,7 @@ export async function getProfileIdentityAdmin(
     slack_display_name: data.slack_display_name,
     slack_avatar_url: data.slack_avatar_url,
     birthday: includePII ? decryptPII(data.birthday) : "",
-    phone: includePII ? decryptPII(data.phone) : "",
+    phone: includePII ? decryptPII(data.shipping_phone) || decryptPII(data.phone) : "",
     address: {
       line1: includePII ? decryptPII(data.address_line1) : "",
       line2: includePII ? decryptPII(data.address_line2) : "",
@@ -334,4 +334,26 @@ export async function getSlackActors(
     }),
   );
   return Object.fromEntries(entries);
+}
+
+
+export async function saveShippingPhone(profileId: string, phone: string) {
+  await sql`
+    update profiles set
+      shipping_phone = ${encryptPII(phone)},
+      shipping_phone_at = now(),
+      updated_at = now()
+    where id = ${profileId}
+  `;
+}
+
+export async function getPhonePrefill(profileId: string): Promise<{ phone: string; fromAuth: boolean }> {
+  const [row] = await sql<{ shipping_phone: string | null; phone: string | null }[]>`
+    select shipping_phone, phone from profiles where id = ${profileId}
+  `;
+  const saved = decryptPII(row?.shipping_phone);
+  if (saved) {
+    return { phone: saved, fromAuth: false };
+  }
+  return { phone: decryptPII(row?.phone), fromAuth: true };
 }

@@ -6,9 +6,11 @@ import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
-import { getHackatimeToken, getSessionProfile, getSlackActors } from "@/lib/profiles";
+import { getHackatimeToken, getPhonePrefill, getSessionProfile, getSlackActors, saveShippingPhone } from "@/lib/profiles";
 import { fetchHackatimeProjects } from "@/lib/hackatime";
 import { deleteProject, getProject, shipProject, unshipProject, updateProject } from "@/lib/projects";
+import ShipDialogButton from "@/app/dashboard/components/ShipDialogButton";
+import { normalizePhone, splitPhone } from "@/lib/phone";
 import { getProjectTimeline, hasBeenShipped, recordProjectHistory } from "@/lib/project-history";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { notifyPlayer } from "@/lib/notifications";
@@ -102,6 +104,8 @@ export default async function EditProjectPage({
   const lockedLabel = isBanned ? "banned :(" : underReview ? "in review :3" : "shipped :D";
 
   const timeline = await getProjectTimeline(project.id, profile.id);
+  const phonePrefill = await getPhonePrefill(profile.id);
+  const phoneStart = splitPhone(phonePrefill.phone);
   const isReship = project.status === "rejected" || (await hasBeenShipped(project.id, profile.id));
   const journal = await listJournal(project.id, profile.id);
   const actors = await getSlackActors([
@@ -263,7 +267,7 @@ export default async function EditProjectPage({
     return { ok: true };
   }
 
-  async function shipProjectAction() {
+  async function shipProjectAction(formData: FormData) {
     "use server";
 
     const store = await cookies();
@@ -296,6 +300,15 @@ export default async function EditProjectPage({
     ) {
       return;
     }
+
+    const phone = normalizePhone(
+      String(formData.get("phone_country") ?? ""),
+      String(formData.get("phone_number") ?? ""),
+    );
+    if (!phone) {
+      return;
+    }
+    await saveShippingPhone(currentProfile.id, phone);
 
     const token = await getHackatimeToken(currentProfile.id);
     const tracked = token ? await fetchHackatimeProjects(token) : null;
@@ -594,14 +607,15 @@ export default async function EditProjectPage({
               >
                 Save it :3
               </SubmitButton>
-              <SubmitButton
-                formAction={shipProjectAction}
-                pendingLabel={isReship ? "reshipping it... :3" : "shipping it... :3"}
+              <ShipDialogButton
+                shipAction={shipProjectAction}
+                isReship={isReship}
                 disabled={missingForShip.length > 0}
+                initialIso={phoneStart?.iso ?? "US"}
+                initialNumber={phoneStart?.number ?? ""}
+                fromAuth={phonePrefill.fromAuth}
                 className="w-full rounded-md bg-[#A8C7E0] px-4 py-2 font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-48"
-              >
-                {isReship ? "Reship it :D" : "Ship it :D"}
-              </SubmitButton>
+              />
             </div>
             <p
               className={`mt-3 text-right font-finger-paint text-base ${

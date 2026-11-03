@@ -237,3 +237,6 @@ alter table projects add column if not exists banned_at timestamptz;
 alter table projects add column if not exists ban_reason text;
 alter table projects add column if not exists banned_by text;
 alter table projects add column if not exists unship_reason text;
+
+alter table profiles add column if not exists shipping_phone text;
+alter table profiles add column if not exists shipping_phone_at timestamptz;

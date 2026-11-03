@@ -335,11 +335,11 @@ export default async function AdminFulfillmentPage({
             />
 
             <details
-              className="mt-4 rounded-md border border-[var(--border)] p-4"
+              className="hc-details mt-4"
               open={Boolean(project.hcb_grant_sent_at) || /grant/i.test(project.reward ?? "") || String(project.id) === grantWonder}
             >
-              <summary className="hc-heading cursor-pointer text-base">Send grant (surprise)</summary>
-              <div className="mt-3 flex flex-col gap-3">
+              <summary>Send grant (surprise)</summary>
+              <div className="hc-details-body flex flex-col gap-3">
                 {String(project.id) === grantWonder && grantOutcome && GRANT_NOTICE[grantOutcome] && (
                   <Callout tone={grantOutcome === "sent" ? "success" : "warning"} icon="important">
                     {GRANT_NOTICE[grantOutcome]}

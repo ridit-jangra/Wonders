@@ -862,7 +862,7 @@ export default async function EditProjectPage({
               <span className="font-finger-paint text-[#5C4A2E]">
                 {member.name}
                 {member.role === "owner" && (
-                  <span className="ml-2 text-sm text-[#5C4A2E]/60">owner</span>
+                  <span className="ml-2 text-sm text-[#5C4A2E]/60">(owner)</span>
                 )}
                 <span className="ml-2 text-sm text-[#5C4A2E]/60">
                   {member.journalCount} {member.journalCount === 1 ? "journal entry" : "journal entries"}

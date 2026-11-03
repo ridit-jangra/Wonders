@@ -17,7 +17,8 @@ export type WonderEvent =
   | "fulfillment_started"
   | "reward_ordered"
   | "reward_sent"
-  | "fulfilled";
+  | "fulfilled"
+  | "collaborator_joined";
 
 function escapeSlack(text: string) {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -54,6 +55,9 @@ function messageFor(event: WonderEvent, title: string, note: string) {
   }
   if (event === "unbanned") {
     return `good news, the ban on your wonder *${title}* was lifted :D\n${note ? `the reviewer said:\n${quote(note)}\n` : ""}you can pick it back up on your dashboard :3`;
+  }
+  if (event === "collaborator_joined") {
+    return `*${note}* just joined your wonder *${title}* with the invite code :wave:\nthey can edit it, journal and ship it with you now :3`;
   }
   if (event === "fulfillment_started") {
     return `your surprise for *${title}* is being put together :roo-gift:\nno peeking! i'll let you know when it's on the move :3`;

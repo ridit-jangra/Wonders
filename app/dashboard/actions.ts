@@ -8,7 +8,9 @@ import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
 import { getSessionProfile } from "@/lib/profiles";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { normalizeInviteCode } from "@/lib/collab-code";
-import { joinByCode } from "@/lib/collaborators";
+import { joinByCode, listMembers } from "@/lib/collaborators";
+import { getProject } from "@/lib/projects";
+import { notifyPlayer } from "@/lib/notifications";
 
 export interface JoinState {
   error?: string;
@@ -45,6 +47,18 @@ export async function joinWonder(_previous: JoinState, formData: FormData): Prom
   const result = await joinByCode(profile.id, code);
   if (!result.ok) {
     return { error: MESSAGES[result.error] };
+  }
+
+  if (result.isNew) {
+    const project = await getProject(result.projectId);
+    if (project) {
+      const joinerName = profile.slack_display_name || profile.name;
+      for (const member of await listMembers(result.projectId)) {
+        if (member.profileId !== profile.id) {
+          notifyPlayer(member.slackId, "collaborator_joined", { title: project.title, note: joinerName });
+        }
+      }
+    }
   }
 
   revalidatePath("/dashboard");

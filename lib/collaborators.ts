@@ -104,7 +104,7 @@ export async function resetInviteCode(
 }
 
 export type JoinResult =
-  | { ok: true; projectId: number }
+  | { ok: true; projectId: number; isNew: boolean }
   | { ok: false; error: "invalid" | "own" | "full" | "banned" | "closed" };
 
 export async function joinByCode(profileId: string, code: string): Promise<JoinResult> {
@@ -131,7 +131,7 @@ export async function joinByCode(profileId: string, code: string): Promise<JoinR
     `;
     if (!existing) return { ok: false, error: "full" };
   }
-  return { ok: true, projectId: project.id };
+  return { ok: true, projectId: project.id, isNew: rows.length > 0 };
 }
 
 export async function removeCollaborator(

@@ -1,5 +1,9 @@
 import { revalidatePath } from "next/cache";
-import { requireAccess } from "@/lib/admin";
+import { hasRecentAuth, reauthUrl, requireAccess } from "@/lib/admin";
+import { getProfileIdentityAdmin } from "@/lib/profiles";
+import { writeAudit } from "@/lib/audit";
+import { checkRateLimit } from "@/lib/rate-limit";
+import ShippingInfo, { type ShippingResult } from "../components/ShippingInfo";
 import { canFulfill } from "@/lib/security/roles";
 import {
   listAllProjects,
@@ -9,13 +13,13 @@ import {
   markRewardOrdered,
   markRewardSent,
   setProjectReward,
+  hasFulfillableProject,
 } from "@/lib/projects";
 import { recordProjectHistory } from "@/lib/project-history";
 import { notifyPlayer } from "@/lib/notifications";
 import {
   ActionButton,
   Badge,
-  ButtonLink,
   Card,
   EmptyState,
   Field,
@@ -46,6 +50,44 @@ export default async function AdminFulfillmentPage({
     offset: (currentPage - 1) * PER_PAGE,
   });
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
+
+  async function loadShipping(profileId: string): Promise<ShippingResult> {
+    "use server";
+    const actor = await requireAccess(canFulfill);
+    if (!(await checkRateLimit("shipping-view", actor.slackId, 60, 60)).allowed) {
+      return { ok: false, reason: "limited" };
+    }
+    if (!(await hasRecentAuth(actor.slackId))) {
+      return { ok: false, reason: "locked" };
+    }
+    if (!(await hasFulfillableProject(profileId))) {
+      return { ok: false, reason: "denied" };
+    }
+    const identity = await getProfileIdentityAdmin(profileId, true);
+    if (!identity || !identity.address.line1) {
+      return { ok: false, reason: "missing" };
+    }
+    await writeAudit({
+      actor: actor.slackId,
+      action: "admin.view_pii",
+      target: profileId,
+      detail: { where: "fulfillment" },
+      sensitive: true,
+    });
+    return {
+      ok: true,
+      data: {
+        name: [identity.first_name, identity.last_name].filter(Boolean).join(" "),
+        phone: identity.phone,
+        line1: identity.address.line1,
+        line2: identity.address.line2,
+        city: identity.address.city,
+        state: identity.address.state,
+        postal: identity.address.postal,
+        country: identity.address.country,
+      },
+    };
+  }
 
   async function saveReward(formData: FormData) {
     "use server";
@@ -182,14 +224,6 @@ export default async function AdminFulfillmentPage({
                   · {project.profile?.email} · <Mono>{project.profile?.slack_id}</Mono>
                 </p>
               </div>
-              <ButtonLink
-                href={`/admin/users/${project.profile_id}`}
-                variant="outline"
-                size="sm"
-                icon="map-pin"
-              >
-                Shipping info
-              </ButtonLink>
             </div>
 
             {project.reviewer_note && (
@@ -197,6 +231,11 @@ export default async function AdminFulfillmentPage({
                 <Quote>{project.reviewer_note}</Quote>
               </div>
             )}
+
+            <ShippingInfo
+              load={loadShipping.bind(null, project.profile_id)}
+              reauthHref={reauthUrl("/admin/fulfillment")}
+            />
 
             <div className="mt-5 flex flex-wrap items-end gap-3 border-t border-[var(--border)] pt-5">
               <form action={saveReward} className="flex flex-1 flex-wrap items-end gap-2">

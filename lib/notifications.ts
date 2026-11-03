@@ -37,7 +37,7 @@ function messageFor(event: WonderEvent, title: string, note: string) {
     return `*${title}* just passed the first round of review :mwah-france:\none more pass to go and then it's out in the world :3`;
   }
   if (event === "second_pass_approved") {
-    return `*${title}* passed its final review!! :mwah-france:\nit's live on Explore now for everyone to see :D and a little surprise is on its way to you soon... :eyes_shaking:`;
+    return `*${title}* passed its final review!! :mwah-france:\nthank you for making something wonderful :3 a little surprise is heading your way soon... :eyes_shaking:`;
   }
   if (event === "changes_requested") {
     return `your wonder *${title}* needs a little fix before it can go through :c\nhere's what the reviewer said:\n${quote(note)}\nfix it up on your dashboard and ship it again whenever you're ready, you got this :3`;

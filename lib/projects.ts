@@ -477,3 +477,15 @@ export async function adminUnshipProject(
   `;
   return rows.length > 0 ? row.status : null;
 }
+
+export async function hasFulfillableProject(profileId: string): Promise<boolean> {
+  const [row] = await sql<{ found: boolean }[]>`
+    select exists (
+      select 1 from projects
+      where profile_id = ${profileId}
+        and status in ('shipped', 'fulfillment_started')
+        and banned_at is null
+    ) as found
+  `;
+  return row?.found ?? false;
+}

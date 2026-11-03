@@ -44,12 +44,10 @@ function adminTag(status: string): Project["tag"] {
 export default function ExploreClient({
   loggedIn,
   showRefers = false,
-  showAdmin = false,
   isAdmin = false,
 }: {
   loggedIn: boolean;
   showRefers?: boolean;
-  showAdmin?: boolean;
   isAdmin?: boolean;
 }) {
   const [tab, setTab] = useState<Tab>("wonders");
@@ -108,7 +106,7 @@ export default function ExploreClient({
         src="/bg-effect-4.png"
         alt=""
       />
-      {loggedIn && <Sidebar showRefers={showRefers} showAdmin={showAdmin} />}
+      {loggedIn && <Sidebar showRefers={showRefers} />}
       <main
         className={`relative min-w-0 flex-1 pr-6 md:pr-10 md:pt-10 ${loggedIn ? "pt-20 pl-6 md:pl-0" : "pt-10 pl-6 md:pl-10"}`}
       >

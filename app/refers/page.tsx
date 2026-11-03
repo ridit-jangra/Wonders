@@ -11,7 +11,6 @@ import {
   REFERRALS_FOR_PIN,
 } from "@/lib/referrals";
 import Sidebar from "@/app/dashboard/components/Sidebar";
-import { canSeeAdminButton } from "@/lib/dashboard-access";
 import { Profile } from "@/app/dashboard/components/Profile";
 import LocalTime from "@/app/dashboard/components/LocalTime";
 import CopyLink from "./CopyLink";
@@ -61,7 +60,7 @@ export default async function RefersPage() {
         <img src="/new-or-edit-projects-template.png" alt="" className="h-full w-full object-fill" />
       </div>
       <TopBlur />
-      <Sidebar showRefers showAdmin={await canSeeAdminButton(profile.slack_id)} />
+      <Sidebar showRefers />
       <Profile />
       <main className="relative min-w-0 flex-1 bg-[#F0EBD1] px-6 pb-10 pt-24 sm:px-10 md:bg-transparent md:py-16 md:pl-4 md:pr-14 lg:py-24">
         <div className="flex flex-col gap-6 md:max-w-[90%]">

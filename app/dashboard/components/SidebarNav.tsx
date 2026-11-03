@@ -2,7 +2,6 @@
 "use client";
 
 import Link from "next/link";
-import JoinWonderButton from "./JoinWonderButton";
 
 const links = [
   { href: "/dashboard", label: "Dashboard :)", src: "/button-template-1.png" },
@@ -13,11 +12,9 @@ const links = [
 export default function SidebarNav({
   onNavigateAction,
   showRefers = false,
-  showAdmin = false,
 }: {
   onNavigateAction?: () => void;
   showRefers?: boolean;
-  showAdmin?: boolean;
 } = {}) {
   return (
     <nav className="absolute inset-0 flex flex-col gap-4 pt-32">
@@ -39,15 +36,6 @@ export default function SidebarNav({
         </Link>
       ))}
       <div className="mt-auto flex flex-col gap-2">
-        {showAdmin && (
-          <a
-            href="/admin/access"
-            onClick={onNavigateAction}
-            className="ml-6 self-start font-finger-paint text-xl text-[#16213E] underline decoration-[#16213E]/40 underline-offset-4 hover:decoration-[#16213E]"
-          >
-            admin stuff, give access :D
-          </a>
-        )}
         {showRefers && (
           <Link
             href="/refers"
@@ -57,12 +45,6 @@ export default function SidebarNav({
             refer friends, get a pin &lt;3
           </Link>
         )}
-      <JoinWonderButton
-        onOpenAction={onNavigateAction}
-        className="ml-6 self-start font-finger-paint text-xl text-[#16213E] underline decoration-[#16213E]/40 underline-offset-4 hover:decoration-[#16213E]"
-      >
-        got a wonder code? join one :D
-      </JoinWonderButton>
       <Link
         href="/docs"
         onClick={onNavigateAction}

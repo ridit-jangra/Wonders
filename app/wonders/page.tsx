@@ -4,7 +4,6 @@ import { cookies } from "next/headers";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
 import { getSessionProfile } from "@/lib/profiles";
 import { canUseReferrals } from "@/lib/referrals";
-import { canSeeAdminButton } from "@/lib/dashboard-access";
 import { getProjects } from "@/lib/projects";
 import Sidebar from "@/app/dashboard/components/Sidebar";
 import { Profile } from "@/app/dashboard/components/Profile";
@@ -36,17 +35,14 @@ export default async function ProjectsPage() {
         src="/bg-effect-4.png"
         alt=""
       />
-      <Sidebar
-        showRefers={await canUseReferrals(profile.slack_id)}
-        showAdmin={await canSeeAdminButton(profile.slack_id)}
-      />
+      <Sidebar showRefers={await canUseReferrals(profile.slack_id)} />
       <Profile />
       <main className="relative min-w-0 flex-1 pr-6 pt-20 md:pr-10 md:pt-10">
         <div className="flex items-center justify-between gap-4">
           <h1 className="font-finger-paint text-4xl text-[#BFD8A8]">
             Your Wonders
           </h1>
-          <JoinWonderButton className="mr-16 rounded-lg bg-[#A8C7E0] px-4 py-2 font-finger-paint text-lg text-black/50 transition hover:scale-105 md:mr-20" />
+          <JoinWonderButton className="mr-0 rounded-lg bg-[#A8C7E0] px-4 py-2 font-finger-paint text-lg text-black/50 transition hover:scale-105 md:mr-36" />
         </div>
 
         <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 md:hidden">

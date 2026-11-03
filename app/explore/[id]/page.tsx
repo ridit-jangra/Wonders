@@ -14,7 +14,6 @@ import { adminUnshipProject, banProject, getProjectWithOwner, unbanProject } fro
 import { recordProjectHistory } from "@/lib/project-history";
 import { clearClaim } from "@/lib/review-claims";
 import { notifyTeam } from "@/lib/notifications";
-import { canSeeAdminButton } from "@/lib/dashboard-access";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { writeAudit } from "@/lib/audit";
 import ReasonDialogButton from "../_components/ReasonDialogButton";
@@ -78,7 +77,6 @@ export default async function ExploreWonderPage({ params }: { params: Promise<{ 
 
   const session = verifySessionCookie((await cookies()).get(SESSION_COOKIE)?.value);
   const showRefers = session ? await canUseReferrals(session.slackId) : false;
-  const showAdmin = session ? await canSeeAdminButton(session.slackId) : false;
 
   async function ban(reasonInput: string): Promise<ActionResult> {
     "use server";
@@ -170,7 +168,7 @@ export default async function ExploreWonderPage({ params }: { params: Promise<{ 
         <img src="/new-or-edit-projects-template.png" alt="" className="h-full w-full object-fill" />
       </div>
       <TopBlur />
-      {session && <Sidebar showRefers={showRefers} showAdmin={showAdmin} />}
+      {session && <Sidebar showRefers={showRefers} />}
       <main className="relative min-w-0 flex-1 bg-[#F0EBD1] px-6 pb-10 pt-24 sm:px-10 md:bg-transparent md:py-16 md:pl-4 md:pr-14 lg:py-24">
       <div className="flex w-full flex-col gap-5 md:max-w-[90%]">
         <Link href="/explore" className="font-finger-paint text-lg text-[#5C4A2E]/70 hover:underline">

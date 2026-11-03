@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
 import { getSessionProfile } from "@/lib/profiles";
-import { canSeeAdminButton, hasDashboardAccess } from "@/lib/dashboard-access";
+import { hasDashboardAccess } from "@/lib/dashboard-access";
 import UnderConstruction from "@/app/components/UnderConstruction";
 import Sidebar from "./components/Sidebar";
 import TopBlur from "./components/TopBlur";
@@ -40,7 +40,7 @@ export default async function DashLayout({
         alt=""
       />
       <TopBlur />
-      <Sidebar showRefers showAdmin={await canSeeAdminButton(profile.slack_id)} />
+      <Sidebar showRefers />
       <main className="relative min-w-0 flex-1">{children}</main>
       <Profile />
     </div>

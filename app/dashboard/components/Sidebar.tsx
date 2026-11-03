@@ -6,13 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import SidebarNav from "./SidebarNav";
 import DrawerFrame from "./DrawerFrame";
 
-export default function Sidebar({
-  showRefers = false,
-  showAdmin = false,
-}: {
-  showRefers?: boolean;
-  showAdmin?: boolean;
-}) {
+export default function Sidebar({ showRefers = false }: { showRefers?: boolean }) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -30,7 +24,7 @@ export default function Sidebar({
     <>
       <div className="relative sticky top-0 z-40 hidden h-screen shrink-0 md:block">
         <img className="h-full w-auto" src="/sidebar.png" alt="" />
-        <SidebarNav showRefers={showRefers} showAdmin={showAdmin} />
+        <SidebarNav showRefers={showRefers} />
       </div>
 
       <button
@@ -52,7 +46,7 @@ export default function Sidebar({
             className="fixed inset-0 z-60 bg-black/40 md:hidden"
           >
             <DrawerFrame>
-              <SidebarNav showRefers={showRefers} showAdmin={showAdmin} onNavigateAction={() => setOpen(false)} />
+              <SidebarNav showRefers={showRefers} onNavigateAction={() => setOpen(false)} />
             </DrawerFrame>
             <button
               type="button"

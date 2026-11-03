@@ -29,7 +29,7 @@ import {
   releaseHcbGrant,
 } from "@/lib/projects";
 import { recordProjectHistory } from "@/lib/project-history";
-import { notifyPlayer } from "@/lib/notifications";
+import { notifyTeam } from "@/lib/notifications";
 import {
   ActionButton,
   Badge,
@@ -240,7 +240,7 @@ export default async function AdminFulfillmentPage({
         reward: existing.reward,
         reviewedBy: admin.slackId,
       });
-      notifyPlayer(existing.profile?.slack_id, "fulfillment_started", { title: existing.title });
+      await notifyTeam(existing.id, "fulfillment_started", { title: existing.title });
     }
 
     revalidatePath("/admin/fulfillment");
@@ -259,7 +259,7 @@ export default async function AdminFulfillmentPage({
 
     const ordered = await markRewardOrdered(id);
     if (ordered) {
-      notifyPlayer(existing.profile?.slack_id, "reward_ordered", { title: existing.title });
+      await notifyTeam(existing.id, "reward_ordered", { title: existing.title });
     }
 
     revalidatePath("/admin/fulfillment");
@@ -278,7 +278,7 @@ export default async function AdminFulfillmentPage({
 
     const sent = await markRewardSent(id);
     if (sent) {
-      notifyPlayer(existing.profile?.slack_id, "reward_sent", { title: existing.title });
+      await notifyTeam(existing.id, "reward_sent", { title: existing.title });
     }
 
     revalidatePath("/admin/fulfillment");
@@ -306,7 +306,7 @@ export default async function AdminFulfillmentPage({
         reward: existing.reward,
         reviewedBy: admin.slackId,
       });
-      notifyPlayer(existing.profile?.slack_id, "fulfilled", { title: existing.title });
+      await notifyTeam(existing.id, "fulfilled", { title: existing.title });
     }
 
     revalidatePath("/admin/fulfillment");

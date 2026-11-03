@@ -30,7 +30,7 @@ import ShipDialogButton from "@/app/dashboard/components/ShipDialogButton";
 import { normalizePhone, splitPhone } from "@/lib/phone";
 import { getProjectTimeline, hasBeenShipped, recordProjectHistory } from "@/lib/project-history";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { notifyPlayer } from "@/lib/notifications";
+import { notifyTeam } from "@/lib/notifications";
 import { precheckEnabled, runPrecheck } from "@/lib/precheck/run";
 import { beginPrecheck } from "@/lib/precheck/store";
 import { uploadThumbnail } from "@/lib/storage";
@@ -243,7 +243,7 @@ export default async function EditProjectPage({
     }
 
     let imageUrl = removeThumbnail ? null : existing.image_url;
-    if (!asCollaborator && thumbnail instanceof File && thumbnail.size > 0) {
+    if (thumbnail instanceof File && thumbnail.size > 0) {
       imageUrl = await uploadThumbnail(thumbnail, currentProfile.id);
     }
 
@@ -252,7 +252,8 @@ export default async function EditProjectPage({
       description,
       link_url: demoUrl,
       github_url: githubUrl,
-      ...(asCollaborator ? {} : { image_url: imageUrl, hackatime_projects: hackatimeLinks }),
+      image_url: imageUrl,
+      ...(asCollaborator ? {} : { hackatime_projects: hackatimeLinks }),
     });
     if (asCollaborator && hackatimeLinks) {
       await setCollaboratorLinks(existing.id, currentProfile.id, hackatimeLinks);
@@ -315,7 +316,7 @@ export default async function EditProjectPage({
         : undefined;
 
     let imageUrl = removeThumbnail ? null : existing.image_url;
-    if (!asCollaborator && thumbnail instanceof File && thumbnail.size > 0) {
+    if (thumbnail instanceof File && thumbnail.size > 0) {
       imageUrl = await uploadThumbnail(thumbnail, currentProfile.id);
     }
 
@@ -324,7 +325,8 @@ export default async function EditProjectPage({
       description,
       link_url: demoUrl,
       github_url: githubUrl,
-      ...(asCollaborator ? {} : { image_url: imageUrl, hackatime_projects: hackatimeLinks }),
+      image_url: imageUrl,
+      ...(asCollaborator ? {} : { hackatime_projects: hackatimeLinks }),
     });
     if (asCollaborator && hackatimeLinks) {
       await setCollaboratorLinks(existing.id, currentProfile.id, hackatimeLinks);
@@ -406,12 +408,7 @@ export default async function EditProjectPage({
         reward: null,
         reviewedBy: current.slackId,
       });
-      notifyPlayer(current.slackId, "in_review", { title: existing.title });
-      for (const member of await listMembers(existing.id)) {
-        if (member.slackId !== current.slackId) {
-          notifyPlayer(member.slackId, "in_review", { title: existing.title });
-        }
-      }
+      await notifyTeam(existing.id, "in_review", { title: existing.title });
 
       if (precheckEnabled()) {
         const token = await beginPrecheck(id, existing.profile_id);
@@ -650,18 +647,7 @@ export default async function EditProjectPage({
           <p className="font-finger-paint text-[#5C4A2E]/70">
             Give your wonder a thumbnail :3
           </p>
-          {isCollaborator ? (
-            <div className="flex flex-col gap-2">
-              {project.image_url && (
-                <img src={project.image_url} alt="" className="max-h-48 w-fit rounded-md object-cover" />
-              )}
-              <p className="font-finger-paint text-sm text-[#5C4A2E]/70">
-                the owner picks the thumbnail :3
-              </p>
-            </div>
-          ) : (
-            <ThumbnailPicker defaultUrl={project.image_url} />
-          )}
+          <ThumbnailPicker defaultUrl={project.image_url} />
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <span className="flex w-full flex-col gap-2">
               <p className="font-finger-paint text-[#5C4A2E]/70">

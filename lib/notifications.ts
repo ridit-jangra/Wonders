@@ -1,4 +1,5 @@
 import "server-only";
+import { listMembers } from "@/lib/collaborators";
 import { after } from "next/server";
 import { sendDirectMessage } from "@/lib/slack";
 
@@ -93,4 +94,23 @@ export function notifyPlayer(
   }
 
   after(() => notifyPlayerNow(slackUserId, event, wonder));
+}
+
+export async function notifyTeam(
+  projectId: number | string,
+  event: WonderEvent,
+  wonder: { title: string; note?: string | null },
+) {
+  if (!process.env.SLACK_BOT_TOKEN) {
+    return;
+  }
+  let slackIds: string[] = [];
+  try {
+    slackIds = (await listMembers(projectId)).map((member) => member.slackId);
+  } catch (err) {
+    console.error("Failed to load the team for a DM:", err);
+  }
+  for (const slackId of new Set(slackIds)) {
+    notifyPlayer(slackId, event, wonder);
+  }
 }

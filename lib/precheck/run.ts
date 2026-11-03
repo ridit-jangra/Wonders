@@ -1,6 +1,7 @@
 import "server-only";
 import { writeAudit } from "@/lib/audit";
 import { notifyPlayerNow } from "@/lib/notifications";
+import { listMembers } from "@/lib/collaborators";
 import { recordProjectHistory } from "@/lib/project-history";
 import { recordReview } from "@/lib/reviews";
 import { listJournalAdmin } from "@/lib/journal";
@@ -267,10 +268,16 @@ export async function runPrecheck(projectId: number, token: string): Promise<voi
       checks: [],
       reviewedBy: AUTO_CHECK_REVIEWER,
     });
-    await notifyPlayerNow(project.owner_slack_id, "auto_check_sent_back", {
-      title: project.title,
-      note: findings.blocking.map((id) => `• ${BLOCKING[id]}`).join("\n"),
-    });
+    const teamSlackIds = new Set([
+      project.owner_slack_id,
+      ...(await listMembers(projectId).catch(() => [])).map((member) => member.slackId),
+    ]);
+    for (const slackId of teamSlackIds) {
+      await notifyPlayerNow(slackId, "auto_check_sent_back", {
+        title: project.title,
+        note: findings.blocking.map((id) => `• ${BLOCKING[id]}`).join("\n"),
+      });
+    }
   } catch (error) {
     console.error("[precheck] run failed", projectId, (error as Error)?.message ?? error);
     try {

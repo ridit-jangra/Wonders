@@ -21,7 +21,7 @@ import {
   setProjectHold,
 } from "@/lib/projects";
 import { getProjectHistory, recordProjectHistory } from "@/lib/project-history";
-import { notifyPlayer } from "@/lib/notifications";
+import { notifyTeam } from "@/lib/notifications";
 import {
   deleteReviewDraft,
   getProjectReviews,
@@ -279,7 +279,7 @@ export default async function AdminReviewPanelPage({
       } else if (toStatus === "shipped" || toStatus === "fulfillment_started") {
         event = "second_pass_approved";
       }
-      notifyPlayer(existing.profile?.slack_id, event, { title: existing.title, note: feedback });
+      await notifyTeam(existing.id, event, { title: existing.title, note: feedback });
 
       if (toStatus === "shipped" || toStatus === "fulfillment_started") {
         after(async () => {

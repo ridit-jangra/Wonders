@@ -13,7 +13,7 @@ import { canManagePlayers } from "@/lib/security/roles";
 import { adminUnshipProject, banProject, getProjectWithOwner, unbanProject } from "@/lib/projects";
 import { recordProjectHistory } from "@/lib/project-history";
 import { clearClaim } from "@/lib/review-claims";
-import { notifyPlayer } from "@/lib/notifications";
+import { notifyTeam } from "@/lib/notifications";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { writeAudit } from "@/lib/audit";
 import ReasonDialogButton from "../_components/ReasonDialogButton";
@@ -97,7 +97,7 @@ export default async function ExploreWonderPage({ params }: { params: Promise<{ 
       target: id,
       detail: { title: existing.title, owner: existing.profile?.slack_id, reason },
     });
-    notifyPlayer(existing.profile?.slack_id, "banned", { title: existing.title, note: reason });
+    await notifyTeam(existing.id, "banned", { title: existing.title, note: reason });
     refresh(id);
     return { ok: true };
   }
@@ -118,7 +118,7 @@ export default async function ExploreWonderPage({ params }: { params: Promise<{ 
       target: id,
       detail: { title: existing.title, owner: existing.profile?.slack_id, reason },
     });
-    notifyPlayer(existing.profile?.slack_id, "unbanned", { title: existing.title, note: reason });
+    await notifyTeam(existing.id, "unbanned", { title: existing.title, note: reason });
     refresh(id);
     return { ok: true };
   }
@@ -151,7 +151,7 @@ export default async function ExploreWonderPage({ params }: { params: Promise<{ 
       target: id,
       detail: { title: existing.title, owner: existing.profile?.slack_id, from, reason },
     });
-    notifyPlayer(existing.profile?.slack_id, "unshipped", { title: existing.title, note: reason });
+    await notifyTeam(existing.id, "unshipped", { title: existing.title, note: reason });
     refresh(id);
     return { ok: true };
   }

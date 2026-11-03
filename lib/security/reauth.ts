@@ -1,6 +1,6 @@
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 
-export const REAUTH_TTL_MS = 10 * 60 * 1000;
+export const REAUTH_TTL_MS = 2 * 60 * 60 * 1000;
 
 function key(secret: string) {
   return createHash("sha256").update(secret).update("wonders:admin-reauth:v1").digest();

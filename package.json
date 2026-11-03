@@ -18,7 +18,7 @@
     "fumadocs-mdx": "15.4.4",
     "fumadocs-ui": "16.15.14",
     "next": "16.4.4",
-    "postgres": "3.4.7",
+    "postgres": "4.0.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-markdown": "10.1.0",

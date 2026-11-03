@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 import { Icon } from "./ui";
+import type { ReviewMacro } from "@/lib/review-macros";
 
 const MIN_AUDIT_LENGTH = 20;
 const MIN_FEEDBACK_LENGTH = 10;
@@ -18,6 +19,31 @@ export interface DraftInput {
 export interface DraftResult {
   ok: boolean;
   savedAt: string | null;
+}
+
+function MacroPicker({ macros, onPick }: { macros: ReviewMacro[]; onPick: (body: string) => void }) {
+  if (macros.length === 0) return null;
+  return (
+    <select
+      className="hc-input"
+      value=""
+      onChange={(event) => {
+        const macro = macros.find((item) => String(item.id) === event.target.value);
+        if (macro) onPick(macro.body);
+      }}
+    >
+      <option value="">Insert a saved reply…</option>
+      {macros.map((macro) => (
+        <option key={macro.id} value={macro.id}>
+          {macro.title}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function appendText(current: string, addition: string) {
+  return current.trim() ? `${current.trimEnd()}\n\n${addition}` : addition;
 }
 
 function formatSavedAt(value: string) {
@@ -130,6 +156,7 @@ export default function ReviewPassForm({
   initialChecks = [],
   initialSavedAt = null,
   initialSavedBy = null,
+  macros = [],
   autosave,
 }: {
   pass: "first" | "second";
@@ -142,6 +169,7 @@ export default function ReviewPassForm({
   initialChecks?: string[];
   initialSavedAt?: string | null;
   initialSavedBy?: string | null;
+  macros?: ReviewMacro[];
   autosave: (draft: DraftInput) => Promise<DraftResult>;
 }) {
   const [step, setStep] = useState(1);
@@ -317,6 +345,8 @@ export default function ReviewPassForm({
           reach the same conclusion you did. Needed to approve, not to request changes.
         </p>
 
+        <MacroPicker macros={macros} onPick={(body) => setTechnical((value) => appendText(value, body))} />
+
         <label className="hc-label">
           Technical features
           <span className="hc-label-hint">
@@ -334,6 +364,8 @@ export default function ReviewPassForm({
             {technical.trim().length}/{MIN_AUDIT_LENGTH}
           </span>
         </label>
+
+        <MacroPicker macros={macros} onPick={(body) => setAdditional((value) => appendText(value, body))} />
 
         <label className="hc-label">
           Additional notes
@@ -364,6 +396,8 @@ export default function ReviewPassForm({
       </div>
 
       <div hidden={step !== 3} className="flex flex-col gap-4">
+        <MacroPicker macros={macros} onPick={(body) => setFeedback((value) => appendText(value, body))} />
+
         <label className="hc-label">
           Note to the user
           <span className="hc-label-hint">

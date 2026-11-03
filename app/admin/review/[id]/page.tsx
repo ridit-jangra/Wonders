@@ -9,6 +9,7 @@ import { canFulfill, canReview } from "@/lib/security/roles";
 import { blocksOwnReview } from "@/lib/security/own-wonder";
 import { claimBlockedBy, claimReview, clearClaim, releaseReview } from "@/lib/review-claims";
 import { getAirtableState, pushWonderToAirtable } from "@/lib/airtable";
+import { listMacros } from "@/lib/review-macros";
 import { writeAudit } from "@/lib/audit";
 import { getSlackActors } from "@/lib/profiles";
 import {
@@ -398,6 +399,7 @@ export default async function AdminReviewPanelPage({
     revalidateReview(id);
   }
 
+  const macros = await listMacros();
   const owner = project.profile;
   const isBanned = Boolean(project.banned_at);
   const ownWonder = blocksOwnReview(viewer, owner?.slack_id);
@@ -472,6 +474,7 @@ export default async function AdminReviewPanelPage({
             initialFeedback={draft?.feedback ?? ""}
             initialSavedAt={draft?.updated_at ?? null}
             initialSavedBy={draft?.updated_by ?? null}
+            macros={macros}
           />
         </Card>
       )}
@@ -494,6 +497,7 @@ export default async function AdminReviewPanelPage({
             initialChecks={draft?.checks ?? []}
             initialSavedAt={draft?.updated_at ?? null}
             initialSavedBy={draft?.updated_by ?? null}
+            macros={macros}
           />
         </Card>
       )}

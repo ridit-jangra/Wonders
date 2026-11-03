@@ -18,3 +18,5 @@ jobs:
       - run: bunx next typegen
       - run: bunx tsc --noEmit
       - run: bun test
+      - run: bun audit --audit-level=high
+        continue-on-error: true

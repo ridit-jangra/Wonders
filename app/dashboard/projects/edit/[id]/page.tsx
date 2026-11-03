@@ -8,7 +8,14 @@ import { after } from "next/server";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
 import { getHackatimeToken, getPhonePrefill, getSessionProfile, getSlackActors, saveShippingPhone } from "@/lib/profiles";
 import { fetchHackatimeProjects } from "@/lib/hackatime";
-import { deleteProject, getProject, shipProject, unshipProject, updateProject } from "@/lib/projects";
+import {
+  deleteProject,
+  getProject,
+  SHIP_AGAIN_MIN_SECONDS,
+  shipProject,
+  unshipProject,
+  updateProject,
+} from "@/lib/projects";
 import ShipDialogButton from "@/app/dashboard/components/ShipDialogButton";
 import { normalizePhone, splitPhone } from "@/lib/phone";
 import { getProjectTimeline, hasBeenShipped, recordProjectHistory } from "@/lib/project-history";
@@ -120,6 +127,16 @@ export default async function EditProjectPage({
   const hackatimeProjects = hackatimeToken
     ? await fetchHackatimeProjects(hackatimeToken)
     : null;
+  const currentTrackedSeconds = hackatimeProjects
+    ? hackatimeProjects
+        .filter((p) => project.hackatime_projects.includes(p.name))
+        .reduce((sum, p) => sum + p.seconds, 0)
+    : null;
+  const canShipAgain =
+    !liveEdit ||
+    (currentTrackedSeconds !== null &&
+      currentTrackedSeconds >= (project.hackatime_seconds ?? 0) + SHIP_AGAIN_MIN_SECONDS);
+
   const hackatimeChoices = [
     ...new Set([
       ...project.hackatime_projects,
@@ -321,6 +338,14 @@ export default async function EditProjectPage({
           .filter((p) => existing.hackatime_projects.includes(p.name))
           .reduce((sum, p) => sum + p.seconds, 0)
       : null;
+
+    if (
+      (existing.status === "shipped" || existing.status === "fulfillment_started") &&
+      (hackatimeSeconds === null ||
+        hackatimeSeconds < (existing.hackatime_seconds ?? 0) + SHIP_AGAIN_MIN_SECONDS)
+    ) {
+      return;
+    }
 
     const shipped = await shipProject(id, currentProfile.id, hackatimeSeconds);
     if (shipped) {
@@ -625,7 +650,7 @@ export default async function EditProjectPage({
                 shipAction={shipProjectAction}
                 isReship={isReship}
                 shipMore={liveEdit}
-                disabled={missingForShip.length > 0}
+                disabled={missingForShip.length > 0 || !canShipAgain}
                 initialIso={phoneStart?.iso ?? "US"}
                 initialNumber={phoneStart?.number ?? ""}
                 fromAuth={phonePrefill.fromAuth}
@@ -638,7 +663,9 @@ export default async function EditProjectPage({
               }`}
             >
               {liveEdit
-                ? "edits show up right away. built more? ship it again and it goes back for another review :3"
+                ? canShipAgain
+                  ? "edits show up right away. built more? ship it again and it goes back for another review :3"
+                  : "edits show up right away. add some new features to your project to ship it again, and only log the new hours :3"
                 : missingForShip.length > 0
                 ? `add ${missingForShip.join(", ")} before you can ${isReship ? "reship" : "ship"} it`
                 : isReship

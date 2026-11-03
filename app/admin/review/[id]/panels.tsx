@@ -84,12 +84,14 @@ export async function HackatimePanel({
   githubUrl,
   linkedProjects,
   shippedSeconds,
+  previousSeconds,
 }: {
   slackId: string | null;
   projectTitle: string;
   githubUrl: string | null;
   linkedProjects: string[];
   shippedSeconds: number | null;
+  previousSeconds: number | null;
 }) {
   const report = await fetchHackatimeReport(slackId);
 
@@ -137,6 +139,11 @@ export async function HackatimePanel({
         {shippedSeconds !== null && (
           <>
             {" "}· <Mono>{(shippedSeconds / 3600).toFixed(1)}h</Mono> recorded at ship
+            {previousSeconds !== null && (
+              <>
+                {" "}· <Mono>+{((shippedSeconds - previousSeconds) / 3600).toFixed(1)}h</Mono> new since the last ship
+              </>
+            )}
           </>
         )}
       </p>

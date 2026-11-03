@@ -112,6 +112,8 @@ export async function updateProject(
   `;
 }
 
+export const SHIP_AGAIN_MIN_SECONDS = 3600;
+
 export async function shipProject(
   id: ProjectId,
   profileId: string,
@@ -120,12 +122,20 @@ export async function shipProject(
   const rows = await sql`
     update projects set
       status = 'in_review',
+      hackatime_seconds_prev = case
+        when status in ('shipped', 'fulfillment_started') then hackatime_seconds
+        else hackatime_seconds_prev
+      end,
       hackatime_seconds = ${hackatimeSeconds},
       unship_reason = null,
       updated_at = now()
     where id = ${id}
       and profile_id = ${profileId}
       and status in ('building', 'rejected', 'shipped', 'fulfillment_started')
+      and (
+        status not in ('shipped', 'fulfillment_started')
+        or ${hackatimeSeconds}::int >= coalesce(hackatime_seconds, 0) + ${SHIP_AGAIN_MIN_SECONDS}
+      )
       and banned_at is null
     returning id
   `;
@@ -171,6 +181,7 @@ export interface ProjectOwner {
 }
 
 export interface ProjectWithOwner extends Project {
+  hackatime_seconds_prev: number | null;
   fulfilled_at: string | null;
   fulfilled_by: string | null;
   reward_ordered_at: string | null;
@@ -191,7 +202,7 @@ export interface ProjectWithOwner extends Project {
 const ADMIN_COLUMNS = () => sql`
   p.id, p.profile_id, p.title, p.description, p.image_url, p.link_url,
   p.github_url, p.status, p.reviewer_note, p.reward, p.hackatime_projects,
-  p.hackatime_seconds, p.created_at,
+  p.hackatime_seconds, p.hackatime_seconds_prev, p.created_at,
   p.fulfilled_at, p.fulfilled_by, p.reward_ordered_at, p.reward_sent_at,
   p.on_hold, p.hold_reason,
   p.banned_at, p.ban_reason, p.banned_by, p.unship_reason,

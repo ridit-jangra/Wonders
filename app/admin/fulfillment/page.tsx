@@ -223,6 +223,17 @@ export default async function AdminFulfillmentPage({
                   </TextLink>{" "}
                   · {project.profile?.email} · <Mono>{project.profile?.slack_id}</Mono>
                 </p>
+                {project.hackatime_seconds !== null && (
+                  <p className="hc-caption mt-1 text-sm">
+                    Hours shipped: <Mono>{(project.hackatime_seconds / 3600).toFixed(1)}h</Mono>
+                    {project.hackatime_seconds_prev !== null && (
+                      <>
+                        {" "}· <Mono>+{((project.hackatime_seconds - project.hackatime_seconds_prev) / 3600).toFixed(1)}h</Mono>{" "}
+                        new in the latest ship
+                      </>
+                    )}
+                  </p>
+                )}
               </div>
             </div>
 

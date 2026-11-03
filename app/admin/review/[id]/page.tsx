@@ -425,8 +425,17 @@ export default async function AdminReviewPanelPage({
       </Callout>
     ) : null;
 
+  const newHoursCallout =
+    project.hackatime_seconds_prev !== null && project.hackatime_seconds !== null ? (
+      <Callout tone="info" icon="clock">
+        Shipped again: <Mono>+{((project.hackatime_seconds - project.hackatime_seconds_prev) / 3600).toFixed(1)}h</Mono> new
+        hours since the last ship (<Mono>{(project.hackatime_seconds / 3600).toFixed(1)}h</Mono> total).
+      </Callout>
+    ) : null;
+
   const reviewTab = (
     <div className="flex flex-col gap-4 pt-4 [&>*:only-child]:flex-1">
+      {newHoursCallout}
       {isBanned && (
         <Callout tone="danger" icon="forbidden">
           This wonder is banned{project.banned_by ? ` (by ${project.banned_by})` : ""}: &ldquo;{project.ban_reason}&rdquo;.
@@ -733,6 +742,7 @@ export default async function AdminReviewPanelPage({
                       githubUrl={project.github_url}
                       linkedProjects={project.hackatime_projects}
                       shippedSeconds={project.hackatime_seconds}
+                      previousSeconds={project.hackatime_seconds_prev}
                     />
                   </Suspense>
                 ),

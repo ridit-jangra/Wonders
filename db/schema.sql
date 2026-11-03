@@ -69,6 +69,7 @@ create table if not exists projects (
   fulfilled_by text,
   hackatime_projects text[] not null default '{}',
   hackatime_seconds integer,
+  hackatime_seconds_prev integer,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

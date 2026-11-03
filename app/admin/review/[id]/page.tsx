@@ -52,6 +52,8 @@ import Markdown from "../../components/Markdown";
 import Tabs from "../../components/Tabs";
 import ResizableSplit from "../../components/ResizableSplit";
 import ReviewHeartbeat from "../../components/ReviewHeartbeat";
+import ImageUploadField from "../../components/ImageUploadField";
+import { uploadThumbnail } from "@/lib/storage";
 import ReviewPassForm, { type DraftInput, type DraftResult } from "../../components/ReviewPassForm";
 import { listJournalAdmin } from "@/lib/journal";
 import { CommitsPanel, HackatimePanel, JournalPanel, PanelLoading, PastReviewsPanel, YswsPanel } from "./panels";
@@ -333,10 +335,21 @@ export default async function AdminReviewPanelPage({
       return;
     }
 
+    let imageUrl = optionalUrl(formData.get("image_url"));
+    const upload = formData.get("image_file");
+    if (upload instanceof File && upload.size > 0) {
+      try {
+        imageUrl = await uploadThumbnail(upload, existing.profile_id);
+      } catch (error) {
+        console.error("Admin image upload failed:", (error as Error).message);
+        return;
+      }
+    }
+
     await adminUpdateProject(id, {
       title,
       description: String(formData.get("description") ?? "").trim(),
-      image_url: optionalUrl(formData.get("image_url")),
+      image_url: imageUrl,
       link_url: optionalUrl(formData.get("link_url")),
       github_url: optionalUrl(formData.get("github_url")),
     });
@@ -773,9 +786,7 @@ function EditSubmissionForm({
       <Field label="Description" hint="Markdown supported.">
         <Textarea name="description" rows={6} defaultValue={project.description} />
       </Field>
-      <Field label="Image URL">
-        <Input name="image_url" defaultValue={project.image_url ?? ""} />
-      </Field>
+      <ImageUploadField defaultValue={project.image_url ?? ""} />
       <Field label="Repo URL">
         <Input name="github_url" type="url" defaultValue={project.github_url ?? ""} />
       </Field>

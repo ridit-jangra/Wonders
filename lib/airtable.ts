@@ -40,6 +40,17 @@ async function loadInput(projectId: number): Promise<AirtableInput | null> {
   }
   const linked: string[] = row.hackatime_projects ?? [];
   const hackatime = await fetchHackatimeAirtableInfo(row.slack_id, linked);
+  const collaborators = await sql<{ slack_id: string; hackatime_projects: string[] }[]>`
+    select o.slack_id, c.hackatime_projects
+    from project_collaborators c join profiles o on o.id = c.profile_id
+    where c.project_id = ${projectId} and cardinality(c.hackatime_projects) > 0
+  `;
+  const collaboratorRanges = await Promise.all(
+    collaborators.map((c) => fetchHackatimeAirtableInfo(c.slack_id, c.hackatime_projects)),
+  );
+  const allRanges = [hackatime.ranges, ...collaboratorRanges.map((info) => info.ranges)]
+    .filter(Boolean)
+    .join(", ");
   const newSeconds =
     row.hackatime_seconds === null || row.hackatime_seconds === undefined
       ? null
@@ -54,7 +65,7 @@ async function loadInput(projectId: number): Promise<AirtableInput | null> {
     imageUrl: absoluteImageUrl(row.image_url),
     hours: hoursFromSeconds(newSeconds),
     hackatimeProjects: linked,
-    hackatimeRanges: hackatime.ranges,
+    hackatimeRanges: allRanges,
     submitterHackatimeId: hackatime.userId,
     technicalNotes: row.technical_notes ?? "",
     additionalNotes: row.additional_notes ?? "",

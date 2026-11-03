@@ -11,6 +11,7 @@ export default function ShipDialogButton({
   shipAction,
   isReship,
   shipMore = false,
+  confirmOnly = false,
   disabled,
   initialIso,
   initialNumber,
@@ -20,6 +21,7 @@ export default function ShipDialogButton({
   shipAction: (formData: FormData) => void;
   isReship: boolean;
   shipMore?: boolean;
+  confirmOnly?: boolean;
   disabled: boolean;
   initialIso: string;
   initialNumber: string;
@@ -29,7 +31,7 @@ export default function ShipDialogButton({
   const [open, setOpen] = useState(false);
   const [iso, setIso] = useState(findCountry(initialIso) ? initialIso : DEFAULT_COUNTRY);
   const [number, setNumber] = useState(initialNumber);
-  const valid = normalizePhone(iso, number) !== null;
+  const valid = confirmOnly || normalizePhone(iso, number) !== null;
 
   useEffect(() => {
     if (!open) return;
@@ -66,6 +68,17 @@ export default function ShipDialogButton({
             >
               <img src="/dialog-box-template.png" alt="" className="absolute inset-0 h-full w-full" />
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-[11%] py-[8%] text-center sm:gap-3">
+                {confirmOnly && (
+                  <>
+                    <p className="font-finger-paint text-base text-[#5C4A2E] sm:text-lg">
+                      ship it for the team? :3
+                    </p>
+                    <p className="font-finger-paint text-xs text-[#5C4A2E]/70 sm:text-sm">
+                      this sends the wonder for review on behalf of everyone on it.
+                    </p>
+                  </>
+                )}
+                {!confirmOnly && (<>
                 <p className="font-finger-paint text-base text-[#5C4A2E] sm:text-lg">
                   where can we reach you? :3
                 </p>
@@ -95,6 +108,7 @@ export default function ShipDialogButton({
                 {!valid && number.trim() !== "" && (
                   <p className="font-finger-paint text-xs text-[#A33B32]">that doesn&apos;t look like a phone number yet :c</p>
                 )}
+                </>)}
                 <div className="flex justify-center gap-3 sm:gap-4">
                   <button
                     type="button"

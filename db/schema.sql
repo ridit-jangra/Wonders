@@ -271,3 +271,15 @@ create table if not exists staff_notices (
 alter table projects add column if not exists airtable_record_ids text[] not null default '{}';
 update projects set airtable_record_ids = array[airtable_record_id]
   where airtable_record_id is not null and airtable_record_ids = '{}';
+
+alter table projects add column if not exists invite_code text;
+create unique index if not exists projects_invite_code_idx on projects (invite_code) where invite_code is not null;
+
+create table if not exists project_collaborators (
+  project_id integer not null references projects (id) on delete cascade,
+  profile_id uuid not null references profiles (id) on delete cascade,
+  hackatime_projects text[] not null default '{}',
+  joined_at timestamptz not null default now(),
+  primary key (project_id, profile_id)
+);
+create index if not exists project_collaborators_profile_idx on project_collaborators (profile_id);

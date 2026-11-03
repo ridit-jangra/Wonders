@@ -10,6 +10,7 @@ import { blocksOwnReview } from "@/lib/security/own-wonder";
 import { claimBlockedBy, claimReview, clearClaim, releaseReview } from "@/lib/review-claims";
 import { getAirtableState, pushWonderToAirtable } from "@/lib/airtable";
 import { listMacros } from "@/lib/review-macros";
+import { listCollaboratorSlackIds, listMembers } from "@/lib/collaborators";
 import { writeAudit } from "@/lib/audit";
 import { getSlackActors } from "@/lib/profiles";
 import {
@@ -79,6 +80,11 @@ async function reviewBlock(
 ): Promise<"own" | "claimed" | null> {
   if (blocksOwnReview(admin, ownerSlackId)) {
     return "own";
+  }
+  for (const slackId of await listCollaboratorSlackIds(projectId)) {
+    if (blocksOwnReview(admin, slackId)) {
+      return "own";
+    }
   }
   if (await claimBlockedBy(projectId, admin.slackId)) {
     return "claimed";
@@ -402,7 +408,10 @@ export default async function AdminReviewPanelPage({
   const macros = await listMacros();
   const owner = project.profile;
   const isBanned = Boolean(project.banned_at);
-  const ownWonder = blocksOwnReview(viewer, owner?.slack_id);
+  const teamMembers = (await listMembers(project.id)).filter((member) => member.role === "collaborator");
+  const ownWonder =
+    blocksOwnReview(viewer, owner?.slack_id) ||
+    teamMembers.some((member) => blocksOwnReview(viewer, member.slackId));
   const claimHolder = ownWonder ? null : await claimBlockedBy(id, viewer.slackId);
   const holderName = claimHolder
     ? ((await getSlackActors([claimHolder]))[claimHolder]?.name ?? claimHolder)
@@ -720,6 +729,19 @@ export default async function AdminReviewPanelPage({
             >
               Open in Slack
             </ButtonLink>
+            {teamMembers.length > 0 && (
+              <p className="hc-caption w-full text-sm">
+                Collaborators:{" "}
+                {teamMembers.map((member, index) => (
+                  <span key={member.profileId}>
+                    {index > 0 && ", "}
+                    <TextLink href={`https://hackclub.slack.com/team/${member.slackId}`} external>
+                      {member.name}
+                    </TextLink>
+                  </span>
+                ))}
+              </p>
+            )}
           </div>
         </Card>
 

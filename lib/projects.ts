@@ -36,7 +36,18 @@ export interface Project {
   banned_at: string | null;
   ban_reason: string | null;
   unship_reason: string | null;
+  is_collaborator?: boolean;
 }
+
+const memberOf = (profileId: string) => sql`
+  (
+    projects.profile_id = ${profileId}
+    or exists (
+      select 1 from project_collaborators pc
+      where pc.project_id = projects.id and pc.profile_id = ${profileId}
+    )
+  )
+`;
 
 const COLUMNS = () => sql`
   id, profile_id, title, description, image_url, link_url, github_url,
@@ -46,8 +57,9 @@ const COLUMNS = () => sql`
 
 export async function getProjects(profileId: string): Promise<Project[]> {
   return sql<Project[]>`
-    select ${COLUMNS()} from projects
-    where profile_id = ${profileId}
+    select ${COLUMNS()}, (profile_id <> ${profileId}) as is_collaborator
+    from projects
+    where ${memberOf(profileId)}
     order by created_at asc
   `;
 }
@@ -106,7 +118,7 @@ export async function updateProject(
       ${data.hackatime_projects !== undefined ? sql`hackatime_projects = ${data.hackatime_projects},` : sql``}
       updated_at = now()
     where id = ${id}
-      and profile_id = ${profileId}
+      and ${memberOf(profileId)}
       and status in ('building', 'rejected', 'shipped', 'fulfillment_started')
       and banned_at is null
   `;
@@ -130,7 +142,7 @@ export async function shipProject(
       unship_reason = null,
       updated_at = now()
     where id = ${id}
-      and profile_id = ${profileId}
+      and ${memberOf(profileId)}
       and status in ('building', 'rejected', 'shipped', 'fulfillment_started')
       and (
         status not in ('shipped', 'fulfillment_started')
@@ -154,7 +166,7 @@ export async function unshipProject(id: ProjectId, profileId: string): Promise<b
       ai_reviewed_at = null,
       updated_at = now()
     where id = ${id}
-      and profile_id = ${profileId}
+      and ${memberOf(profileId)}
       and status = 'in_review'
     returning id
   `;

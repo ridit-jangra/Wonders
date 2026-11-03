@@ -73,7 +73,7 @@ export default function ProjectCardWide({
       <p className="absolute top-[26%] left-[43%] h-[39%] w-[56%] overflow-hidden font-finger-paint text-xs text-[#5C4A2E]">
         {project.description}
       </p>
-      {editable ? (
+      {editable && !project.is_collaborator ? (
         <DeleteProjectButton
           action={deleteProjectAction}
           className="absolute bottom-[22%] left-[42%] w-[28%] py-1 cursor-pointer hover:zoom-110 transition-all font-finger-paint text-xl bg-[#F2B3AD] text-black/45 rounded-lg"
@@ -84,7 +84,7 @@ export default function ProjectCardWide({
           disabled
           className="absolute bottom-[22%] left-[42%] w-[28%] py-1 cursor-not-allowed opacity-60 font-finger-paint text-xl bg-[#F2B3AD] text-black/45 rounded-lg"
         >
-          {lockedLabel}
+          {project.is_collaborator ? "team wonder :3" : lockedLabel}
         </button>
       )}
       <Link

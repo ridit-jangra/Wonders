@@ -11,6 +11,7 @@ import ProjectCard from "@/app/dashboard/components/ProjectCard";
 import AddProjectCard from "@/app/dashboard/components/AddProjectCard";
 import ProjectCardWide from "@/app/dashboard/components/ProjectCardWide";
 import AddProjectCardWide from "@/app/dashboard/components/AddProjectCardWide";
+import JoinWonderButton from "@/app/dashboard/components/JoinWonderButton";
 
 export default async function ProjectsPage() {
   const cookieStore = await cookies();
@@ -37,9 +38,12 @@ export default async function ProjectsPage() {
       <Sidebar showRefers={await canUseReferrals(profile.slack_id)} />
       <Profile />
       <main className="relative min-w-0 flex-1 pr-6 pt-20 md:pr-10 md:pt-10">
-        <h1 className="font-finger-paint text-4xl text-[#BFD8A8]">
-          Your Wonders
-        </h1>
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="font-finger-paint text-4xl text-[#BFD8A8]">
+            Your Wonders
+          </h1>
+          <JoinWonderButton className="mr-16 rounded-lg bg-[#A8C7E0] px-4 py-2 font-finger-paint text-lg text-black/50 transition hover:scale-105 md:mr-20" />
+        </div>
 
         <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 md:hidden">
           {projects.map((project) => (

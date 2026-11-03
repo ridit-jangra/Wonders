@@ -23,6 +23,9 @@ export interface JournalItem {
   content: string;
   createdAt: string;
   editedAt: string | null;
+  mine?: boolean;
+  authorName?: string;
+  authorAvatar?: string | null;
 }
 
 export type JournalResult = { ok: true } | { ok: false; error: string };
@@ -517,9 +520,14 @@ export default function Journal({ projectId, entries, locked, post, edit, remove
               <article key={entry.id} className="rounded-md bg-[#E7E2C9] px-4 py-3">
                 <div className="mb-1 flex flex-wrap items-center gap-x-3 gap-y-1">
                   {entry.title && <h3 className="font-finger-paint text-lg text-[#5C4A2E]">{entry.title}</h3>}
+                  {entry.authorName && (
+                    <span className="font-finger-paint text-sm text-[#5C4A2E]/80">
+                      {entry.mine ? "you" : entry.authorName}
+                    </span>
+                  )}
                   <LocalTime iso={entry.createdAt} className="font-finger-paint text-sm text-[#8C8368]" />
                   {entry.editedAt && <span className="font-finger-paint text-sm text-[#8C8368]">(edited)</span>}
-                  {!locked && (
+                  {!locked && entry.mine !== false && (
                     <span className="ml-auto flex gap-3 font-finger-paint text-sm text-[#5C4A2E]">
                       {confirming === entry.id ? (
                         <>

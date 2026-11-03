@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+import JoinWonderButton from "./JoinWonderButton";
 
 const links = [
   { href: "/dashboard", label: "Dashboard :)", src: "/button-template-1.png" },
@@ -45,6 +46,12 @@ export default function SidebarNav({
             refer friends, get a pin &lt;3
           </Link>
         )}
+      <JoinWonderButton
+        onOpenAction={onNavigateAction}
+        className="ml-6 self-start font-finger-paint text-xl text-[#16213E] underline decoration-[#16213E]/40 underline-offset-4 hover:decoration-[#16213E]"
+      >
+        got a wonder code? join one :D
+      </JoinWonderButton>
       <Link
         href="/docs"
         onClick={onNavigateAction}

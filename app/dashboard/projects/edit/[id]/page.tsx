@@ -7,6 +7,16 @@ import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
 import { getHackatimeToken, getPhonePrefill, getSessionProfile, getSlackActors, saveShippingPhone } from "@/lib/profiles";
+import {
+  computeWonderSeconds,
+  getCollaboratorLinks,
+  getInviteCode,
+  getRole,
+  listMembers,
+  removeCollaborator,
+  resetInviteCode,
+  setCollaboratorLinks,
+} from "@/lib/collaborators";
 import { fetchHackatimeProjects } from "@/lib/hackatime";
 import {
   deleteProject,
@@ -28,7 +38,7 @@ import {
   addJournalEntry,
   deleteJournalEntry,
   editJournalEntry,
-  listJournal,
+  listJournalForMember,
 } from "@/lib/journal";
 import { JOURNAL_MAX_CONTENT, journalLocked } from "@/lib/journal-shared";
 import Journal, { type JournalResult } from "@/app/dashboard/components/Journal";
@@ -39,6 +49,7 @@ import AutoSave from "@/app/dashboard/components/AutoSave";
 import LockRibbons from "@/app/dashboard/components/LockRibbons";
 import ProjectTimeline from "@/app/dashboard/components/ProjectTimeline";
 import DeleteProjectButton from "@/app/dashboard/components/DeleteProjectButton";
+import CopyCode from "@/app/dashboard/components/CopyCode";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -62,7 +73,7 @@ async function journalGuard(id: string, bucket: string, limit: number): Promise<
     return null;
   }
   const existing = await getProject(id);
-  if (!existing || existing.profile_id !== currentProfile.id) {
+  if (!existing || !(await getRole(existing.id, currentProfile.id))) {
     return null;
   }
   if (journalLocked(existing.status)) {
@@ -72,6 +83,27 @@ async function journalGuard(id: string, bucket: string, limit: number): Promise<
     return { error: "slow down a little and try again :3" };
   }
   return { profileId: currentProfile.id };
+}
+
+async function memberContext(id: string) {
+  const store = await cookies();
+  const current = verifySessionCookie(store.get(SESSION_COOKIE)?.value);
+  if (!current || !(await isStaffSlackId(current.slackId))) {
+    return null;
+  }
+  const profile = await getSessionProfile(current);
+  if (!profile) {
+    return null;
+  }
+  const project = await getProject(id);
+  if (!project) {
+    return null;
+  }
+  const role = await getRole(project.id, profile.id);
+  if (!role) {
+    return null;
+  }
+  return { current, profile, project, role };
 }
 
 export default async function EditProjectPage({
@@ -101,9 +133,20 @@ export default async function EditProjectPage({
   }
 
   const project = await getProject(id);
-  if (!project || project.profile_id !== profile.id) {
+  if (!project) {
     redirect("/wonders");
   }
+  const role = await getRole(project.id, profile.id);
+  if (!role) {
+    redirect("/wonders");
+  }
+  const isCollaborator = role === "collaborator";
+  const members = await listMembers(project.id);
+  const ownerMember = members.find((member) => member.role === "owner");
+  const myLinks = isCollaborator
+    ? await getCollaboratorLinks(project.id, profile.id)
+    : project.hackatime_projects;
+  const inviteCode = isCollaborator ? null : await getInviteCode(project.id, profile.id);
 
   const isBanned = Boolean(project.banned_at);
   const liveEdit = (project.status === "shipped" || project.status === "fulfillment_started") && !isBanned;
@@ -111,13 +154,13 @@ export default async function EditProjectPage({
   const underReview = project.status === "in_review" || project.status === "second_pass";
   const lockedLabel = isBanned ? "banned :(" : underReview ? "in review :3" : "shipped :D";
 
-  const timeline = await getProjectTimeline(project.id, profile.id);
+  const timeline = await getProjectTimeline(project.id, project.profile_id);
   const phonePrefill = await getPhonePrefill(profile.id);
   const phoneStart = splitPhone(phonePrefill.phone);
-  const isReship = project.status === "rejected" || (await hasBeenShipped(project.id, profile.id));
-  const journal = await listJournal(project.id, profile.id);
+  const isReship = project.status === "rejected" || (await hasBeenShipped(project.id, project.profile_id));
+  const journal = await listJournalForMember(project.id, profile.id);
   const actors = await getSlackActors([
-    profile.slack_id,
+    ...members.map((member) => member.slackId),
     ...timeline.map((entry) => entry.actorSlackId),
   ]);
 
@@ -127,11 +170,7 @@ export default async function EditProjectPage({
   const hackatimeProjects = hackatimeToken
     ? await fetchHackatimeProjects(hackatimeToken)
     : null;
-  const currentTrackedSeconds = hackatimeProjects
-    ? hackatimeProjects
-        .filter((p) => project.hackatime_projects.includes(p.name))
-        .reduce((sum, p) => sum + p.seconds, 0)
-    : null;
+  const currentTrackedSeconds = liveEdit ? await computeWonderSeconds(project) : null;
   const canShipAgain =
     !liveEdit ||
     (currentTrackedSeconds !== null &&
@@ -139,7 +178,7 @@ export default async function EditProjectPage({
 
   const hackatimeChoices = [
     ...new Set([
-      ...project.hackatime_projects,
+      ...myLinks,
       ...(hackatimeProjects ?? []).map((p) => p.name),
     ]),
   ];
@@ -150,7 +189,7 @@ export default async function EditProjectPage({
     !project.github_url && "a github url",
     !hackatimeConnected && "your hackatime",
     hackatimeConnected &&
-      project.hackatime_projects.length === 0 &&
+      myLinks.length === 0 &&
       "a hackatime project",
   ].filter((v): v is string => Boolean(v));
 
@@ -172,9 +211,11 @@ export default async function EditProjectPage({
     }
 
     const existing = await getProject(id);
-    if (!existing || existing.profile_id !== currentProfile.id) {
+    const memberRole = existing ? await getRole(existing.id, currentProfile.id) : null;
+    if (!existing || !memberRole) {
       redirect("/wonders");
     }
+    const asCollaborator = memberRole === "collaborator";
 
     if (!(await checkRateLimit("project-save", current.slackId, 30, 60)).allowed) {
       return;
@@ -202,7 +243,7 @@ export default async function EditProjectPage({
     }
 
     let imageUrl = removeThumbnail ? null : existing.image_url;
-    if (thumbnail instanceof File && thumbnail.size > 0) {
+    if (!asCollaborator && thumbnail instanceof File && thumbnail.size > 0) {
       imageUrl = await uploadThumbnail(thumbnail, currentProfile.id);
     }
 
@@ -211,9 +252,11 @@ export default async function EditProjectPage({
       description,
       link_url: demoUrl,
       github_url: githubUrl,
-      image_url: imageUrl,
-      hackatime_projects: hackatimeLinks,
+      ...(asCollaborator ? {} : { image_url: imageUrl, hackatime_projects: hackatimeLinks }),
     });
+    if (asCollaborator && hackatimeLinks) {
+      await setCollaboratorLinks(existing.id, currentProfile.id, hackatimeLinks);
+    }
     redirect("/wonders");
   }
 
@@ -232,9 +275,11 @@ export default async function EditProjectPage({
     }
 
     const existing = await getProject(id);
+    const memberRole = existing ? await getRole(existing.id, currentProfile.id) : null;
+    const asCollaborator = memberRole === "collaborator";
     if (
       !existing ||
-      existing.profile_id !== currentProfile.id ||
+      !memberRole ||
       (existing.status !== "building" &&
         existing.status !== "rejected" &&
         existing.status !== "shipped" &&
@@ -270,7 +315,7 @@ export default async function EditProjectPage({
         : undefined;
 
     let imageUrl = removeThumbnail ? null : existing.image_url;
-    if (thumbnail instanceof File && thumbnail.size > 0) {
+    if (!asCollaborator && thumbnail instanceof File && thumbnail.size > 0) {
       imageUrl = await uploadThumbnail(thumbnail, currentProfile.id);
     }
 
@@ -279,9 +324,11 @@ export default async function EditProjectPage({
       description,
       link_url: demoUrl,
       github_url: githubUrl,
-      image_url: imageUrl,
-      hackatime_projects: hackatimeLinks,
+      ...(asCollaborator ? {} : { image_url: imageUrl, hackatime_projects: hackatimeLinks }),
     });
+    if (asCollaborator && hackatimeLinks) {
+      await setCollaboratorLinks(existing.id, currentProfile.id, hackatimeLinks);
+    }
 
     revalidatePath("/dashboard");
     revalidatePath("/wonders");
@@ -306,38 +353,39 @@ export default async function EditProjectPage({
     }
 
     const existing = await getProject(id);
-    if (!existing || existing.profile_id !== currentProfile.id) {
+    const memberRole = existing ? await getRole(existing.id, currentProfile.id) : null;
+    if (!existing || !memberRole) {
       redirect("/wonders");
     }
+    const asCollaborator = memberRole === "collaborator";
     if (!(await checkRateLimit("project-ship", current.slackId, 10, 60)).allowed) {
       return;
     }
+    const shipperLinks = asCollaborator
+      ? await getCollaboratorLinks(existing.id, currentProfile.id)
+      : existing.hackatime_projects;
     if (
       !existing.image_url ||
       !existing.link_url ||
       !existing.github_url ||
       !currentProfile.hackatime_connected_at ||
-      existing.hackatime_projects.length === 0
+      shipperLinks.length === 0
     ) {
       return;
     }
 
-    const phone = normalizePhone(
-      String(formData.get("phone_country") ?? ""),
-      String(formData.get("phone_number") ?? ""),
-    );
-    if (!phone) {
-      return;
+    if (!asCollaborator) {
+      const phone = normalizePhone(
+        String(formData.get("phone_country") ?? ""),
+        String(formData.get("phone_number") ?? ""),
+      );
+      if (!phone) {
+        return;
+      }
+      await saveShippingPhone(currentProfile.id, phone);
     }
-    await saveShippingPhone(currentProfile.id, phone);
 
-    const token = await getHackatimeToken(currentProfile.id);
-    const tracked = token ? await fetchHackatimeProjects(token) : null;
-    const hackatimeSeconds = tracked
-      ? tracked
-          .filter((p) => existing.hackatime_projects.includes(p.name))
-          .reduce((sum, p) => sum + p.seconds, 0)
-      : null;
+    const hackatimeSeconds = await computeWonderSeconds(existing);
 
     if (
       (existing.status === "shipped" || existing.status === "fulfillment_started") &&
@@ -351,7 +399,7 @@ export default async function EditProjectPage({
     if (shipped) {
       await recordProjectHistory({
         projectId: id,
-        profileId: currentProfile.id,
+        profileId: existing.profile_id,
         fromStatus: existing.status,
         toStatus: "in_review",
         reviewerNote: null,
@@ -359,9 +407,14 @@ export default async function EditProjectPage({
         reviewedBy: current.slackId,
       });
       notifyPlayer(current.slackId, "in_review", { title: existing.title });
+      for (const member of await listMembers(existing.id)) {
+        if (member.slackId !== current.slackId) {
+          notifyPlayer(member.slackId, "in_review", { title: existing.title });
+        }
+      }
 
       if (precheckEnabled()) {
-        const token = await beginPrecheck(id, currentProfile.id);
+        const token = await beginPrecheck(id, existing.profile_id);
         if (token) {
           after(() => runPrecheck(Number(id), token));
         }
@@ -391,7 +444,7 @@ export default async function EditProjectPage({
     }
 
     const existing = await getProject(id);
-    if (!existing || existing.profile_id !== currentProfile.id) {
+    if (!existing || !(await getRole(existing.id, currentProfile.id))) {
       redirect("/wonders");
     }
     if (!(await checkRateLimit("project-unship", current.slackId, 10, 60)).allowed) {
@@ -402,7 +455,7 @@ export default async function EditProjectPage({
     if (undone) {
       await recordProjectHistory({
         projectId: id,
-        profileId: currentProfile.id,
+        profileId: existing.profile_id,
         fromStatus: "in_review",
         toStatus: "building",
         reviewerNote: null,
@@ -506,6 +559,46 @@ export default async function EditProjectPage({
     revalidatePath("/wonders");
   }
 
+  async function createInviteAction() {
+    "use server";
+    const ctx = await memberContext(id);
+    if (!ctx || ctx.role !== "owner" || ctx.project.banned_at) return;
+    if (!(await checkRateLimit("collab-invite", ctx.current.slackId, 20, 60)).allowed) return;
+    await resetInviteCode(ctx.project.id, ctx.profile.id, "create");
+    revalidatePath(`/dashboard/projects/edit/${id}`);
+  }
+
+  async function revokeInviteAction() {
+    "use server";
+    const ctx = await memberContext(id);
+    if (!ctx || ctx.role !== "owner") return;
+    if (!(await checkRateLimit("collab-invite", ctx.current.slackId, 20, 60)).allowed) return;
+    await resetInviteCode(ctx.project.id, ctx.profile.id, "revoke");
+    revalidatePath(`/dashboard/projects/edit/${id}`);
+  }
+
+  async function removeMemberAction(formData: FormData) {
+    "use server";
+    const ctx = await memberContext(id);
+    if (!ctx || ctx.role !== "owner") return;
+    const target = String(formData.get("profile") ?? "");
+    if (!UUID.test(target) || target === ctx.profile.id) return;
+    if (!(await checkRateLimit("collab-remove", ctx.current.slackId, 20, 60)).allowed) return;
+    await removeCollaborator(ctx.project.id, ctx.profile.id, target);
+    revalidatePath(`/dashboard/projects/edit/${id}`);
+  }
+
+  async function leaveAction() {
+    "use server";
+    const ctx = await memberContext(id);
+    if (!ctx || ctx.role !== "collaborator") return;
+    if (!(await checkRateLimit("collab-remove", ctx.current.slackId, 20, 60)).allowed) return;
+    await removeCollaborator(ctx.project.id, ctx.profile.id, ctx.profile.id);
+    revalidatePath("/dashboard");
+    revalidatePath("/wonders");
+    redirect("/wonders");
+  }
+
   return (
     <div className="relative flex min-h-screen flex-col gap-6 bg-[#F0EBD1] px-6 pt-24 pb-10 sm:px-10 md:bg-transparent md:pr-14 md:pl-4 md:py-16 lg:py-28">
       <div className="pointer-events-none fixed top-0 right-[2%] bottom-0 left-0 -z-10 hidden md:block md:left-[calc(100vh*554/1080-10vh)]">
@@ -520,6 +613,11 @@ export default async function EditProjectPage({
       <h1 className="font-finger-paint text-3xl text-[#5C4A2E] sm:text-4xl lg:text-5xl">
         Edit your Wonder
       </h1>
+      {isCollaborator && ownerMember && (
+        <p className="font-finger-paint text-[#5C4A2E]/70">
+          you&apos;re on {ownerMember.name}&apos;s team for this one :3 you can edit it and ship it, only they can delete it
+        </p>
+      )}
       <form
         action={submitProject}
         className="w-full md:max-w-[90%]"
@@ -552,7 +650,18 @@ export default async function EditProjectPage({
           <p className="font-finger-paint text-[#5C4A2E]/70">
             Give your wonder a thumbnail :3
           </p>
-          <ThumbnailPicker defaultUrl={project.image_url} />
+          {isCollaborator ? (
+            <div className="flex flex-col gap-2">
+              {project.image_url && (
+                <img src={project.image_url} alt="" className="max-h-48 w-fit rounded-md object-cover" />
+              )}
+              <p className="font-finger-paint text-sm text-[#5C4A2E]/70">
+                the owner picks the thumbnail :3
+              </p>
+            </div>
+          ) : (
+            <ThumbnailPicker defaultUrl={project.image_url} />
+          )}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <span className="flex w-full flex-col gap-2">
               <p className="font-finger-paint text-[#5C4A2E]/70">
@@ -604,14 +713,14 @@ export default async function EditProjectPage({
                   which hackatime project is this wonder? :3
                 </p>
                 {editable && <input type="hidden" name="hackatime-picker" value="1" />}
-                {(editable ? hackatimeChoices : project.hackatime_projects).length === 0 ? (
+                {(editable ? hackatimeChoices : myLinks).length === 0 ? (
                   <p className="font-finger-paint text-sm text-[#5C4A2E]/70">
                     no hackatime projects yet, code a bit with hackatime running and they&apos;ll show up here
                   </p>
                 ) : (
                   <HackatimeProjectSelect
-                    options={editable ? hackatimeChoices : project.hackatime_projects}
-                    defaultSelected={project.hackatime_projects}
+                    options={editable ? hackatimeChoices : myLinks}
+                    defaultSelected={myLinks}
                     disabled={!editable}
                   />
                 )}
@@ -625,13 +734,13 @@ export default async function EditProjectPage({
               <AutoSave action={autosaveProject} />
             </div>
             <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:justify-end">
-              {liveEdit ? (
+              {liveEdit || isCollaborator ? (
                 <button
                   type="button"
                   disabled
                   className="w-full cursor-not-allowed rounded-md bg-[#F2B3AD] px-4 py-2 font-finger-paint text-lg text-black/40 opacity-60 sm:w-48"
                 >
-                  {lockedLabel}
+                  {isCollaborator ? "owner only :3" : lockedLabel}
                 </button>
               ) : (
                 <DeleteProjectButton
@@ -650,6 +759,7 @@ export default async function EditProjectPage({
                 shipAction={shipProjectAction}
                 isReship={isReship}
                 shipMore={liveEdit}
+                confirmOnly={isCollaborator}
                 disabled={missingForShip.length > 0 || !canShipAgain}
                 initialIso={phoneStart?.iso ?? "US"}
                 initialNumber={phoneStart?.number ?? ""}
@@ -739,6 +849,87 @@ export default async function EditProjectPage({
           )}
         </div>
       )}
+      <section className="w-full rounded-md bg-[#E7E2C9] p-4 md:max-w-[90%]">
+        <h2 className="font-finger-paint text-xl text-[#5C4A2E]">the team :3</h2>
+        <ul className="mt-3 flex flex-col gap-2">
+          {members.map((member) => (
+            <li key={member.profileId} className="flex items-center gap-3">
+              {member.avatarUrl ? (
+                <img src={member.avatarUrl} alt="" className="h-8 w-8 rounded-full" />
+              ) : (
+                <span className="h-8 w-8 rounded-full bg-[#D9D2B0]" />
+              )}
+              <span className="font-finger-paint text-[#5C4A2E]">
+                {member.name}
+                {member.role === "owner" && (
+                  <span className="ml-2 text-sm text-[#5C4A2E]/60">owner</span>
+                )}
+              </span>
+              {!isCollaborator && member.role === "collaborator" && (
+                <form action={removeMemberAction} className="ml-auto">
+                  <input type="hidden" name="profile" value={member.profileId} />
+                  <SubmitButton
+                    pendingLabel="removing..."
+                    className="font-finger-paint text-sm text-[#5C4A2E] underline"
+                  >
+                    remove
+                  </SubmitButton>
+                </form>
+              )}
+            </li>
+          ))}
+        </ul>
+        {!isCollaborator && !isBanned && (
+          <div className="mt-4 flex flex-col gap-2">
+            <p className="font-finger-paint text-sm text-[#5C4A2E]/70">
+              want someone on this wonder with you? give them a code and they can join from their dashboard :3
+            </p>
+            {inviteCode ? (
+              <div className="flex flex-wrap items-center gap-3">
+                <code className="rounded-md bg-[#F0EBD1] px-3 py-2 font-mono text-lg tracking-widest text-[#5C4A2E]">
+                  {inviteCode}
+                </code>
+                <CopyCode code={inviteCode} />
+                <form action={createInviteAction}>
+                  <SubmitButton
+                    pendingLabel="making..."
+                    className="font-finger-paint text-sm text-[#5C4A2E] underline"
+                  >
+                    new code
+                  </SubmitButton>
+                </form>
+                <form action={revokeInviteAction}>
+                  <SubmitButton
+                    pendingLabel="turning off..."
+                    className="font-finger-paint text-sm text-[#5C4A2E] underline"
+                  >
+                    turn off
+                  </SubmitButton>
+                </form>
+              </div>
+            ) : (
+              <form action={createInviteAction}>
+                <SubmitButton
+                  pendingLabel="making it... :3"
+                  className="rounded-md bg-[#A8C7E0] px-4 py-2 font-finger-paint text-lg text-black/40 transition hover:scale-105"
+                >
+                  Invite someone :D
+                </SubmitButton>
+              </form>
+            )}
+          </div>
+        )}
+        {isCollaborator && (
+          <form action={leaveAction} className="mt-4">
+            <SubmitButton
+              pendingLabel="leaving..."
+              className="font-finger-paint text-sm text-[#5C4A2E] underline"
+            >
+              leave this wonder
+            </SubmitButton>
+          </form>
+        )}
+      </section>
       <Journal
         projectId={Number(project.id)}
         entries={journal}
@@ -751,7 +942,7 @@ export default async function EditProjectPage({
       <ProjectTimeline
         entries={timeline}
         actors={actors}
-        ownerSlackId={profile.slack_id}
+        ownerSlackId={ownerMember?.slackId ?? profile.slack_id}
         startedAt={project.created_at}
       />
     </div>

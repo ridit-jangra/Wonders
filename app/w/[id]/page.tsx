@@ -59,7 +59,7 @@ export default async function SharedWonderPage({ params }: { params: Params }) {
               href={wonder.link_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-lg bg-[#A8C7E0] px-4 py-2 font-finger-paint text-lg text-black/50 transition hover:scale-105"
+              className="rounded-lg bg-[#A8C7E0] px-4 py-2 font-finger-paint text-lg text-black/50 transition-all hover:zoom-110"
             >
               try it :D
             </a>
@@ -69,14 +69,14 @@ export default async function SharedWonderPage({ params }: { params: Params }) {
               href={wonder.github_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-lg bg-[#D1E4B5] px-4 py-2 font-finger-paint text-lg text-black/50 transition hover:scale-105"
+              className="rounded-lg bg-[#D1E4B5] px-4 py-2 font-finger-paint text-lg text-black/50 transition-all hover:zoom-110"
             >
               the code :3
             </a>
           )}
           <Link
             href="/"
-            className="rounded-lg bg-[#F2B3AD] px-4 py-2 font-finger-paint text-lg text-black/50 transition hover:scale-105"
+            className="rounded-lg bg-[#F2B3AD] px-4 py-2 font-finger-paint text-lg text-black/50 transition-all hover:zoom-110"
           >
             make your own wonder
           </Link>

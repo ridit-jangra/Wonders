@@ -42,7 +42,7 @@ export default async function ProjectsPage() {
           <h1 className="font-finger-paint text-4xl text-[#BFD8A8]">
             Your Wonders
           </h1>
-          <JoinWonderButton className="mr-0 rounded-lg bg-[#A8C7E0] px-4 py-2 font-finger-paint text-lg text-black/50 transition hover:scale-105 md:mr-36" />
+          <JoinWonderButton className="mr-0 rounded-lg bg-[#A8C7E0] px-4 py-2 font-finger-paint text-lg text-black/50 transition-all hover:zoom-110 md:mr-36" />
         </div>
 
         <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 md:hidden">

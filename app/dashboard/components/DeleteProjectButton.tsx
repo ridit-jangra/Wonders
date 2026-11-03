@@ -77,7 +77,7 @@ export default function DeleteProjectButton({
                     type="button"
                     onClick={() => setOpen(false)}
                     disabled={pending}
-                    className="rounded-lg bg-[#D0E4B4] px-4 py-2 font-finger-paint text-black/60 transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100"
+                    className="rounded-lg bg-[#D0E4B4] px-4 py-2 font-finger-paint text-black/60 transition-all hover:zoom-110 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100"
                   >
                     nevermind :3
                   </button>
@@ -85,7 +85,7 @@ export default function DeleteProjectButton({
                     type="button"
                     onClick={handleConfirm}
                     disabled={pending}
-                    className="rounded-lg bg-[#F2B3AD] px-4 py-2 font-finger-paint text-black/60 transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100"
+                    className="rounded-lg bg-[#F2B3AD] px-4 py-2 font-finger-paint text-black/60 transition-all hover:zoom-110 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100"
                   >
                     {pending ? "deleting... :(" : "delete it :("}
                   </button>

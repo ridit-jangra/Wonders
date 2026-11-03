@@ -113,7 +113,7 @@ export default function ShipDialogButton({
                   <button
                     type="button"
                     onClick={() => setOpen(false)}
-                    className="rounded-lg bg-[#D0E4B4] px-4 py-2 font-finger-paint text-black/60 transition hover:scale-105"
+                    className="rounded-lg bg-[#D0E4B4] px-4 py-2 font-finger-paint text-black/60 transition-all hover:zoom-110"
                   >
                     nevermind :3
                   </button>
@@ -121,7 +121,7 @@ export default function ShipDialogButton({
                     formAction={shipAction}
                     disabled={!valid}
                     pendingLabel={`${verb}ping it... :3`}
-                    className="rounded-lg bg-[#A8C7E0] px-4 py-2 font-finger-paint text-black/60 transition hover:scale-105"
+                    className="rounded-lg bg-[#A8C7E0] px-4 py-2 font-finger-paint text-black/60 transition-all hover:zoom-110"
                   >
                     {verb} it :D
                   </SubmitButton>

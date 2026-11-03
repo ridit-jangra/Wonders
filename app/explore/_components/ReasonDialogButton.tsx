@@ -102,7 +102,7 @@ export default function ReasonDialogButton({
                     type="button"
                     onClick={close}
                     disabled={pending}
-                    className="rounded-lg bg-[#D0E4B4] px-4 py-2 font-finger-paint text-black/60 transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="rounded-lg bg-[#D0E4B4] px-4 py-2 font-finger-paint text-black/60 transition-all hover:zoom-110 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     nevermind :3
                   </button>
@@ -110,7 +110,7 @@ export default function ReasonDialogButton({
                     type="button"
                     onClick={confirm}
                     disabled={pending}
-                    className="rounded-lg bg-[#F2B3AD] px-4 py-2 font-finger-paint text-black/60 transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="rounded-lg bg-[#F2B3AD] px-4 py-2 font-finger-paint text-black/60 transition-all hover:zoom-110 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {pending ? pendingLabel : confirmLabel}
                   </button>

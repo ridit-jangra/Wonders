@@ -911,7 +911,7 @@ export default async function EditProjectPage({
               <form action={createInviteAction}>
                 <SubmitButton
                   pendingLabel="making it... :3"
-                  className="rounded-md bg-[#A8C7E0] px-4 py-2 font-finger-paint text-lg text-black/40 transition hover:scale-105"
+                  className="rounded-md bg-[#A8C7E0] px-4 py-2 font-finger-paint text-lg text-black/40 transition-all hover:zoom-110"
                 >
                   Invite someone :D
                 </SubmitButton>

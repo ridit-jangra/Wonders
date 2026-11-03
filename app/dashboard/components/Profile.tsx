@@ -18,7 +18,7 @@ export async function Profile() {
       {showAdmin && (
         <a
           href="/admin/access"
-          className="rounded-full bg-[#16213E]/80 px-3 py-1.5 font-finger-paint text-sm text-white shadow-md transition hover:scale-105"
+          className="rounded-full bg-[#16213E]/80 px-3 py-1.5 font-finger-paint text-sm text-white shadow-md transition-all hover:zoom-110"
         >
           admin :D
         </a>

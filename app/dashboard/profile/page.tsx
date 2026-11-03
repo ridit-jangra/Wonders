@@ -51,7 +51,10 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 export default async function ProfilePage() {
   const session = verifySessionCookie((await cookies()).get(SESSION_COOKIE)?.value);
-  if (!session) redirect("/login");
+  if (!session) {
+    // redirect("/login");
+    return <UnderConstruction />;
+  }
   if (!(await isStaffSlackId(session.slackId))) {
     return <UnderConstruction />;
   }

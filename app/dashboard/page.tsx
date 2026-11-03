@@ -15,7 +15,8 @@ export default async function DashPage() {
   const session = verifySessionCookie(cookieStore.get(SESSION_COOKIE)?.value);
 
   if (!session) {
-    redirect("/login");
+    // redirect("/login");
+    return <UnderConstruction />;
   }
 
   if (!(await isStaffSlackId(session.slackId))) {

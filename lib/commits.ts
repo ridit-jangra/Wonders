@@ -11,6 +11,8 @@ export interface Commit {
 export interface CommitResult {
   repo: string | null;
   commits: Commit[];
+  total: number;
+  firstDate: string | null;
   error: string | null;
 }
 
@@ -49,7 +51,7 @@ export function parseGithubRepo(url: string | null | undefined): string | null {
 export async function fetchCommits(githubUrl: string | null | undefined): Promise<CommitResult> {
   const repo = parseGithubRepo(githubUrl);
   if (!repo) {
-    return { repo: null, commits: [], error: "No GitHub repo linked." };
+    return { repo: null, commits: [], total: 0, firstDate: null, error: "No GitHub repo linked." };
   }
 
   const headers: Record<string, string> = {
@@ -61,23 +63,23 @@ export async function fetchCommits(githubUrl: string | null | undefined): Promis
   }
 
   try {
-    const res = await fetch(`https://api.github.com/repos/${repo}/commits?per_page=100`, {
-      headers,
-      signal: AbortSignal.timeout(8000),
-      next: { revalidate: 300 },
-    });
+    const init = { headers, signal: AbortSignal.timeout(8000), next: { revalidate: 300 } } as const;
+    const [res, countRes] = await Promise.all([
+      fetch(`https://api.github.com/repos/${repo}/commits?per_page=100`, init),
+      fetch(`https://api.github.com/repos/${repo}/commits?per_page=1`, init).catch(() => null),
+    ]);
 
     if (res.status === 404) {
-      return { repo, commits: [], error: "Repo not found, or it's private." };
+      return { repo, commits: [], total: 0, firstDate: null, error: "Repo not found, or it's private." };
     }
     if (res.status === 403 || res.status === 429) {
-      return { repo, commits: [], error: "GitHub rate limit hit. Set GITHUB_TOKEN to raise it." };
+      return { repo, commits: [], total: 0, firstDate: null, error: "GitHub rate limit hit. Set GITHUB_TOKEN to raise it." };
     }
     if (res.status === 409) {
-      return { repo, commits: [], error: "The repo is empty." };
+      return { repo, commits: [], total: 0, firstDate: null, error: "The repo is empty." };
     }
     if (!res.ok) {
-      return { repo, commits: [], error: `GitHub returned ${res.status}.` };
+      return { repo, commits: [], total: 0, firstDate: null, error: `GitHub returned ${res.status}.` };
     }
 
     const data = (await res.json()) as {
@@ -105,8 +107,27 @@ export async function fetchCommits(githubUrl: string | null | undefined): Promis
       });
     }
 
-    return { repo, commits, error: null };
+    let total = commits.length;
+    let firstDate: string | null = commits.length > 0 ? commits[commits.length - 1].date : null;
+    const lastPage = countRes?.ok
+      ? Number(countRes.headers.get("link")?.match(/[?&]page=(\d+)>;\s*rel="last"/)?.[1])
+      : NaN;
+    if (Number.isFinite(lastPage) && lastPage > commits.length) {
+      total = lastPage;
+      try {
+        const oldestRes = await fetch(
+          `https://api.github.com/repos/${repo}/commits?per_page=1&page=${lastPage}`,
+          init,
+        );
+        if (oldestRes.ok) {
+          const oldest = (await oldestRes.json()) as { commit: { author: { date: string } | null } }[];
+          firstDate = oldest[0]?.commit.author?.date ?? firstDate;
+        }
+      } catch {}
+    }
+
+    return { repo, commits, total, firstDate, error: null };
   } catch {
-    return { repo, commits: [], error: "Couldn't reach GitHub." };
+    return { repo, commits: [], total: 0, firstDate: null, error: "Couldn't reach GitHub." };
   }
 }

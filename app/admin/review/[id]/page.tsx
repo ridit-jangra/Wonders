@@ -507,6 +507,16 @@ export default async function AdminReviewPanelPage({
           </TextLink>
         </Callout>
       )}
+      {canFulfill(viewer) &&
+        (project.status === "shipped" ||
+          project.status === "fulfillment_started" ||
+          project.status === "fulfilled") && (
+          <div className="[&>a]:w-full">
+            <ButtonLink href="/admin/fulfillment" icon="send">
+              Go to fulfillment
+            </ButtonLink>
+          </div>
+        )}
 
       {project.status === "fulfilled" && (
         <Callout tone="success" icon="check-circle">

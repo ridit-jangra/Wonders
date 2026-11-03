@@ -49,8 +49,9 @@ export async function CommitsPanel({ githubUrl }: { githubUrl: string | null }) 
   return (
     <div>
       <p className="hc-caption border-b border-[var(--border)] px-4 py-3 text-sm">
-        <Mono>{result.repo}</Mono> · {result.commits.length}
-        {result.commits.length === 100 ? "+" : ""} commits · {formatDate(oldest.date)} <Icon glyph="view-forward" size={14} className="inline-block align-middle" /> {formatDate(newest.date)}
+        <Mono>{result.repo}</Mono> · {result.total}
+        {result.total === 1 ? " commit" : " commits"}
+        {result.total > result.commits.length ? ` (latest ${result.commits.length} listed)` : ""} · {formatDate(result.firstDate ?? oldest.date)} <Icon glyph="view-forward" size={14} className="inline-block align-middle" /> {formatDate(newest.date)}
       </p>
       <PaginatedTable
         headers={["When", "Commit", "Message", "Author"]}

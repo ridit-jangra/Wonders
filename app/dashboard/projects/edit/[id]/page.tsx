@@ -870,7 +870,7 @@ export default async function EditProjectPage({
                   <input type="hidden" name="profile" value={member.profileId} />
                   <SubmitButton
                     pendingLabel="removing..."
-                    className="font-finger-paint text-sm text-[#5C4A2E] underline"
+                    className="font-finger-paint text-sm text-[#5C4A2E] underline hover:zoom-110 transition-all"
                   >
                     remove
                   </SubmitButton>
@@ -893,7 +893,7 @@ export default async function EditProjectPage({
                 <form action={createInviteAction}>
                   <SubmitButton
                     pendingLabel="making..."
-                    className="font-finger-paint text-sm text-[#5C4A2E] underline"
+                    className="font-finger-paint text-sm text-[#5C4A2E] underline hover:zoom-110 transition-all"
                   >
                     new code
                   </SubmitButton>
@@ -901,7 +901,7 @@ export default async function EditProjectPage({
                 <form action={revokeInviteAction}>
                   <SubmitButton
                     pendingLabel="turning off..."
-                    className="font-finger-paint text-sm text-[#5C4A2E] underline"
+                    className="font-finger-paint text-sm text-[#5C4A2E] underline hover:zoom-110 transition-all"
                   >
                     turn off
                   </SubmitButton>
@@ -923,7 +923,7 @@ export default async function EditProjectPage({
           <form action={leaveAction} className="mt-4">
             <SubmitButton
               pendingLabel="leaving..."
-              className="font-finger-paint text-sm text-[#5C4A2E] underline"
+              className="font-finger-paint text-sm text-[#5C4A2E] underline hover:zoom-110 transition-all"
             >
               leave this wonder
             </SubmitButton>

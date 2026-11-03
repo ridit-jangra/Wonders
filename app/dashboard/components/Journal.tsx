@@ -534,7 +534,7 @@ export default function Journal({ projectId, entries, locked, post, edit, remove
                           <span>delete it?</span>
                           <button
                             type="button"
-                            className="underline"
+                            className="underline hover:zoom-110 transition-all"
                             disabled={removing}
                             onClick={() =>
                               startRemoving(async () => {
@@ -547,16 +547,16 @@ export default function Journal({ projectId, entries, locked, post, edit, remove
                           >
                             {removing ? "deleting..." : "yes"}
                           </button>
-                          <button type="button" className="underline" onClick={() => setConfirming(null)}>
+                          <button type="button" className="underline hover:zoom-110 transition-all" onClick={() => setConfirming(null)}>
                             no
                           </button>
                         </>
                       ) : (
                         <>
-                          <button type="button" className="underline" onClick={() => setEditing(entry.id)}>
+                          <button type="button" className="underline hover:zoom-110 transition-all" onClick={() => setEditing(entry.id)}>
                             edit
                           </button>
-                          <button type="button" className="underline" onClick={() => setConfirming(entry.id)}>
+                          <button type="button" className="underline hover:zoom-110 transition-all" onClick={() => setConfirming(entry.id)}>
                             delete
                           </button>
                         </>

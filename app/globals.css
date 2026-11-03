@@ -91,3 +91,11 @@ body {
 *::-webkit-resizer {
   background: transparent;
 }
+
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  summary {
+    cursor: pointer;
+  }
+}

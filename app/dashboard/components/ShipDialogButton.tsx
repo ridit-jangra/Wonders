@@ -47,7 +47,7 @@ export default function ShipDialogButton({
   return (
     <>
       <button type="button" disabled={disabled} onClick={() => setOpen(true)} className={`${className} disabled:cursor-not-allowed disabled:opacity-60`}>
-        {shipMore ? "Ship more :D" : isReship ? "Reship it :D" : "Ship it :D"}
+        {shipMore ? "Ship again :D" : isReship ? "Reship it :D" : "Ship it :D"}
       </button>
       <AnimatePresence>
         {open && (

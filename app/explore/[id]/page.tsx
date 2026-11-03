@@ -1,5 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
+import { cookies } from "next/headers";
+import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
+import { canUseReferrals } from "@/lib/referrals";
+import Sidebar from "@/app/dashboard/components/Sidebar";
+import { Profile } from "@/app/dashboard/components/Profile";
 import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getAdminSession, requireAccess } from "@/lib/admin";
@@ -60,6 +65,9 @@ export default async function ExploreWonderPage({ params }: { params: Promise<{ 
 
   const project = await getProjectWithOwner(id);
   if (!project) notFound();
+
+  const session = verifySessionCookie((await cookies()).get(SESSION_COOKIE)?.value);
+  const showRefers = session ? await canUseReferrals(session.slackId) : false;
 
   async function guard(): Promise<{ admin: Awaited<ReturnType<typeof requireAccess>> } | { error: string }> {
     const current = await requireAccess(canManagePlayers);
@@ -149,8 +157,12 @@ export default async function ExploreWonderPage({ params }: { params: Promise<{ 
   const ownerName = owner?.name || owner?.slack_display_name || "Unknown";
 
   return (
-    <div className="relative min-h-screen px-6 py-10 md:px-10">
+    <div className="relative flex min-h-screen">
       <img className="fixed inset-0 -z-10 h-full w-full object-cover" src="/bg-effect-4.png" alt="" />
+      {session && <Sidebar showRefers={showRefers} />}
+      <main
+        className={`relative min-w-0 flex-1 pr-6 pb-10 md:pr-10 md:pt-10 ${session ? "pt-20 pl-6 md:pl-0" : "pt-10 pl-6 md:pl-10"}`}
+      >
       <div className="flex w-full flex-col gap-5">
         <Link href="/explore" className="font-finger-paint text-lg text-[#F2B3AD] hover:underline">
           &lt; back to explore
@@ -247,6 +259,8 @@ export default async function ExploreWonderPage({ params }: { params: Promise<{ 
           )}
         </div>
       </div>
+      </main>
+      {session && <Profile />}
     </div>
   );
 }

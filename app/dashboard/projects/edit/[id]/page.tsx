@@ -775,7 +775,7 @@ export default async function EditProjectPage({
               {liveEdit
                 ? canShipAgain
                   ? "edits show up right away. built more? ship it again and it goes back for another review :3"
-                  : "edits show up right away. add some new features to your project to ship it again, and only log the new hours :3"
+                  : "edits show up right away. add some new features to your project to ship it again :3"
                 : missingForShip.length > 0
                 ? `add ${missingForShip.join(", ")} before you can ${isReship ? "reship" : "ship"} it`
                 : isReship

@@ -864,6 +864,9 @@ export default async function EditProjectPage({
                 {member.role === "owner" && (
                   <span className="ml-2 text-sm text-[#5C4A2E]/60">owner</span>
                 )}
+                <span className="ml-2 text-sm text-[#5C4A2E]/60">
+                  {member.journalCount} {member.journalCount === 1 ? "journal entry" : "journal entries"}
+                </span>
               </span>
               {!isCollaborator && member.role === "collaborator" && (
                 <form action={removeMemberAction} className="ml-auto">

@@ -13,6 +13,7 @@ export interface Member {
   slackId: string;
   name: string;
   avatarUrl: string | null;
+  journalCount: number;
 }
 
 export async function getRole(projectId: ProjectId, profileId: string): Promise<Role | null> {
@@ -40,15 +41,20 @@ export async function listMembers(projectId: ProjectId): Promise<Member[]> {
       name: string;
       slack_display_name: string | null;
       slack_avatar_url: string | null;
+      journal_count: number;
     }[]
   >`
     select 'owner' as role, o.id as profile_id, o.slack_id, o.name, o.slack_display_name,
-      o.slack_avatar_url, 0 as sort, null::timestamptz as joined_at
+      o.slack_avatar_url,
+      (select count(*)::int from project_journal j where j.project_id = p.id and j.profile_id = o.id) as journal_count,
+      0 as sort, null::timestamptz as joined_at
     from projects p join profiles o on o.id = p.profile_id
     where p.id = ${projectId}
     union all
     select 'collaborator', o.id, o.slack_id, o.name, o.slack_display_name,
-      o.slack_avatar_url, 1, c.joined_at
+      o.slack_avatar_url,
+      (select count(*)::int from project_journal j where j.project_id = c.project_id and j.profile_id = o.id),
+      1, c.joined_at
     from project_collaborators c join profiles o on o.id = c.profile_id
     where c.project_id = ${projectId}
     order by sort, joined_at
@@ -59,6 +65,7 @@ export async function listMembers(projectId: ProjectId): Promise<Member[]> {
     slackId: row.slack_id,
     name: row.slack_display_name || row.name,
     avatarUrl: row.slack_avatar_url,
+    journalCount: row.journal_count,
   }));
 }
 

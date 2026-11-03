@@ -55,12 +55,16 @@ export default function ExploreClient({
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const adminQuery = isAdmin ? query : "";
+  const needle = query.trim().toLowerCase();
+  const visible = isAdmin || !needle ? projects : projects.filter((p) => p.name.toLowerCase().includes(needle));
+
   useEffect(() => {
     setLoading(true);
     const controller = new AbortController();
     const delay = isAdmin ? 250 : 0;
     const timer = setTimeout(() => {
-      const url = isAdmin ? `/api/admin/explore?q=${encodeURIComponent(query)}` : "/api/public/wonders";
+      const url = isAdmin ? `/api/admin/explore?q=${encodeURIComponent(adminQuery)}` : "/api/public/wonders";
       fetch(url, { signal: controller.signal })
         .then((r) => r.json())
         .then((data) => {
@@ -93,7 +97,7 @@ export default function ExploreClient({
       clearTimeout(timer);
       controller.abort();
     };
-  }, [tab, isAdmin, query]);
+  }, [tab, isAdmin, adminQuery]);
 
   return (
     <div className="relative flex min-h-screen">
@@ -121,16 +125,18 @@ export default function ExploreClient({
           </button>
         </div>
 
-        {isAdmin && (
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="search by title, slack id, name, email, repo, demo or #id"
-            maxLength={100}
-            className="mt-6 w-full max-w-xl rounded-md bg-[#E7E2C9] px-4 py-3 font-finger-paint text-base text-[#5C4A2E] placeholder:text-[#8C8368] focus:outline-none"
-          />
-        )}
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={
+            isAdmin
+              ? "search by title, slack id, name, email, repo, demo or #id"
+              : "search wonders by name"
+          }
+          maxLength={100}
+          className="mt-6 w-full rounded-md bg-[#E7E2C9] px-4 py-3 font-finger-paint text-base text-[#5C4A2E] placeholder:text-[#8C8368] focus:outline-none"
+        />
 
         <div className="mt-8">
           {loading && (
@@ -141,7 +147,7 @@ export default function ExploreClient({
 
           {!loading && tab === "wonders" && (
             <div className="mt-2 flex flex-col items-stretch gap-3">
-              {projects.map((p, i) => (
+              {visible.map((p, i) => (
                 <ExploreProjectCard
                   project={p}
                   key={p.id ?? i}
@@ -149,7 +155,12 @@ export default function ExploreClient({
                   href={isAdmin && p.id ? `/explore/${p.id}` : undefined}
                 />
               ))}
-              {projects.length === 0 && (
+              {visible.length === 0 && needle && (
+                <p className="py-10 text-center font-finger-paint text-xl text-[#5C4A2E]/70">
+                  no wonders match that :(
+                </p>
+              )}
+              {visible.length === 0 && !needle && (
                 <div className="flex min-h-[55vh] w-full flex-col items-center justify-center gap-6 py-10 text-center">
                   <h2 className="mb-3 font-finger-paint text-5xl leading-none text-balance text-[#5C4A2E] sm:text-7xl lg:text-8xl">
                     no projects

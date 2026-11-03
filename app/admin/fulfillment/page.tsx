@@ -1,8 +1,11 @@
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { hasRecentAuth, reauthUrl, requireAccess } from "@/lib/admin";
 import { getProfileIdentityAdmin } from "@/lib/profiles";
 import { writeAudit } from "@/lib/audit";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { createCardGrant, hcbMaxGrantCents, isHcbConfigured } from "@/lib/hcb";
+import { formatDollars, parseGrantInput } from "@/lib/hcb-grant";
 import ShippingInfo, { type ShippingResult } from "../components/ShippingInfo";
 import { canFulfill } from "@/lib/security/roles";
 import {
@@ -14,12 +17,16 @@ import {
   markRewardSent,
   setProjectReward,
   hasFulfillableProject,
+  claimHcbGrant,
+  finishHcbGrant,
+  releaseHcbGrant,
 } from "@/lib/projects";
 import { recordProjectHistory } from "@/lib/project-history";
 import { notifyPlayer } from "@/lib/notifications";
 import {
   ActionButton,
   Badge,
+  Callout,
   Card,
   EmptyState,
   Field,
@@ -35,13 +42,25 @@ import {
 
 const PER_PAGE = 25;
 
+const GRANT_NOTICE: Record<string, string> = {
+  sent: "Grant sent.",
+  failed: "HCB refused the grant, nothing was sent. Check the HCB connection and try again.",
+  invalid: "Check the amount (within the limit) and purpose, then try again.",
+  exists: "A grant was already sent for this wonder.",
+  locked: "Verify it's you again to send grants.",
+  limited: "Too many tries, wait a minute.",
+  notconfigured: "HCB isn't connected yet.",
+};
+
 export default async function AdminFulfillmentPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; grant?: string; wonder?: string }>;
 }) {
-  await requireAccess(canFulfill);
-  const { page } = await searchParams;
+  const admin = await requireAccess(canFulfill);
+  const { page, grant: grantOutcome, wonder: grantWonder } = await searchParams;
+  const hcbReady = isHcbConfigured();
+  const canSendGrant = hcbReady && (await hasRecentAuth(admin.slackId));
   const currentPage = Math.max(1, parseInt(page ?? "1", 10) || 1);
 
   const { projects, total } = await listAllProjects({
@@ -87,6 +106,72 @@ export default async function AdminFulfillmentPage({
         country: identity.address.country,
       },
     };
+  }
+
+  async function sendGrant(formData: FormData) {
+    "use server";
+
+    const actor = await requireAccess(canFulfill);
+    const id = String(formData.get("id") ?? "");
+    if (!id) return;
+    const back = (code: string): never =>
+      redirect(`/admin/fulfillment?grant=${code}&wonder=${encodeURIComponent(id)}`);
+
+    if (!(await checkRateLimit("hcb-grant", actor.slackId, 10, 60)).allowed) back("limited");
+    if (!isHcbConfigured()) back("notconfigured");
+    if (!(await hasRecentAuth(actor.slackId))) back("locked");
+
+    const existing = await getProjectWithOwner(id);
+    const email = existing?.profile?.email;
+    if (
+      !existing ||
+      !email ||
+      existing.banned_at ||
+      (existing.status !== "shipped" && existing.status !== "fulfillment_started")
+    ) {
+      back("invalid");
+    }
+
+    const input = parseGrantInput(
+      {
+        amount: String(formData.get("amount") ?? ""),
+        purpose: String(formData.get("purpose") ?? ""),
+        message: String(formData.get("message") ?? ""),
+        keyword: String(formData.get("keyword") ?? ""),
+        oneTime: formData.get("one_time") === "on",
+      },
+      hcbMaxGrantCents(),
+    );
+    if (!input) back("invalid");
+
+    if (!(await claimHcbGrant(id, input!.amountCents))) back("exists");
+
+    const result = await createCardGrant({ email: email!, ...input! });
+    if (!result.ok) {
+      await releaseHcbGrant(id);
+      await writeAudit({
+        actor: actor.slackId,
+        action: "hcb.grant_failed",
+        target: id,
+        detail: { error: result.error, amount_cents: input!.amountCents },
+      });
+      back("failed");
+    } else {
+      await finishHcbGrant(id, result.id);
+      if (!existing!.reward) {
+        await setProjectReward(id, `HCB grant (${formatDollars(input!.amountCents)})`);
+      }
+      await writeAudit({
+        actor: actor.slackId,
+        action: "hcb.grant_create",
+        target: id,
+        detail: { grant_id: result.id, amount_cents: input!.amountCents, purpose: input!.purpose },
+        sensitive: true,
+      });
+    }
+
+    revalidatePath("/admin/fulfillment");
+    back("sent");
   }
 
   async function saveReward(formData: FormData) {
@@ -248,6 +333,75 @@ export default async function AdminFulfillmentPage({
               load={loadShipping}
               reauthHref={reauthUrl("/admin/fulfillment")}
             />
+
+            <details
+              className="mt-4 rounded-md border border-[var(--border)] p-4"
+              open={Boolean(project.hcb_grant_sent_at) || /grant/i.test(project.reward ?? "") || String(project.id) === grantWonder}
+            >
+              <summary className="hc-heading cursor-pointer text-base">Send grant (surprise)</summary>
+              <div className="mt-3 flex flex-col gap-3">
+                {String(project.id) === grantWonder && grantOutcome && GRANT_NOTICE[grantOutcome] && (
+                  <Callout tone={grantOutcome === "sent" ? "success" : "warning"} icon="important">
+                    {GRANT_NOTICE[grantOutcome]}
+                    {grantOutcome === "locked" && (
+                      <>
+                        {" "}
+                        <TextLink href={reauthUrl("/admin/fulfillment")}>Verify it&apos;s you</TextLink>
+                      </>
+                    )}
+                  </Callout>
+                )}
+                {project.hcb_grant_sent_at ? (
+                  <p className="hc-caption text-sm">
+                    Grant of <Mono>{formatDollars(project.hcb_grant_cents ?? 0)}</Mono> sent to{" "}
+                    <Mono>{project.profile?.email}</Mono>
+                    {project.hcb_grant_id && (
+                      <>
+                        {" "}· <Mono>{project.hcb_grant_id}</Mono>
+                      </>
+                    )}
+                    .
+                  </p>
+                ) : !hcbReady ? (
+                  <p className="hc-caption text-sm">HCB isn&apos;t connected yet. Set the HCB env vars to turn this on.</p>
+                ) : !canSendGrant ? (
+                  <p className="hc-caption text-sm">
+                    <TextLink href={reauthUrl("/admin/fulfillment")}>Verify it&apos;s you</TextLink> to send grants.
+                  </p>
+                ) : (
+                  <form action={sendGrant} className="flex flex-col gap-3">
+                    <input type="hidden" name="id" value={project.id} />
+                    <p className="hc-caption text-sm">
+                      Goes to <Mono>{project.profile?.email}</Mono> as an HCB card grant. Max{" "}
+                      {formatDollars(hcbMaxGrantCents())}.
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      <Field label="Amount ($)" className="w-32">
+                        <Input name="amount" inputMode="decimal" placeholder="25" required />
+                      </Field>
+                      <Field label="What it's for" className="min-w-56 flex-1">
+                        <Input name="purpose" defaultValue="Wonders reward" required maxLength={200} />
+                      </Field>
+                    </div>
+                    <Field label="Message to them" hint="optional">
+                      <Input name="message" defaultValue="something for the wonder you built :3" maxLength={500} />
+                    </Field>
+                    <Field label="Keyword lock" hint="optional, limits where the card works">
+                      <Input name="keyword" maxLength={100} />
+                    </Field>
+                    <label className="flex items-center gap-2 text-sm">
+                      <input type="checkbox" name="one_time" />
+                      One time use
+                    </label>
+                    <div>
+                      <ActionButton pendingLabel="Sending…" icon="send">
+                        Send grant
+                      </ActionButton>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </details>
 
             <div className="mt-5 flex flex-wrap items-end gap-3 border-t border-[var(--border)] pt-5">
               <form action={saveReward} className="flex flex-1 flex-wrap items-end gap-2">

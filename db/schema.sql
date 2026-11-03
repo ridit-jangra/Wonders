@@ -70,6 +70,9 @@ create table if not exists projects (
   hackatime_projects text[] not null default '{}',
   hackatime_seconds integer,
   hackatime_seconds_prev integer,
+  hcb_grant_id text,
+  hcb_grant_cents integer,
+  hcb_grant_sent_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -245,3 +248,13 @@ alter table profiles add column if not exists shipping_phone_at timestamptz;
 alter table projects add column if not exists fulfillment_started_at timestamptz;
 update projects set fulfillment_started_at = coalesce(updated_at, now())
   where status in ('fulfillment_started', 'fulfilled') and fulfillment_started_at is null;
+
+alter table projects add column if not exists hackatime_seconds_prev integer;
+alter table projects add column if not exists hcb_grant_id text;
+alter table projects add column if not exists hcb_grant_cents integer;
+alter table projects add column if not exists hcb_grant_sent_at timestamptz;
+
+create table if not exists staff_notices (
+  key text primary key,
+  sent_at timestamptz not null default now()
+);

@@ -181,6 +181,9 @@ export interface ProjectOwner {
 }
 
 export interface ProjectWithOwner extends Project {
+  hcb_grant_id: string | null;
+  hcb_grant_cents: number | null;
+  hcb_grant_sent_at: string | null;
   hackatime_seconds_prev: number | null;
   fulfilled_at: string | null;
   fulfilled_by: string | null;
@@ -203,6 +206,7 @@ const ADMIN_COLUMNS = () => sql`
   p.id, p.profile_id, p.title, p.description, p.image_url, p.link_url,
   p.github_url, p.status, p.reviewer_note, p.reward, p.hackatime_projects,
   p.hackatime_seconds, p.hackatime_seconds_prev, p.created_at,
+  p.hcb_grant_id, p.hcb_grant_cents, p.hcb_grant_sent_at,
   p.fulfilled_at, p.fulfilled_by, p.reward_ordered_at, p.reward_sent_at,
   p.on_hold, p.hold_reason,
   p.banned_at, p.ban_reason, p.banned_by, p.unship_reason,
@@ -503,4 +507,27 @@ export async function hasFulfillableProject(profileId: string): Promise<boolean>
     ) as found
   `;
   return row?.found ?? false;
+}
+
+export async function claimHcbGrant(id: ProjectId, cents: number): Promise<boolean> {
+  const rows = await sql`
+    update projects set hcb_grant_sent_at = now(), hcb_grant_cents = ${cents}
+    where id = ${id}
+      and hcb_grant_sent_at is null
+      and status in ('shipped', 'fulfillment_started')
+      and banned_at is null
+    returning id
+  `;
+  return rows.length > 0;
+}
+
+export async function finishHcbGrant(id: ProjectId, grantId: string) {
+  await sql`update projects set hcb_grant_id = ${grantId} where id = ${id}`;
+}
+
+export async function releaseHcbGrant(id: ProjectId) {
+  await sql`
+    update projects set hcb_grant_sent_at = null, hcb_grant_cents = null
+    where id = ${id} and hcb_grant_id is null
+  `;
 }

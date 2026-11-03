@@ -91,3 +91,25 @@ export async function sendDirectMessage(slackUserId: string, text: string): Prom
     console.error("Slack DM failed:", data.error);
   }
 }
+
+export async function postChannelMessage(channelId: string, text: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${SLACK_API_BASE}/chat.postMessage`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${getBotToken()}`,
+        "Content-Type": "application/json; charset=utf-8",
+      },
+      body: JSON.stringify({ channel: channelId, text, unfurl_links: false }),
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      console.error("Slack channel post failed:", data.error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error("Slack channel post failed:", err);
+    return false;
+  }
+}

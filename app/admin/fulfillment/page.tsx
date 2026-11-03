@@ -233,7 +233,8 @@ export default async function AdminFulfillmentPage({
             )}
 
             <ShippingInfo
-              load={loadShipping.bind(null, project.profile_id)}
+              profileId={project.profile_id}
+              load={loadShipping}
               reauthHref={reauthUrl("/admin/fulfillment")}
             />
 

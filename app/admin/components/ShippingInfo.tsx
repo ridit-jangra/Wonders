@@ -16,13 +16,15 @@ export interface ShippingData {
 
 export type ShippingResult =
   | { ok: true; data: ShippingData }
-  | { ok: false; reason: "locked" | "missing" | "denied" | "limited" };
+  | { ok: false; reason: "locked" | "missing" | "denied" | "limited" | "failed" };
 
 export default function ShippingInfo({
+  profileId,
   load,
   reauthHref,
 }: {
-  load: () => Promise<ShippingResult>;
+  profileId: string;
+  load: (profileId: string) => Promise<ShippingResult>;
   reauthHref: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -34,7 +36,11 @@ export default function ShippingInfo({
     setOpen(next);
     if (next && (!result || !result.ok)) {
       startTransition(async () => {
-        setResult(await load());
+        try {
+          setResult(await load(profileId));
+        } catch {
+          setResult({ ok: false, reason: "failed" });
+        }
       });
     }
     if (!next) {
@@ -67,6 +73,11 @@ export default function ShippingInfo({
           )}
           {!pending && result && !result.ok && result.reason === "limited" && (
             <Callout tone="warning">Slow down a little, then try again.</Callout>
+          )}
+          {!pending && result && !result.ok && result.reason === "failed" && (
+            <Callout tone="danger">
+              Couldn&apos;t load this, usually because the site just updated. Reload the page and try again.
+            </Callout>
           )}
           {!pending && result && !result.ok && result.reason === "denied" && (
             <Callout tone="danger">You can&apos;t view this.</Callout>

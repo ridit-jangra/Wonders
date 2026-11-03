@@ -45,7 +45,7 @@ export default function ProjectCard({
         {project.description}
       </p>
       <span className="absolute bottom-[5%] right-[9%] font-finger-paint text-[10px] text-[#7A6B4A]">
-        {STATUS_LABEL[project.status]}
+        {project.banned_at ? "banned :(" : STATUS_LABEL[project.status]}
       </span>
       <LinkPending />
     </Link>

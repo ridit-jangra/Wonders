@@ -232,3 +232,8 @@ create table if not exists review_claims (
 alter table projects add column if not exists airtable_record_id text;
 alter table projects add column if not exists airtable_pushed_at timestamptz;
 alter table projects add column if not exists airtable_error text;
+
+alter table projects add column if not exists banned_at timestamptz;
+alter table projects add column if not exists ban_reason text;
+alter table projects add column if not exists banned_by text;
+alter table projects add column if not exists unship_reason text;

@@ -9,6 +9,8 @@ import ExploreProjectCard from "./ExploreProjectCard";
 import ExplorePlayerCard from "./ExplorePlayerCard";
 
 interface Project {
+  id?: number;
+  label?: string;
   name: string;
   description: string;
   repo_url: string | null;
@@ -19,23 +21,79 @@ interface Project {
 
 type Tab = "wonders";
 
-export default function ExploreClient({ loggedIn, showRefers = false }: { loggedIn: boolean; showRefers?: boolean }) {
+interface AdminWonder {
+  id: number;
+  title: string;
+  description: string;
+  github_url: string | null;
+  link_url: string | null;
+  image_url: string | null;
+  status: string;
+  banned_at: string | null;
+  owner_name: string;
+  owner_slack_id: string;
+  owner_slack_name: string | null;
+}
+
+function adminTag(status: string): Project["tag"] {
+  if (status === "shipped" || status === "fulfillment_started" || status === "fulfilled") return "shipped";
+  if (status === "in_review" || status === "second_pass" || status === "approved") return "in_review";
+  return "draft";
+}
+
+export default function ExploreClient({
+  loggedIn,
+  showRefers = false,
+  isAdmin = false,
+}: {
+  loggedIn: boolean;
+  showRefers?: boolean;
+  isAdmin?: boolean;
+}) {
   const [tab, setTab] = useState<Tab>("wonders");
+  const [query, setQuery] = useState("");
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
-    const url =
-      tab === "wonders" ? "/api/public/wonders" : "";
-    fetch(url)
-      .then((r) => r.json())
-      .then((data) => {
-        if (tab === "wonders") setProjects(data.projects ?? []);
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [tab]);
+    const controller = new AbortController();
+    const delay = isAdmin ? 250 : 0;
+    const timer = setTimeout(() => {
+      const url = isAdmin ? `/api/admin/explore?q=${encodeURIComponent(query)}` : "/api/public/wonders";
+      fetch(url, { signal: controller.signal })
+        .then((r) => r.json())
+        .then((data) => {
+          if (isAdmin) {
+            const wonders: AdminWonder[] = data.wonders ?? [];
+            setProjects(
+              wonders.map((w) => ({
+                id: w.id,
+                name: w.title,
+                description: w.description,
+                repo_url: w.github_url,
+                demo_url: w.link_url,
+                image_url: w.image_url,
+                tag: adminTag(w.status),
+                label: `${w.banned_at ? "banned :( · " : ""}${w.owner_slack_name || w.owner_name || w.owner_slack_id}`,
+              })),
+            );
+          } else {
+            setProjects(data.projects ?? []);
+          }
+        })
+        .catch((err) => {
+          if (err?.name !== "AbortError") console.error(err);
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setLoading(false);
+        });
+    }, delay);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [tab, isAdmin, query]);
 
   return (
     <div className="relative flex min-h-screen">
@@ -63,6 +121,17 @@ export default function ExploreClient({ loggedIn, showRefers = false }: { logged
           </button>
         </div>
 
+        {isAdmin && (
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="search by title, slack id, name, email, repo, demo or #id"
+            maxLength={100}
+            className="mt-6 w-full max-w-xl rounded-md bg-[#E7E2C9] px-4 py-3 font-finger-paint text-base text-[#5C4A2E] placeholder:text-[#8C8368] focus:outline-none"
+          />
+        )}
+
         <div className="mt-8">
           {loading && (
             <div className="flex justify-center py-16">
@@ -75,8 +144,9 @@ export default function ExploreClient({ loggedIn, showRefers = false }: { logged
               {projects.map((p, i) => (
                 <ExploreProjectCard
                   project={p}
-                  key={i}
+                  key={p.id ?? i}
                   className="w-full"
+                  href={isAdmin && p.id ? `/explore/${p.id}` : undefined}
                 />
               ))}
               {projects.length === 0 && (

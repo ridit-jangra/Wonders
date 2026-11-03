@@ -21,6 +21,7 @@ export async function GET() {
           else 'draft'
         end as tag
       from projects
+      where banned_at is null
       order by created_at desc, id desc
     `;
 

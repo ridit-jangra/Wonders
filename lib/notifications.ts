@@ -10,6 +10,9 @@ export type WonderEvent =
   | "second_pass_approved"
   | "changes_requested"
   | "auto_check_sent_back"
+  | "unshipped"
+  | "banned"
+  | "unbanned"
   | "fulfillment_started"
   | "reward_ordered"
   | "reward_sent"
@@ -41,6 +44,15 @@ function messageFor(event: WonderEvent, title: string, note: string) {
   }
   if (event === "auto_check_sent_back") {
     return `hey! your wonder *${title}* came back before review because a few required things are missing :c\n${note}\nfix them, then ship it again from your dashboard :3\nthis was an automatic check. if you think it got something wrong, ship again without changes and a person will take a look`;
+  }
+  if (event === "unshipped") {
+    return `your wonder *${title}* was moved back to building by a reviewer :c\nhere's why:\n${quote(note)}\nfix it up on your dashboard and ship it again whenever you're ready :3`;
+  }
+  if (event === "banned") {
+    return `your wonder *${title}* was banned :c\nhere's why:\n${quote(note)}\nit can't be edited, shipped or deleted while it's banned. if you think this is a mistake, ask in the Wonders channel`;
+  }
+  if (event === "unbanned") {
+    return `good news, the ban on your wonder *${title}* was lifted :D\nyou can pick it back up on your dashboard :3`;
   }
   if (event === "fulfillment_started") {
     return `your surprise for *${title}* is being put together :roo-gift:\nno peeking! i'll let you know when it's on the move :3`;

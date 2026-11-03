@@ -30,7 +30,7 @@ export async function GET() {
       >`
         select profile_id, title, description, github_url, link_url
         from projects
-        where status = any(${PUBLIC_STATUSES})
+        where status = any(${PUBLIC_STATUSES}) and banned_at is null
       `,
     ]);
   } catch (error) {

@@ -49,6 +49,7 @@ export default async function AdminWondersPage({
 
   const { projects, total } = await listAllProjects({
     search: q,
+    includeBanned: true,
     status: statusFilter,
     limit: PER_PAGE,
     offset: (currentPage - 1) * PER_PAGE,

@@ -95,9 +95,10 @@ export default async function EditProjectPage({
     redirect("/wonders");
   }
 
-  const editable = project.status === "building" || project.status === "rejected";
+  const isBanned = Boolean(project.banned_at);
+  const editable = (project.status === "building" || project.status === "rejected") && !isBanned;
   const underReview = project.status === "in_review" || project.status === "second_pass";
-  const lockedLabel = underReview ? "in review :3" : "shipped :D";
+  const lockedLabel = isBanned ? "banned :(" : underReview ? "in review :3" : "shipped :D";
 
   const timeline = await getProjectTimeline(project.id, profile.id);
   const isReship = project.status === "rejected" || (await hasBeenShipped(project.id, profile.id));
@@ -642,7 +643,32 @@ export default async function EditProjectPage({
         )}
       </form>
       </div>
-      {project.status === "rejected" && (
+      {isBanned && (
+        <div className="w-full rounded-md bg-[#F2B3AD]/60 p-4 md:max-w-[90%]">
+          <p className="font-finger-paint text-[#5C4A2E]">
+            this wonder was banned, so it can&apos;t be edited, shipped or deleted :(
+          </p>
+          {project.ban_reason && (
+            <p className="mt-2 font-finger-paint text-sm text-[#5C4A2E]/70">
+              &quot;{project.ban_reason}&quot;
+            </p>
+          )}
+          <p className="mt-2 font-finger-paint text-sm text-[#5C4A2E]/70">
+            think it&apos;s a mistake? ask in the Wonders channel on Slack :3
+          </p>
+        </div>
+      )}
+      {!isBanned && project.status === "building" && project.unship_reason && (
+        <div className="w-full rounded-md bg-[#F0E27D]/40 p-4 md:max-w-[90%]">
+          <p className="font-finger-paint text-[#5C4A2E]">
+            a reviewer moved this back to building :c fix it up and ship it again :3
+          </p>
+          <p className="mt-2 font-finger-paint text-sm text-[#5C4A2E]/70">
+            &quot;{project.unship_reason}&quot;
+          </p>
+        </div>
+      )}
+      {project.status === "rejected" && !isBanned && (
         <div className="w-full rounded-md bg-[#F2B3AD]/30 p-4 md:max-w-[90%]">
           <p className="font-finger-paint text-[#5C4A2E]">
             this wasn&apos;t approved — fix it up and ship it again :3

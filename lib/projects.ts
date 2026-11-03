@@ -33,12 +33,15 @@ export interface Project {
   hackatime_projects: string[];
   hackatime_seconds: number | null;
   created_at: string;
+  banned_at: string | null;
+  ban_reason: string | null;
+  unship_reason: string | null;
 }
 
 const COLUMNS = () => sql`
   id, profile_id, title, description, image_url, link_url, github_url,
   status, reviewer_note, reward, hackatime_projects, hackatime_seconds,
-  created_at
+  created_at, banned_at, ban_reason, unship_reason
 `;
 
 export async function getProjects(profileId: string): Promise<Project[]> {
@@ -105,6 +108,7 @@ export async function updateProject(
     where id = ${id}
       and profile_id = ${profileId}
       and status in ('building', 'rejected')
+      and banned_at is null
   `;
 }
 
@@ -117,10 +121,12 @@ export async function shipProject(
     update projects set
       status = 'in_review',
       hackatime_seconds = ${hackatimeSeconds},
+      unship_reason = null,
       updated_at = now()
     where id = ${id}
       and profile_id = ${profileId}
       and status in ('building', 'rejected')
+      and banned_at is null
     returning id
   `;
   return rows.length > 0;
@@ -151,6 +157,7 @@ export async function deleteProject(id: ProjectId, profileId: string) {
     where id = ${id}
       and profile_id = ${profileId}
       and status in ('building', 'rejected')
+      and banned_at is null
   `;
 }
 
@@ -170,6 +177,7 @@ export interface ProjectWithOwner extends Project {
   reward_sent_at: string | null;
   on_hold: boolean;
   hold_reason: string | null;
+  banned_by: string | null;
   ai_review_status: AutoCheckStatus;
   ai_review_summary: string | null;
   ai_review_findings: AutoCheckFindings | null;
@@ -186,6 +194,7 @@ const ADMIN_COLUMNS = () => sql`
   p.hackatime_seconds, p.created_at,
   p.fulfilled_at, p.fulfilled_by, p.reward_ordered_at, p.reward_sent_at,
   p.on_hold, p.hold_reason,
+  p.banned_at, p.ban_reason, p.banned_by, p.unship_reason,
   p.ai_review_status, p.ai_review_summary, p.ai_review_findings,
   p.ai_review_error, p.ai_review_model, p.ai_reviewed_at,
   p.ai_precheck_sendbacks,
@@ -201,6 +210,7 @@ const ADMIN_COLUMNS = () => sql`
 export async function listAllProjects(opts: {
   status?: ProjectStatus | ProjectStatus[];
   search?: string;
+  includeBanned?: boolean;
   limit: number;
   offset: number;
 }): Promise<{ projects: ProjectWithOwner[]; total: number }> {
@@ -218,6 +228,7 @@ export async function listAllProjects(opts: {
       p.ai_review_status = 'pending'
       and p.ai_review_started_at > now() - make_interval(mins => ${PRECHECK_HIDE_MINUTES})
     )
+    ${opts.includeBanned ? sql`` : sql`and p.banned_at is null`}
     ${statuses ? sql`and p.status = any(${statuses})` : sql``}
     ${opts.search ? sql`and p.title ilike ${"%" + opts.search + "%"}` : sql``}
   `;
@@ -288,7 +299,7 @@ export async function firstPassReview(
       on_hold = false,
       hold_reason = null,
       updated_at = now()
-    where id = ${id} and status = 'in_review'
+    where id = ${id} and status = 'in_review' and banned_at is null
     returning id
   `;
   return rows.length > 0;
@@ -311,7 +322,7 @@ export async function secondPassReview(
       on_hold = false,
       hold_reason = null,
       updated_at = now()
-    where id = ${id} and status = 'second_pass'
+    where id = ${id} and status = 'second_pass' and banned_at is null
     returning id
   `;
   return rows.length > 0;
@@ -352,7 +363,7 @@ export async function adminUpdateProject(
 export async function startFulfillment(id: ProjectId): Promise<boolean> {
   const rows = await sql`
     update projects set status = 'fulfillment_started', updated_at = now()
-    where id = ${id} and status = 'shipped'
+    where id = ${id} and status = 'shipped' and banned_at is null
     returning id
   `;
   return rows.length > 0;
@@ -394,6 +405,7 @@ export async function fulfillProject(
     where id = ${id}
       and status = 'fulfillment_started'
       and reward is not null
+      and banned_at is null
     returning id
   `;
   return rows.length > 0;
@@ -404,4 +416,64 @@ export async function setProjectReward(id: ProjectId, reward: string | null) {
     update projects set reward = ${reward}, updated_at = now()
     where id = ${id} and status in ('shipped', 'fulfillment_started')
   `;
+}
+
+
+const UNSHIPPABLE: ProjectStatus[] = ["in_review", "second_pass", "shipped"];
+
+export async function banProject(id: ProjectId, reason: string, adminSlackId: string): Promise<boolean> {
+  const rows = await sql`
+    update projects set
+      banned_at = now(),
+      ban_reason = ${reason},
+      banned_by = ${adminSlackId},
+      on_hold = false,
+      hold_reason = null,
+      updated_at = now()
+    where id = ${id} and banned_at is null
+    returning id
+  `;
+  return rows.length > 0;
+}
+
+export async function unbanProject(id: ProjectId): Promise<boolean> {
+  const rows = await sql`
+    update projects set
+      banned_at = null,
+      ban_reason = null,
+      banned_by = null,
+      updated_at = now()
+    where id = ${id} and banned_at is not null
+    returning id
+  `;
+  return rows.length > 0;
+}
+
+export async function adminUnshipProject(
+  id: ProjectId,
+  reason: string,
+): Promise<ProjectStatus | null> {
+  const [row] = await sql<{ status: ProjectStatus }[]>`
+    select status from projects where id = ${id}
+  `;
+  if (!row || !UNSHIPPABLE.includes(row.status)) {
+    return null;
+  }
+  const rows = await sql`
+    update projects set
+      status = 'building',
+      unship_reason = ${reason},
+      on_hold = false,
+      hold_reason = null,
+      ai_review_status = 'none',
+      ai_review_token = null,
+      ai_review_summary = null,
+      ai_review_findings = null,
+      ai_review_model = null,
+      ai_reviewed_at = null,
+      updated_at = now()
+    where id = ${id} and status = ${row.status}
+    returning id
+  `;
+  return rows.length > 0 ? row.status : null;
 }

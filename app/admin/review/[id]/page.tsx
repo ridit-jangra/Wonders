@@ -383,6 +383,7 @@ export default async function AdminReviewPanelPage({
   }
 
   const owner = project.profile;
+  const isBanned = Boolean(project.banned_at);
   const ownWonder = blocksOwnReview(viewer, owner?.slack_id);
   const claimHolder = ownWonder ? null : await claimBlockedBy(id, viewer.slackId);
   const holderName = claimHolder
@@ -412,18 +413,24 @@ export default async function AdminReviewPanelPage({
 
   const reviewTab = (
     <div className="flex flex-col gap-4 pt-4 [&>*:only-child]:flex-1">
-      {isReviewable && ownWonder && (
+      {isBanned && (
+        <Callout tone="danger" icon="forbidden">
+          This wonder is banned{project.banned_by ? ` (by ${project.banned_by})` : ""}: &ldquo;{project.ban_reason}&rdquo;.
+          It can&apos;t be reviewed until it&apos;s unbanned from its Explore page.
+        </Callout>
+      )}
+      {isReviewable && !isBanned && ownWonder && (
         <Callout tone="danger" icon="forbidden">
           This is your own wonder, so you can&apos;t review it. Another reviewer has to pick it up.
         </Callout>
       )}
-      {isReviewable && !ownWonder && claimHolder && (
+      {isReviewable && !isBanned && !ownWonder && claimHolder && (
         <Callout tone="warning" icon="clock">
           {holderName} is reviewing this right now. This page unlocks when they leave or go quiet for a few
           minutes.
         </Callout>
       )}
-      {project.status === "in_review" && !ownWonder && !claimHolder && (
+      {project.status === "in_review" && !isBanned && !ownWonder && !claimHolder && (
         <Card>
           <h3 className="hc-heading text-base">First pass</h3>
           <p className="hc-caption mt-1 mb-4 text-sm">
@@ -444,7 +451,7 @@ export default async function AdminReviewPanelPage({
         </Card>
       )}
 
-      {project.status === "second_pass" && !ownWonder && !claimHolder && (
+      {project.status === "second_pass" && !isBanned && !ownWonder && !claimHolder && (
         <Card>
           <h3 className="hc-heading text-base">Second pass</h3>
           <p className="hc-caption mt-1 mb-4 text-sm">
@@ -533,7 +540,7 @@ export default async function AdminReviewPanelPage({
 
   const actionsTab = (
     <div className="flex flex-col gap-4 pt-4">
-      {isReviewable && !ownWonder && (
+      {isReviewable && !isBanned && !ownWonder && (
       <Card>
         <CardHeader title={project.on_hold ? "On hold" : "Put this review on hold"} icon="important" />
         {project.on_hold ? (

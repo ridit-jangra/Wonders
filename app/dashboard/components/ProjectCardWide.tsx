@@ -27,9 +27,10 @@ export default function ProjectCardWide({
   project: Project;
   className?: string;
 }) {
-  const editable = project.status === "building" || project.status === "rejected";
-  const lockedLabel =
-    project.status === "in_review" || project.status === "second_pass"
+  const editable = (project.status === "building" || project.status === "rejected") && !project.banned_at;
+  const lockedLabel = project.banned_at
+    ? "banned :("
+    : project.status === "in_review" || project.status === "second_pass"
       ? "in review :3"
       : STATUS_LABEL[project.status];
 
@@ -98,7 +99,7 @@ export default function ProjectCardWide({
         </LinkPending>
       </Link>
       <span className="absolute bottom-[12%] right-[2%] font-finger-paint text-[13px] text-[#7A6B4A]">
-        {STATUS_LABEL[project.status]}
+        {project.banned_at ? "banned :(" : STATUS_LABEL[project.status]}
       </span>
     </div>
   );

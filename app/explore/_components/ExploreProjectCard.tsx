@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
+import Link from "next/link";
 
 interface ExploreProject {
   name: string;
@@ -7,6 +8,7 @@ interface ExploreProject {
   demo_url: string | null;
   image_url?: string | null;
   tag: "draft" | "in_review" | "shipped";
+  label?: string;
 }
 
 const TAG: Record<ExploreProject["tag"], string> = {
@@ -18,18 +20,31 @@ const TAG: Record<ExploreProject["tag"], string> = {
 export default function ExploreProjectCard({
   project,
   className = "w-full max-w-3xl",
+  href,
 }: {
   project: ExploreProject;
   className?: string;
+  href?: string;
 }) {
   return (
-    <>
+    <div className="relative">
+      {href && (
+        <Link
+          href={href}
+          aria-label={`open ${project.name}`}
+          className="absolute inset-0 z-5 rounded-lg"
+        />
+      )}
       <div className={`hidden md:block ${className}`}>
         <WideCard project={project} />
       </div>
       <StackedCard project={project} />
-    </>
+    </div>
   );
+}
+
+function tagText(project: ExploreProject) {
+  return project.label ?? TAG[project.tag];
 }
 
 function StackedCard({ project }: { project: ExploreProject }) {
@@ -43,7 +58,7 @@ function StackedCard({ project }: { project: ExploreProject }) {
       <div className="flex items-start justify-between gap-3">
         <h3 className="min-w-0 wrap-break-word font-finger-paint text-xl text-[#5C4A2E]">{project.name}</h3>
         <span className="shrink-0 pt-1 font-finger-paint text-xs text-[#7A6B4A]">
-          {TAG[project.tag]}
+          {tagText(project)}
         </span>
       </div>
       <p className="line-clamp-4 font-finger-paint text-sm text-[#5C4A2E]">{project.description}</p>
@@ -54,7 +69,7 @@ function StackedCard({ project }: { project: ExploreProject }) {
               href={project.repo_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 rounded-lg bg-[#D0E4B4] py-1.5 text-center font-finger-paint text-lg text-black/45"
+              className="relative z-10 flex-1 rounded-lg bg-[#D0E4B4] py-1.5 text-center font-finger-paint text-lg text-black/45"
             >
               Repo :D
             </a>
@@ -64,7 +79,7 @@ function StackedCard({ project }: { project: ExploreProject }) {
               href={project.demo_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 rounded-lg bg-[#F0E27D] py-1.5 text-center font-finger-paint text-lg text-black/45"
+              className="relative z-10 flex-1 rounded-lg bg-[#F0E27D] py-1.5 text-center font-finger-paint text-lg text-black/45"
             >
               Demo :3
             </a>
@@ -89,7 +104,7 @@ function WideCard({ project }: { project: ExploreProject }) {
         className="absolute top-[5%] left-[3%] h-[74%] w-[36%] rounded-md object-cover"
       />
       <span className="absolute bottom-[12%] right-[2%] font-finger-paint text-[13px] text-[#7A6B4A]">
-        {TAG[project.tag]}
+        {tagText(project)}
       </span>
       <div className="absolute top-[5.5%] left-[43%] h-[16%] w-[38%] flex items-center overflow-hidden">
         <h3 className="truncate font-finger-paint text-lg text-[#5C4A2E]">
@@ -104,7 +119,7 @@ function WideCard({ project }: { project: ExploreProject }) {
           href={project.repo_url}
           target="_blank"
           rel="noopener noreferrer"
-          className="absolute bottom-[22%] left-[42%] w-[28%] py-1 text-center cursor-pointer hover:zoom-110 transition-all font-finger-paint text-xl bg-[#D0E4B4] text-black/45 rounded-lg"
+          className="absolute z-10 bottom-[22%] left-[42%] w-[28%] py-1 text-center cursor-pointer hover:zoom-110 transition-all font-finger-paint text-xl bg-[#D0E4B4] text-black/45 rounded-lg"
         >
           Repo :D
         </a>
@@ -114,7 +129,7 @@ function WideCard({ project }: { project: ExploreProject }) {
           href={project.demo_url}
           target="_blank"
           rel="noopener noreferrer"
-          className="absolute bottom-[22%] right-[0%] w-[28%] py-1 text-center cursor-pointer hover:zoom-110 transition-all font-finger-paint text-xl bg-[#F0E27D] text-black/45 rounded-lg"
+          className="absolute z-10 bottom-[22%] right-[0%] w-[28%] py-1 text-center cursor-pointer hover:zoom-110 transition-all font-finger-paint text-xl bg-[#F0E27D] text-black/45 rounded-lg"
         >
           Demo :3
         </a>

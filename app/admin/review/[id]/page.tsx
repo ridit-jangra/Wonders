@@ -4,9 +4,9 @@ import { LinkExternalIcon, MarkGithubIcon } from "@primer/octicons-react";
 import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
-import { requireAccess } from "@/lib/admin";
+import { requireAccess, type AdminUser } from "@/lib/admin";
 import { canFulfill, canReview } from "@/lib/security/roles";
-import { isOwnWonder } from "@/lib/security/own-wonder";
+import { blocksOwnReview } from "@/lib/security/own-wonder";
 import { claimBlockedBy, claimReview, clearClaim, releaseReview } from "@/lib/review-claims";
 import { getAirtableState, pushWonderToAirtable } from "@/lib/airtable";
 import { writeAudit } from "@/lib/audit";
@@ -70,14 +70,14 @@ function revalidateReview(id: string) {
 }
 
 async function reviewBlock(
-  slackId: string,
+  admin: AdminUser,
   projectId: string,
   ownerSlackId: string | null | undefined,
 ): Promise<"own" | "claimed" | null> {
-  if (isOwnWonder(slackId, ownerSlackId)) {
+  if (blocksOwnReview(admin, ownerSlackId)) {
     return "own";
   }
-  if (await claimBlockedBy(projectId, slackId)) {
+  if (await claimBlockedBy(projectId, admin.slackId)) {
     return "claimed";
   }
   return null;
@@ -126,7 +126,7 @@ export default async function AdminReviewPanelPage({
     if (!existing) {
       return { ok: false, savedAt: null };
     }
-    if (await reviewBlock(admin.slackId, id, existing.profile?.slack_id)) {
+    if (await reviewBlock(admin, id, existing.profile?.slack_id)) {
       return { ok: false, savedAt: null };
     }
 
@@ -170,7 +170,7 @@ export default async function AdminReviewPanelPage({
     const existing = await getProjectWithOwner(id);
     if (!existing) notFound();
 
-    const blocked = await reviewBlock(admin.slackId, id, existing.profile?.slack_id);
+    const blocked = await reviewBlock(admin, id, existing.profile?.slack_id);
     if (blocked === "own") {
       await writeAudit({
         actor: admin.slackId,
@@ -293,7 +293,7 @@ export default async function AdminReviewPanelPage({
     const admin = await requireAccess(canReview);
     const existing = await getProjectWithOwner(id);
     if (!existing) notFound();
-    if (await reviewBlock(admin.slackId, id, existing.profile?.slack_id)) {
+    if (await reviewBlock(admin, id, existing.profile?.slack_id)) {
       return;
     }
 
@@ -311,7 +311,7 @@ export default async function AdminReviewPanelPage({
     const admin = await requireAccess(canReview);
     const existing = await getProjectWithOwner(id);
     if (!existing) notFound();
-    if (await reviewBlock(admin.slackId, id, existing.profile?.slack_id)) {
+    if (await reviewBlock(admin, id, existing.profile?.slack_id)) {
       return;
     }
 
@@ -324,7 +324,7 @@ export default async function AdminReviewPanelPage({
     const admin = await requireAccess(canReview);
     const existing = await getProjectWithOwner(id);
     if (!existing) notFound();
-    if (isOwnWonder(admin.slackId, existing.profile?.slack_id)) {
+    if (blocksOwnReview(admin, existing.profile?.slack_id)) {
       return;
     }
 
@@ -351,7 +351,7 @@ export default async function AdminReviewPanelPage({
     if (
       !existing ||
       (existing.status !== "in_review" && existing.status !== "second_pass") ||
-      isOwnWonder(admin.slackId, existing.profile?.slack_id)
+      blocksOwnReview(admin, existing.profile?.slack_id)
     ) {
       return { held: false, holder: "" };
     }
@@ -383,7 +383,7 @@ export default async function AdminReviewPanelPage({
   }
 
   const owner = project.profile;
-  const ownWonder = isOwnWonder(viewer.slackId, owner?.slack_id);
+  const ownWonder = blocksOwnReview(viewer, owner?.slack_id);
   const claimHolder = ownWonder ? null : await claimBlockedBy(id, viewer.slackId);
   const holderName = claimHolder
     ? ((await getSlackActors([claimHolder]))[claimHolder]?.name ?? claimHolder)

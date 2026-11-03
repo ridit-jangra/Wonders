@@ -1,4 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
+import { isStaffSlackId } from "@/lib/admin";
+import UnderConstruction from "@/app/components/UnderConstruction";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
@@ -28,6 +30,10 @@ export default async function NewProjectPage({
     redirect("/login");
   }
 
+  if (!(await isStaffSlackId(session.slackId))) {
+    return <UnderConstruction />;
+  }
+
   async function submitProject(formData: FormData) {
     "use server";
 
@@ -35,6 +41,9 @@ export default async function NewProjectPage({
     const current = verifySessionCookie(store.get(SESSION_COOKIE)?.value);
     if (!current) {
       redirect("/login");
+    }
+    if (!(await isStaffSlackId(current.slackId))) {
+      redirect("/");
     }
 
     const profile = await getSessionProfile(current);

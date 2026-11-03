@@ -1,4 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
+import { isStaffSlackId } from "@/lib/admin";
+import UnderConstruction from "@/app/components/UnderConstruction";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import Link from "next/link";
@@ -14,6 +16,10 @@ export default async function DashPage() {
 
   if (!session) {
     redirect("/login");
+  }
+
+  if (!(await isStaffSlackId(session.slackId))) {
+    return <UnderConstruction />;
   }
 
   const profile = await getSessionProfile(session);

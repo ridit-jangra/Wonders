@@ -106,6 +106,10 @@ export async function getStaffAccess(slackId: string): Promise<StaffAccess> {
   return { isOwner: isAdminSlackId(slackId), roles: await loadRoles(slackId) };
 }
 
+export async function isStaffSlackId(slackId: string): Promise<boolean> {
+  return isStaff(await getStaffAccess(slackId));
+}
+
 export async function getAdminSession(): Promise<AdminUser | null> {
   const cookieStore = await cookies();
   const session = verifyAdminSessionCookie(cookieStore.get(ADMIN_SESSION_COOKIE)?.value);

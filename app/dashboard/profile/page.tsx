@@ -1,4 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
+import { isStaffSlackId } from "@/lib/admin";
+import UnderConstruction from "@/app/components/UnderConstruction";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { cookies, headers } from "next/headers";
@@ -50,6 +52,10 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 export default async function ProfilePage() {
   const session = verifySessionCookie((await cookies()).get(SESSION_COOKIE)?.value);
   if (!session) redirect("/login");
+  if (!(await isStaffSlackId(session.slackId))) {
+    return <UnderConstruction />;
+  }
+
   const profile = await getSessionProfile(session);
   if (!profile) redirect("/onboarding");
 

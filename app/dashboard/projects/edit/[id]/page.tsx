@@ -1,4 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
+import { isStaffSlackId } from "@/lib/admin";
+import UnderConstruction from "@/app/components/UnderConstruction";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
@@ -43,7 +45,7 @@ type JournalGuard = { error: string; profileId?: undefined } | { error?: undefin
 async function journalGuard(id: string, bucket: string, limit: number): Promise<JournalGuard | null> {
   const store = await cookies();
   const current = verifySessionCookie(store.get(SESSION_COOKIE)?.value);
-  if (!current) {
+  if (!current || !(await isStaffSlackId(current.slackId))) {
     return null;
   }
   const currentProfile = await getSessionProfile(current);
@@ -77,6 +79,10 @@ export default async function EditProjectPage({
   const session = verifySessionCookie(cookieStore.get(SESSION_COOKIE)?.value);
   if (!session) {
     redirect("/login");
+  }
+
+  if (!(await isStaffSlackId(session.slackId))) {
+    return <UnderConstruction />;
   }
 
   const profile = await getSessionProfile(session);
@@ -130,6 +136,9 @@ export default async function EditProjectPage({
     const current = verifySessionCookie(store.get(SESSION_COOKIE)?.value);
     if (!current) {
       redirect("/login");
+    }
+    if (!(await isStaffSlackId(current.slackId))) {
+      redirect("/");
     }
 
     const currentProfile = await getSessionProfile(current);
@@ -188,7 +197,7 @@ export default async function EditProjectPage({
 
     const store = await cookies();
     const current = verifySessionCookie(store.get(SESSION_COOKIE)?.value);
-    if (!current) {
+    if (!current || !(await isStaffSlackId(current.slackId))) {
       return { ok: false };
     }
 
@@ -259,6 +268,9 @@ export default async function EditProjectPage({
     if (!current) {
       redirect("/login");
     }
+    if (!(await isStaffSlackId(current.slackId))) {
+      redirect("/");
+    }
 
     const currentProfile = await getSessionProfile(current);
     if (!currentProfile) {
@@ -323,6 +335,9 @@ export default async function EditProjectPage({
     const current = verifySessionCookie(store.get(SESSION_COOKIE)?.value);
     if (!current) {
       redirect("/login");
+    }
+    if (!(await isStaffSlackId(current.slackId))) {
+      redirect("/");
     }
 
     const currentProfile = await getSessionProfile(current);
@@ -431,6 +446,9 @@ export default async function EditProjectPage({
     const current = verifySessionCookie(store.get(SESSION_COOKIE)?.value);
     if (!current) {
       redirect("/login");
+    }
+    if (!(await isStaffSlackId(current.slackId))) {
+      redirect("/");
     }
 
     const currentProfile = await getSessionProfile(current);

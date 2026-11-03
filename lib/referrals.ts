@@ -1,8 +1,7 @@
 import "server-only";
 import crypto from "node:crypto";
 import { sql } from "@/lib/db";
-import { getStaffAccess } from "@/lib/admin";
-import { isStaff } from "@/lib/security/roles";
+import { isStaffSlackId } from "@/lib/admin";
 
 export const REFERRAL_COOKIE = "wonders_ref";
 export const REFERRAL_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
@@ -24,7 +23,7 @@ export function visitorHash(ip: string, userAgent: string) {
 }
 
 export async function canUseReferrals(slackId: string) {
-  return isStaff(await getStaffAccess(slackId));
+  return isStaffSlackId(slackId);
 }
 
 export async function findReferrerBySlug(slug: string) {

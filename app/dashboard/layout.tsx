@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
 import { getSessionProfile } from "@/lib/profiles";
-import { canUseReferrals } from "@/lib/referrals";
+import { isStaffSlackId } from "@/lib/admin";
+import UnderConstruction from "@/app/components/UnderConstruction";
 import Sidebar from "./components/Sidebar";
 import TopBlur from "./components/TopBlur";
 import { Profile } from "./components/Profile";
@@ -26,6 +27,10 @@ export default async function DashLayout({
     redirect("/onboarding");
   }
 
+  if (!(await isStaffSlackId(profile.slack_id))) {
+    return <UnderConstruction />;
+  }
+
   return (
     <div className="relative flex min-h-screen">
       <img
@@ -34,7 +39,7 @@ export default async function DashLayout({
         alt=""
       />
       <TopBlur />
-      <Sidebar showRefers={await canUseReferrals(profile.slack_id)} />
+      <Sidebar showRefers />
       <main className="relative min-w-0 flex-1">{children}</main>
       <Profile />
     </div>

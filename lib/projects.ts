@@ -125,7 +125,7 @@ export async function shipProject(
       updated_at = now()
     where id = ${id}
       and profile_id = ${profileId}
-      and status in ('building', 'rejected')
+      and status in ('building', 'rejected', 'shipped', 'fulfillment_started')
       and banned_at is null
     returning id
   `;
@@ -219,7 +219,12 @@ export async function listAllProjects(opts: {
   const orderBy = isQueue
     ? sql`order by coalesce(
         (select min(h.created_at) from project_history h
-          where h.project_id = p.id and h.to_status = 'in_review'),
+          where h.project_id = p.id and h.to_status = 'in_review'
+            and h.created_at > coalesce(
+              (select max(a.created_at) from project_history a
+                where a.project_id = p.id and a.to_status in ('shipped', 'fulfillment_started')),
+              '-infinity'::timestamptz
+            )),
         p.created_at
       ) asc, p.id asc`
     : sql`order by p.created_at desc`;
@@ -309,23 +314,22 @@ export async function secondPassReview(
   id: ProjectId,
   verdict: "approved" | "changes_requested",
   feedback: string,
-): Promise<boolean> {
-  let nextStatus: ProjectStatus = "rejected";
-  if (verdict === "approved") {
-    nextStatus = "shipped";
-  }
-
-  const rows = await sql`
+): Promise<ProjectStatus | null> {
+  const rows = await sql<{ status: ProjectStatus }[]>`
     update projects set
-      status = ${nextStatus},
+      status = case
+        when ${verdict === "approved"} then
+          case when fulfillment_started_at is not null then 'fulfillment_started' else 'shipped' end
+        else 'rejected'
+      end,
       reviewer_note = ${feedback},
       on_hold = false,
       hold_reason = null,
       updated_at = now()
     where id = ${id} and status = 'second_pass' and banned_at is null
-    returning id
+    returning status
   `;
-  return rows.length > 0;
+  return rows[0]?.status ?? null;
 }
 
 export async function setProjectHold(id: ProjectId, onHold: boolean, reason: string | null) {
@@ -362,7 +366,7 @@ export async function adminUpdateProject(
 
 export async function startFulfillment(id: ProjectId): Promise<boolean> {
   const rows = await sql`
-    update projects set status = 'fulfillment_started', updated_at = now()
+    update projects set status = 'fulfillment_started', fulfillment_started_at = coalesce(fulfillment_started_at, now()), updated_at = now()
     where id = ${id} and status = 'shipped' and banned_at is null
     returning id
   `;

@@ -240,3 +240,7 @@ alter table projects add column if not exists unship_reason text;
 
 alter table profiles add column if not exists shipping_phone text;
 alter table profiles add column if not exists shipping_phone_at timestamptz;
+
+alter table projects add column if not exists fulfillment_started_at timestamptz;
+update projects set fulfillment_started_at = coalesce(updated_at, now())
+  where status in ('fulfillment_started', 'fulfilled') and fulfillment_started_at is null;

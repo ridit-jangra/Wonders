@@ -229,16 +229,17 @@ export default async function AdminReviewPanelPage({
     }
 
     let ok = false;
-    let toStatus: "second_pass" | "shipped" | "rejected" = "rejected";
+    let toStatus: "second_pass" | "shipped" | "fulfillment_started" | "rejected" = "rejected";
     if (pass === "first") {
       ok = await firstPassReview(id, verdict, feedback);
       if (verdict === "approved") {
         toStatus = "second_pass";
       }
     } else {
-      ok = await secondPassReview(id, verdict, feedback);
-      if (verdict === "approved") {
-        toStatus = "shipped";
+      const result = await secondPassReview(id, verdict, feedback);
+      ok = result !== null;
+      if (result === "shipped" || result === "fulfillment_started") {
+        toStatus = result;
       }
     }
 
@@ -268,12 +269,12 @@ export default async function AdminReviewPanelPage({
       let event: "first_pass_approved" | "second_pass_approved" | "changes_requested" = "changes_requested";
       if (toStatus === "second_pass") {
         event = "first_pass_approved";
-      } else if (toStatus === "shipped") {
+      } else if (toStatus === "shipped" || toStatus === "fulfillment_started") {
         event = "second_pass_approved";
       }
       notifyPlayer(existing.profile?.slack_id, event, { title: existing.title, note: feedback });
 
-      if (toStatus === "shipped") {
+      if (toStatus === "shipped" || toStatus === "fulfillment_started") {
         after(async () => {
           const result = await pushWonderToAirtable(Number(id));
           await writeAudit({

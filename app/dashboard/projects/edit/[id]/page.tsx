@@ -621,25 +621,24 @@ export default async function EditProjectPage({
               >
                 Save it :3
               </SubmitButton>
-              {!liveEdit && (
-                <ShipDialogButton
-                  shipAction={shipProjectAction}
-                  isReship={isReship}
-                  disabled={missingForShip.length > 0}
-                  initialIso={phoneStart?.iso ?? "US"}
-                  initialNumber={phoneStart?.number ?? ""}
-                  fromAuth={phonePrefill.fromAuth}
-                  className="w-full rounded-md bg-[#A8C7E0] px-4 py-2 font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-48"
-                />
-              )}
+              <ShipDialogButton
+                shipAction={shipProjectAction}
+                isReship={isReship}
+                shipMore={liveEdit}
+                disabled={missingForShip.length > 0}
+                initialIso={phoneStart?.iso ?? "US"}
+                initialNumber={phoneStart?.number ?? ""}
+                fromAuth={phonePrefill.fromAuth}
+                className="w-full rounded-md bg-[#A8C7E0] px-4 py-2 font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-48"
+              />
             </div>
             <p
               className={`mt-3 text-right font-finger-paint text-base ${
-                !liveEdit && missingForShip.length > 0 ? "text-[#A33B32]" : "text-[#5C4A2E]/70"
+                missingForShip.length > 0 ? "text-[#A33B32]" : "text-[#5C4A2E]/70"
               }`}
             >
               {liveEdit
-                ? "it's already shipped, so your edits show up right away :3"
+                ? "edits show up right away. built more? ship it again and it goes back for another review :3"
                 : missingForShip.length > 0
                 ? `add ${missingForShip.join(", ")} before you can ${isReship ? "reship" : "ship"} it`
                 : isReship

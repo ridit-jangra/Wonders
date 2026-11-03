@@ -10,6 +10,7 @@ import SubmitButton from "./SubmitButton";
 export default function ShipDialogButton({
   shipAction,
   isReship,
+  shipMore = false,
   disabled,
   initialIso,
   initialNumber,
@@ -18,6 +19,7 @@ export default function ShipDialogButton({
 }: {
   shipAction: (formData: FormData) => void;
   isReship: boolean;
+  shipMore?: boolean;
   disabled: boolean;
   initialIso: string;
   initialNumber: string;
@@ -40,12 +42,12 @@ export default function ShipDialogButton({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open]);
 
-  const verb = isReship ? "reship" : "ship";
+  const verb = isReship && !shipMore ? "reship" : "ship";
 
   return (
     <>
       <button type="button" disabled={disabled} onClick={() => setOpen(true)} className={`${className} disabled:cursor-not-allowed disabled:opacity-60`}>
-        {isReship ? "Reship it :D" : "Ship it :D"}
+        {shipMore ? "Ship more :D" : isReship ? "Reship it :D" : "Ship it :D"}
       </button>
       <AnimatePresence>
         {open && (

@@ -8,7 +8,9 @@ import { after } from "next/server";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
 import { getHackatimeToken, getPhonePrefill, getSessionProfile, getSlackActors, saveShippingPhone } from "@/lib/profiles";
 import {
+  computeTeamSeconds,
   computeWonderSeconds,
+  saveCollaboratorSeconds,
   getCollaboratorLinks,
   getInviteCode,
   getRole,
@@ -376,18 +378,17 @@ export default async function EditProjectPage({
       return;
     }
 
-    if (!asCollaborator) {
-      const phone = normalizePhone(
-        String(formData.get("phone_country") ?? ""),
-        String(formData.get("phone_number") ?? ""),
-      );
-      if (!phone) {
-        return;
-      }
-      await saveShippingPhone(currentProfile.id, phone);
+    const phone = normalizePhone(
+      String(formData.get("phone_country") ?? ""),
+      String(formData.get("phone_number") ?? ""),
+    );
+    if (!phone) {
+      return;
     }
+    await saveShippingPhone(currentProfile.id, phone);
 
-    const hackatimeSeconds = await computeWonderSeconds(existing);
+    const team = await computeTeamSeconds(existing);
+    const hackatimeSeconds = team?.total ?? null;
 
     if (
       (existing.status === "shipped" || existing.status === "fulfillment_started") &&
@@ -397,8 +398,10 @@ export default async function EditProjectPage({
       return;
     }
 
-    const shipped = await shipProject(id, currentProfile.id, hackatimeSeconds);
+    const wasLive = existing.status === "shipped" || existing.status === "fulfillment_started";
+    const shipped = await shipProject(id, currentProfile.id, hackatimeSeconds, team?.owner ?? null);
     if (shipped) {
+      await saveCollaboratorSeconds(existing.id, wasLive, team?.collaborators ?? []);
       await recordProjectHistory({
         projectId: id,
         profileId: existing.profile_id,
@@ -757,7 +760,6 @@ export default async function EditProjectPage({
                 shipAction={shipProjectAction}
                 isReship={isReship}
                 shipMore={liveEdit}
-                confirmOnly={isCollaborator}
                 disabled={missingForShip.length > 0 || !canShipAgain}
                 initialIso={phoneStart?.iso ?? "US"}
                 initialNumber={phoneStart?.number ?? ""}

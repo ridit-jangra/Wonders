@@ -51,9 +51,11 @@ export async function listJournalForMember(
 
 export async function listJournalAdmin(projectId: ProjectId): Promise<JournalEntry[]> {
   return sql<JournalEntry[]>`
-    select ${COLUMNS()} from project_journal
-    where project_id = ${projectId}
-    order by created_at desc, id desc
+    select j.id, j.title, j.content, j.created_at as "createdAt", j.edited_at as "editedAt",
+      coalesce(a.slack_display_name, a.name) as "authorName"
+    from project_journal j join profiles a on a.id = j.profile_id
+    where j.project_id = ${projectId}
+    order by j.created_at desc, j.id desc
     limit ${JOURNAL_MAX_ENTRIES}
   `;
 }

@@ -105,13 +105,16 @@ export async function resetInviteCode(
 
 export type JoinResult =
   | { ok: true; projectId: number }
-  | { ok: false; error: "invalid" | "own" | "full" | "banned" };
+  | { ok: false; error: "invalid" | "own" | "full" | "banned" | "closed" };
 
 export async function joinByCode(profileId: string, code: string): Promise<JoinResult> {
-  const [project] = await sql<{ id: number; profile_id: string; banned_at: string | null }[]>`
-    select id, profile_id, banned_at from projects where invite_code = ${code}
+  const [project] = await sql<
+    { id: number; profile_id: string; banned_at: string | null; status: string }[]
+  >`
+    select id, profile_id, banned_at, status from projects where invite_code = ${code}
   `;
   if (!project) return { ok: false, error: "invalid" };
+  if (project.status === "fulfilled") return { ok: false, error: "closed" };
   if (project.banned_at) return { ok: false, error: "banned" };
   if (project.profile_id === profileId) return { ok: false, error: "own" };
 
@@ -179,14 +182,47 @@ async function memberSeconds(profileId: string, links: string[]): Promise<number
   return tracked.filter((p) => links.includes(p.name)).reduce((sum, p) => sum + p.seconds, 0);
 }
 
-export async function computeWonderSeconds(project: Project): Promise<number | null> {
+export interface TeamSeconds {
+  total: number;
+  owner: number;
+  collaborators: { profileId: string; seconds: number }[];
+}
+
+export async function computeTeamSeconds(project: Project): Promise<TeamSeconds | null> {
   const collaborators = await sql<{ profile_id: string; hackatime_projects: string[] }[]>`
     select profile_id, hackatime_projects from project_collaborators where project_id = ${project.id}
   `;
-  const parts = await Promise.all([
+  const [owner, ...others] = await Promise.all([
     memberSeconds(project.profile_id, project.hackatime_projects),
     ...collaborators.map((c) => memberSeconds(c.profile_id, c.hackatime_projects)),
   ]);
-  if (parts.some((part) => part === null)) return null;
-  return parts.reduce<number>((sum, part) => sum + (part ?? 0), 0);
+  if (owner === null || others.some((part) => part === null)) return null;
+  const list = collaborators.map((c, index) => ({
+    profileId: c.profile_id,
+    seconds: others[index] ?? 0,
+  }));
+  return {
+    total: owner + list.reduce((sum, item) => sum + item.seconds, 0),
+    owner,
+    collaborators: list,
+  };
+}
+
+export async function computeWonderSeconds(project: Project): Promise<number | null> {
+  return (await computeTeamSeconds(project))?.total ?? null;
+}
+
+export async function saveCollaboratorSeconds(
+  projectId: ProjectId,
+  wasLive: boolean,
+  list: { profileId: string; seconds: number }[],
+) {
+  for (const item of list) {
+    await sql`
+      update project_collaborators set
+        hackatime_seconds_prev = case when ${wasLive} then hackatime_seconds else hackatime_seconds_prev end,
+        hackatime_seconds = ${item.seconds}
+      where project_id = ${projectId} and profile_id = ${item.profileId}
+    `;
+  }
 }

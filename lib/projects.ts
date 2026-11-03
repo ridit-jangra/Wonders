@@ -130,6 +130,7 @@ export async function shipProject(
   id: ProjectId,
   profileId: string,
   hackatimeSeconds: number | null,
+  ownerSeconds: number | null = null,
 ): Promise<boolean> {
   const rows = await sql`
     update projects set
@@ -139,6 +140,11 @@ export async function shipProject(
         else hackatime_seconds_prev
       end,
       hackatime_seconds = ${hackatimeSeconds},
+      owner_seconds_prev = case
+        when status in ('shipped', 'fulfillment_started') then owner_seconds
+        else owner_seconds_prev
+      end,
+      owner_seconds = ${ownerSeconds},
       unship_reason = null,
       updated_at = now()
     where id = ${id}
@@ -401,55 +407,6 @@ export async function startFulfillment(id: ProjectId): Promise<boolean> {
   return rows.length > 0;
 }
 
-export async function markRewardOrdered(id: ProjectId): Promise<boolean> {
-  const rows = await sql`
-    update projects set reward_ordered_at = now(), updated_at = now()
-    where id = ${id}
-      and status = 'fulfillment_started'
-      and reward_ordered_at is null
-    returning id
-  `;
-  return rows.length > 0;
-}
-
-export async function markRewardSent(id: ProjectId): Promise<boolean> {
-  const rows = await sql`
-    update projects set reward_sent_at = now(), updated_at = now()
-    where id = ${id}
-      and status = 'fulfillment_started'
-      and reward_ordered_at is not null
-      and reward_sent_at is null
-    returning id
-  `;
-  return rows.length > 0;
-}
-
-export async function fulfillProject(
-  id: ProjectId,
-  adminSlackId: string,
-): Promise<boolean> {
-  const rows = await sql`
-    update projects set
-      status = 'fulfilled',
-      fulfilled_at = now(),
-      fulfilled_by = ${adminSlackId},
-      updated_at = now()
-    where id = ${id}
-      and status = 'fulfillment_started'
-      and reward is not null
-      and banned_at is null
-    returning id
-  `;
-  return rows.length > 0;
-}
-
-export async function setProjectReward(id: ProjectId, reward: string | null) {
-  await sql`
-    update projects set reward = ${reward}, updated_at = now()
-    where id = ${id} and status in ('shipped', 'fulfillment_started')
-  `;
-}
-
 
 const UNSHIPPABLE: ProjectStatus[] = ["in_review", "second_pass", "shipped"];
 
@@ -510,37 +467,3 @@ export async function adminUnshipProject(
   return rows.length > 0 ? row.status : null;
 }
 
-export async function hasFulfillableProject(profileId: string): Promise<boolean> {
-  const [row] = await sql<{ found: boolean }[]>`
-    select exists (
-      select 1 from projects
-      where profile_id = ${profileId}
-        and status in ('shipped', 'fulfillment_started')
-        and banned_at is null
-    ) as found
-  `;
-  return row?.found ?? false;
-}
-
-export async function claimHcbGrant(id: ProjectId, cents: number): Promise<boolean> {
-  const rows = await sql`
-    update projects set hcb_grant_sent_at = now(), hcb_grant_cents = ${cents}
-    where id = ${id}
-      and hcb_grant_sent_at is null
-      and status in ('shipped', 'fulfillment_started')
-      and banned_at is null
-    returning id
-  `;
-  return rows.length > 0;
-}
-
-export async function finishHcbGrant(id: ProjectId, grantId: string) {
-  await sql`update projects set hcb_grant_id = ${grantId} where id = ${id}`;
-}
-
-export async function releaseHcbGrant(id: ProjectId) {
-  await sql`
-    update projects set hcb_grant_sent_at = null, hcb_grant_cents = null
-    where id = ${id} and hcb_grant_id is null
-  `;
-}

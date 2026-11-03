@@ -7,7 +7,7 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import {
   airtableRecordUrl,
   fetchSubmissionStates,
-  isWonderInUnified,
+  isUnitInUnified,
   pushAllMissingToAirtable,
   summarizeUnified,
 } from "@/lib/airtable";
@@ -15,21 +15,23 @@ import { createCardGrant, hcbMaxGrantCents, isHcbConfigured } from "@/lib/hcb";
 import { formatDollars, parseGrantInput } from "@/lib/hcb-grant";
 import ShippingInfo, { type ShippingResult } from "../components/ShippingInfo";
 import { canFulfill } from "@/lib/security/roles";
+import { listAllProjects, getProjectWithOwner, startFulfillment } from "@/lib/projects";
 import {
-  listAllProjects,
-  getProjectWithOwner,
-  startFulfillment,
-  fulfillProject,
-  markRewardOrdered,
-  markRewardSent,
-  setProjectReward,
-  hasFulfillableProject,
-  claimHcbGrant,
-  finishHcbGrant,
-  releaseHcbGrant,
-} from "@/lib/projects";
+  claimUnitGrant,
+  completeProjectIfDone,
+  finishUnitGrant,
+  fulfillUnit,
+  getUnit,
+  hasFulfillableUnit,
+  listUnits,
+  markUnitOrdered,
+  markUnitSent,
+  releaseUnitGrant,
+  setUnitReward,
+  type FulfillmentUnit,
+} from "@/lib/units";
 import { recordProjectHistory } from "@/lib/project-history";
-import { notifyTeam } from "@/lib/notifications";
+import { notifyPlayer, notifyTeam } from "@/lib/notifications";
 import {
   ActionButton,
   Badge,
@@ -48,20 +50,34 @@ import {
 } from "../components/ui";
 
 const PER_PAGE = 25;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-async function notInUnified(id: string): Promise<boolean> {
-  return !(await isWonderInUnified(Number(id)));
+async function resolveUnit(id: string, memberProfileId: string) {
+  if (!/^\d{1,9}$/.test(id) || !UUID.test(memberProfileId)) return null;
+  const project = await getProjectWithOwner(id);
+  if (!project) return null;
+  const unit = await getUnit(project.id, memberProfileId);
+  if (!unit) return null;
+  return { project, unit };
+}
+
+async function unitNotInUnified(unit: FulfillmentUnit): Promise<boolean> {
+  return !(await isUnitInUnified(unit.projectId, unit.profileId));
+}
+
+function hoursText(seconds: number) {
+  return `${(seconds / 3600).toFixed(1)}h`;
 }
 
 const GRANT_NOTICE: Record<string, string> = {
   sent: "Grant sent.",
   failed: "HCB refused the grant, nothing was sent. Check the HCB connection and try again.",
   invalid: "Check the amount (within the limit) and purpose, then try again.",
-  exists: "A grant was already sent for this wonder.",
+  exists: "A grant was already sent for this person.",
   locked: "Verify it's you again to send grants.",
   limited: "Too many tries, wait a minute.",
   notconfigured: "HCB isn't connected yet.",
-  notunified: "This wonder isn't in the Unified YSWS database yet.",
+  notunified: "This person isn't in the Unified YSWS database yet.",
 };
 
 export default async function AdminFulfillmentPage({
@@ -80,7 +96,10 @@ export default async function AdminFulfillmentPage({
     limit: PER_PAGE,
     offset: (currentPage - 1) * PER_PAGE,
   });
-  const unifiedStates = await fetchSubmissionStates(projects.flatMap((p) => p.airtable_record_ids));
+  const unitsByProject = await listUnits(projects.map((p) => p.id));
+  const unifiedStates = await fetchSubmissionStates(
+    [...unitsByProject.values()].flat().flatMap((unit) => unit.airtableIds),
+  );
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
 
   async function loadShipping(profileId: string): Promise<ShippingResult> {
@@ -92,7 +111,7 @@ export default async function AdminFulfillmentPage({
     if (!(await hasRecentAuth(actor.slackId))) {
       return { ok: false, reason: "locked" };
     }
-    if (!(await hasFulfillableProject(profileId))) {
+    if (!(await hasFulfillableUnit(profileId))) {
       return { ok: false, reason: "denied" };
     }
     const identity = await getProfileIdentityAdmin(profileId, true);
@@ -126,25 +145,26 @@ export default async function AdminFulfillmentPage({
 
     const actor = await requireAccess(canFulfill);
     const id = String(formData.get("id") ?? "");
-    if (!id) return;
+    const member = String(formData.get("member") ?? "");
+    if (!id || !member) return;
     const back = (code: string): never =>
-      redirect(`/admin/fulfillment?grant=${code}&wonder=${encodeURIComponent(id)}`);
+      redirect(`/admin/fulfillment?grant=${code}&wonder=${encodeURIComponent(`${id}:${member}`)}`);
 
     if (!(await checkRateLimit("hcb-grant", actor.slackId, 10, 60)).allowed) back("limited");
     if (!isHcbConfigured()) back("notconfigured");
-    if (await notInUnified(id)) back("notunified");
     if (!(await hasRecentAuth(actor.slackId))) back("locked");
 
-    const existing = await getProjectWithOwner(id);
-    const email = existing?.profile?.email;
+    const resolved = await resolveUnit(id, member);
     if (
-      !existing ||
-      !email ||
-      existing.banned_at ||
-      (existing.status !== "shipped" && existing.status !== "fulfillment_started")
+      !resolved ||
+      !resolved.unit.email ||
+      resolved.project.banned_at ||
+      (resolved.project.status !== "shipped" && resolved.project.status !== "fulfillment_started")
     ) {
       back("invalid");
     }
+    const { unit, project } = resolved!;
+    if (await unitNotInUnified(unit)) back("notunified");
 
     const input = parseGrantInput(
       {
@@ -158,28 +178,28 @@ export default async function AdminFulfillmentPage({
     );
     if (!input) back("invalid");
 
-    if (!(await claimHcbGrant(id, input!.amountCents))) back("exists");
+    if (!(await claimUnitGrant(unit, input!.amountCents))) back("exists");
 
-    const result = await createCardGrant({ email: email!, ...input! });
+    const result = await createCardGrant({ email: unit.email, ...input! });
     if (!result.ok) {
-      await releaseHcbGrant(id);
+      await releaseUnitGrant(unit);
       await writeAudit({
         actor: actor.slackId,
         action: "hcb.grant_failed",
-        target: id,
-        detail: { error: result.error, amount_cents: input!.amountCents },
+        target: String(project.id),
+        detail: { error: result.error, amount_cents: input!.amountCents, member },
       });
       back("failed");
     } else {
-      await finishHcbGrant(id, result.id);
-      if (!existing!.reward) {
-        await setProjectReward(id, `HCB grant (${formatDollars(input!.amountCents)})`);
+      await finishUnitGrant(unit, result.id);
+      if (!unit.reward) {
+        await setUnitReward(unit, `HCB grant (${formatDollars(input!.amountCents)})`);
       }
       await writeAudit({
         actor: actor.slackId,
         action: "hcb.grant_create",
-        target: id,
-        detail: { grant_id: result.id, amount_cents: input!.amountCents, purpose: input!.purpose },
+        target: String(project.id),
+        detail: { grant_id: result.id, amount_cents: input!.amountCents, purpose: input!.purpose, member },
         sensitive: true,
       });
     }
@@ -209,11 +229,14 @@ export default async function AdminFulfillmentPage({
     "use server";
 
     await requireAccess(canFulfill);
-    const id = String(formData.get("id") ?? "");
-    if (!id) return;
+    const resolved = await resolveUnit(
+      String(formData.get("id") ?? ""),
+      String(formData.get("member") ?? ""),
+    );
+    if (!resolved) return;
 
     const reward = String(formData.get("reward") ?? "").trim() || null;
-    await setProjectReward(id, reward);
+    await setUnitReward(resolved.unit, reward);
 
     revalidatePath("/admin/fulfillment");
   }
@@ -223,11 +246,19 @@ export default async function AdminFulfillmentPage({
 
     const admin = await requireAccess(canFulfill);
     const id = String(formData.get("id") ?? "");
-    if (!id) return;
+    if (!/^\d{1,9}$/.test(id)) return;
 
     const existing = await getProjectWithOwner(id);
     if (!existing) return;
-    if (await notInUnified(id)) return;
+    const units = (await listUnits([existing.id])).get(existing.id) ?? [];
+    let anyUnified = false;
+    for (const unit of units) {
+      if (await isUnitInUnified(unit.projectId, unit.profileId)) {
+        anyUnified = true;
+        break;
+      }
+    }
+    if (!anyUnified) return;
 
     const started = await startFulfillment(id);
     if (started) {
@@ -250,16 +281,16 @@ export default async function AdminFulfillmentPage({
     "use server";
 
     await requireAccess(canFulfill);
-    const id = String(formData.get("id") ?? "");
-    if (!id) return;
+    const resolved = await resolveUnit(
+      String(formData.get("id") ?? ""),
+      String(formData.get("member") ?? ""),
+    );
+    if (!resolved) return;
+    if (await unitNotInUnified(resolved.unit)) return;
 
-    const existing = await getProjectWithOwner(id);
-    if (!existing) return;
-    if (await notInUnified(id)) return;
-
-    const ordered = await markRewardOrdered(id);
+    const ordered = await markUnitOrdered(resolved.unit);
     if (ordered) {
-      await notifyTeam(existing.id, "reward_ordered", { title: existing.title });
+      notifyPlayer(resolved.unit.slackId, "reward_ordered", { title: resolved.project.title });
     }
 
     revalidatePath("/admin/fulfillment");
@@ -269,16 +300,16 @@ export default async function AdminFulfillmentPage({
     "use server";
 
     await requireAccess(canFulfill);
-    const id = String(formData.get("id") ?? "");
-    if (!id) return;
+    const resolved = await resolveUnit(
+      String(formData.get("id") ?? ""),
+      String(formData.get("member") ?? ""),
+    );
+    if (!resolved) return;
+    if (await unitNotInUnified(resolved.unit)) return;
 
-    const existing = await getProjectWithOwner(id);
-    if (!existing) return;
-    if (await notInUnified(id)) return;
-
-    const sent = await markRewardSent(id);
+    const sent = await markUnitSent(resolved.unit);
     if (sent) {
-      await notifyTeam(existing.id, "reward_sent", { title: existing.title });
+      notifyPlayer(resolved.unit.slackId, "reward_sent", { title: resolved.project.title });
     }
 
     revalidatePath("/admin/fulfillment");
@@ -288,25 +319,27 @@ export default async function AdminFulfillmentPage({
     "use server";
 
     const admin = await requireAccess(canFulfill);
-    const id = String(formData.get("id") ?? "");
-    if (!id) return;
+    const resolved = await resolveUnit(
+      String(formData.get("id") ?? ""),
+      String(formData.get("member") ?? ""),
+    );
+    if (!resolved || !resolved.unit.reward) return;
+    if (await unitNotInUnified(resolved.unit)) return;
 
-    const existing = await getProjectWithOwner(id);
-    if (!existing || !existing.reward) return;
-    if (await notInUnified(id)) return;
-
-    const fulfilled = await fulfillProject(id, admin.slackId);
+    const fulfilled = await fulfillUnit(resolved.unit, admin.slackId);
     if (fulfilled) {
-      await recordProjectHistory({
-        projectId: id,
-        profileId: existing.profile_id,
-        fromStatus: existing.status,
-        toStatus: "fulfilled",
-        reviewerNote: null,
-        reward: existing.reward,
-        reviewedBy: admin.slackId,
-      });
-      await notifyTeam(existing.id, "fulfilled", { title: existing.title });
+      notifyPlayer(resolved.unit.slackId, "fulfilled", { title: resolved.project.title });
+      if (await completeProjectIfDone(resolved.project.id)) {
+        await recordProjectHistory({
+          projectId: resolved.project.id,
+          profileId: resolved.project.profile_id,
+          fromStatus: "fulfillment_started",
+          toStatus: "fulfilled",
+          reviewerNote: null,
+          reward: resolved.project.reward,
+          reviewedBy: admin.slackId,
+        });
+      }
     }
 
     revalidatePath("/admin/fulfillment");
@@ -317,7 +350,7 @@ export default async function AdminFulfillmentPage({
       <PageHeader
         title="Fulfillment"
         count={total}
-        description="Published wonders working through their reward order."
+        description="Published wonders working through their reward order. Everyone on a wonder gets their own reward."
         actions={
           <form action={pushAllMissing}>
             <ActionButton pendingLabel="Pushing…" variant="outline" icon="send">
@@ -332,223 +365,266 @@ export default async function AdminFulfillmentPage({
           <Callout tone={airtableOutcome === "limited" ? "warning" : "info"} icon="important">
             {airtableOutcome === "limited"
               ? "Too many tries, wait a minute."
-              : `Pushed ${airtableOutcome.split("-")[0]} wonder(s) to Airtable, ${airtableOutcome.split("-")[1] ?? 0} failed.`}
+              : `Pushed ${airtableOutcome.split("-")[0]} row(s) to Airtable, ${airtableOutcome.split("-")[1] ?? 0} failed.`}
           </Callout>
         </div>
       )}
 
       <div className="flex flex-col gap-4">
         {projects.map((project) => {
-          const unified = summarizeUnified(project.airtable_record_ids, unifiedStates);
-          const inUnified = unified.state === "unified";
-          const recordUrl = project.airtable_record_ids.length
-            ? airtableRecordUrl(project.airtable_record_ids[project.airtable_record_ids.length - 1])
-            : null;
+          const units = unitsByProject.get(project.id) ?? [];
+          const unifiedByUnit = units.map((unit) => summarizeUnified(unit.airtableIds, unifiedStates));
+          const anyUnified = unifiedByUnit.some((summary) => summary.state === "unified");
           return (
-          <Card key={project.id}>
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <TextLink href={`/admin/review/${project.id}`} className="hc-heading text-lg">
-                    {project.title}
-                  </TextLink>
-                  <StatusBadge status={project.status} />
-                  {unified.state === "unified" && <Badge tone="success">In Unified YSWS</Badge>}
-                  {unified.state === "waiting" && <Badge tone="warning">Waiting on Airtable</Badge>}
-                  {unified.state === "not_pushed" && <Badge tone="danger">Not in Airtable</Badge>}
-                  {unified.state === "error" && <Badge tone="danger">Airtable check failed</Badge>}
-                  {project.status === "fulfillment_started" && project.reward_sent_at && (
-                    <Badge tone="info">On its way</Badge>
-                  )}
-                  {project.status === "fulfillment_started" &&
-                    project.reward_ordered_at &&
-                    !project.reward_sent_at && <Badge tone="info">Ordered</Badge>}
+            <Card key={project.id}>
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <TextLink href={`/admin/review/${project.id}`} className="hc-heading text-lg">
+                      {project.title}
+                    </TextLink>
+                    <StatusBadge status={project.status} />
+                    {units.length > 1 && <Badge tone="purple">{units.length} people</Badge>}
+                  </div>
                 </div>
-                <p className="hc-caption mt-1 text-sm">
-                  <TextLink href={`/admin/users/${project.profile_id}`}>
-                    {project.profile?.name || project.profile?.email}
-                  </TextLink>{" "}
-                  · {project.profile?.email} · <Mono>{project.profile?.slack_id}</Mono>
-                </p>
-                {project.hackatime_seconds !== null && (
-                  <p className="hc-caption mt-1 text-sm">
-                    Hours shipped: <Mono>{(project.hackatime_seconds / 3600).toFixed(1)}h</Mono>
-                    {project.hackatime_seconds_prev !== null && (
-                      <>
-                        {" "}· <Mono>+{((project.hackatime_seconds - project.hackatime_seconds_prev) / 3600).toFixed(1)}h</Mono>{" "}
-                        new in the latest ship
-                      </>
-                    )}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {project.reviewer_note && (
-              <div className="mt-4">
-                <Quote>{project.reviewer_note}</Quote>
-              </div>
-            )}
-
-            <ShippingInfo
-              profileId={project.profile_id}
-              load={loadShipping}
-              reauthHref={reauthUrl("/admin/fulfillment")}
-            />
-
-            <details
-              className="hc-details mt-4"
-              open={Boolean(project.hcb_grant_sent_at) || /grant/i.test(project.reward ?? "") || String(project.id) === grantWonder}
-            >
-              <summary>Send grant (surprise)</summary>
-              <div className="hc-details-body flex flex-col gap-3">
-                {String(project.id) === grantWonder && grantOutcome && GRANT_NOTICE[grantOutcome] && (
-                  <Callout tone={grantOutcome === "sent" ? "success" : "warning"} icon="important">
-                    {GRANT_NOTICE[grantOutcome]}
-                    {grantOutcome === "locked" && (
-                      <>
-                        {" "}
-                        <TextLink href={reauthUrl("/admin/fulfillment")}>Verify it&apos;s you</TextLink>
-                      </>
-                    )}
-                  </Callout>
-                )}
-                {project.hcb_grant_sent_at ? (
-                  <p className="hc-caption text-sm">
-                    Grant of <Mono>{formatDollars(project.hcb_grant_cents ?? 0)}</Mono> sent to{" "}
-                    <Mono>{project.profile?.email}</Mono>
-                    {project.hcb_grant_id && (
-                      <>
-                        {" "}· <Mono>{project.hcb_grant_id}</Mono>
-                      </>
-                    )}
-                    .
-                  </p>
-                ) : !hcbReady ? (
-                  <p className="hc-caption text-sm">HCB isn&apos;t connected yet. Set the HCB env vars to turn this on.</p>
-                ) : !inUnified ? (
-                  <p className="hc-caption text-sm">Available once this wonder is in the Unified YSWS database.</p>
-                ) : !canSendGrant ? (
-                  <p className="hc-caption text-sm">
-                    <TextLink href={reauthUrl("/admin/fulfillment")}>Verify it&apos;s you</TextLink> to send grants.
-                  </p>
-                ) : (
-                  <form action={sendGrant} className="flex flex-col gap-3">
+                {project.status === "shipped" && (
+                  <form action={beginFulfillment}>
                     <input type="hidden" name="id" value={project.id} />
-                    <p className="hc-caption text-sm">
-                      Goes to <Mono>{project.profile?.email}</Mono> as an HCB card grant. Max{" "}
-                      {formatDollars(hcbMaxGrantCents())}.
-                    </p>
-                    <div className="flex flex-wrap gap-3">
-                      <Field label="Amount ($)" className="w-32">
-                        <Input name="amount" inputMode="decimal" placeholder="25" required />
-                      </Field>
-                      <Field label="What it's for" className="min-w-56 flex-1">
-                        <Input name="purpose" defaultValue="Wonders reward" required maxLength={200} />
-                      </Field>
-                    </div>
-                    <Field label="Message to them" hint="optional">
-                      <Input name="message" defaultValue="something for the wonder you built :3" maxLength={500} />
-                    </Field>
-                    <Field label="Keyword lock" hint="optional, limits where the card works">
-                      <Input name="keyword" maxLength={100} />
-                    </Field>
-                    <label className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" name="one_time" />
-                      One time use
-                    </label>
-                    <div>
-                      <ActionButton pendingLabel="Sending…" icon="send">
-                        Send grant
-                      </ActionButton>
-                    </div>
-                  </form>
-                )}
-              </div>
-            </details>
-
-            <div className="mt-5 flex flex-wrap items-end gap-3 border-t border-[var(--border)] pt-5">
-              <form action={saveReward} className="flex flex-1 flex-wrap items-end gap-2">
-                <input type="hidden" name="id" value={project.id} />
-                <Field label="Reward" className="w-full max-w-sm">
-                  <Input
-                    name="reward"
-                    defaultValue={project.reward ?? ""}
-                    placeholder="e.g. hoodie + stickers"
-                  />
-                </Field>
-                <ActionButton pendingLabel="Saving…" variant="outline">
-                  Save
-                </ActionButton>
-              </form>
-
-              {project.status === "shipped" && (
-                <form action={beginFulfillment}>
-                  <input type="hidden" name="id" value={project.id} />
-                  <ActionButton pendingLabel="Starting…" icon="package" disabled={!inUnified}>
-                    Start fulfillment
-                  </ActionButton>
-                </form>
-              )}
-
-              {project.status === "fulfillment_started" && !project.reward_ordered_at && (
-                <form action={markOrdered}>
-                  <input type="hidden" name="id" value={project.id} />
-                  <ActionButton pendingLabel="Marking…" variant="outline" icon="package" disabled={!inUnified}>
-                    Mark ordered
-                  </ActionButton>
-                </form>
-              )}
-
-              {project.status === "fulfillment_started" &&
-                project.reward_ordered_at &&
-                !project.reward_sent_at && (
-                  <form action={markSent}>
-                    <input type="hidden" name="id" value={project.id} />
-                    <ActionButton pendingLabel="Marking…" variant="outline" icon="send" disabled={!inUnified}>
-                      Mark on its way
+                    <ActionButton pendingLabel="Starting…" icon="package" disabled={!anyUnified}>
+                      Start fulfillment
                     </ActionButton>
                   </form>
                 )}
+              </div>
 
-              {project.status === "fulfillment_started" && (
-                <form action={markFulfilled}>
-                  <input type="hidden" name="id" value={project.id} />
-                  <ActionButton
-                    pendingLabel="Marking…"
-                    variant="success"
-                    icon="check-circle"
-                    disabled={!project.reward || !inUnified}
-                  >
-                    Mark fulfilled
-                  </ActionButton>
-                </form>
+              {project.reviewer_note && (
+                <div className="mt-4">
+                  <Quote>{project.reviewer_note}</Quote>
+                </div>
               )}
-            </div>
 
-            {!inUnified && (
-              <p className="hc-caption mt-2 flex items-center gap-1 text-sm">
-                <Icon glyph="important" size={18} />
-                {unified.state === "not_pushed"
-                  ? "Not in Airtable yet. Use Push all missing, or push it from its review page."
-                  : unified.state === "error"
-                    ? `Couldn't check Airtable (${unified.error}).`
-                    : "Waiting for this wonder to reach the Unified YSWS database (status 2–Submitted in Airtable)."}
-                {recordUrl && (
-                  <TextLink href={recordUrl} external>
-                    Open record
-                  </TextLink>
-                )}
-              </p>
-            )}
+              {project.status === "shipped" && !anyUnified && (
+                <p className="hc-caption mt-2 flex items-center gap-1 text-sm">
+                  <Icon glyph="important" size={18} />
+                  Start fulfillment unlocks once someone on this wonder reaches the Unified YSWS database.
+                </p>
+              )}
 
-            {project.status === "fulfillment_started" && !project.reward && (
-              <p className="hc-caption mt-2 flex items-center gap-1 text-sm">
-                <Icon glyph="important" size={18} />
-                Set a reward before marking this fulfilled.
-              </p>
-            )}
-          </Card>
+              {units.map((unit, index) => {
+                const unified = unifiedByUnit[index];
+                const inUnified = unified.state === "unified";
+                const recordUrl = unit.airtableIds.length
+                  ? airtableRecordUrl(unit.airtableIds[unit.airtableIds.length - 1])
+                  : null;
+                const unitKey = `${project.id}:${unit.profileId}`;
+                const started = project.status === "fulfillment_started";
+                return (
+                  <section key={unit.profileId} className="mt-5 border-t border-[var(--border)] pt-5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <TextLink href={`/admin/users/${unit.profileId}`} className="hc-heading text-base">
+                        {unit.name}
+                      </TextLink>
+                      <Badge tone={unit.kind === "owner" ? "info" : "purple"}>
+                        {unit.kind === "owner" ? "Owner" : `Collaborator C${unit.unitId}`}
+                      </Badge>
+                      {unified.state === "unified" && <Badge tone="success">In Unified YSWS</Badge>}
+                      {unified.state === "waiting" && <Badge tone="warning">Waiting on Airtable</Badge>}
+                      {unified.state === "not_pushed" && <Badge tone="danger">Not in Airtable</Badge>}
+                      {unified.state === "error" && <Badge tone="danger">Airtable check failed</Badge>}
+                      {unit.fulfilledAt ? (
+                        <Badge tone="success">Fulfilled</Badge>
+                      ) : (
+                        <>
+                          {started && unit.sentAt && <Badge tone="info">On its way</Badge>}
+                          {started && unit.orderedAt && !unit.sentAt && <Badge tone="info">Ordered</Badge>}
+                        </>
+                      )}
+                    </div>
+                    <p className="hc-caption mt-1 text-sm">
+                      {unit.email} · <Mono>{unit.slackId}</Mono>
+                    </p>
+                    {unit.seconds !== null && (
+                      <p className="hc-caption mt-1 text-sm">
+                        Hours shipped: <Mono>{hoursText(unit.seconds)}</Mono>
+                        {unit.secondsPrev !== null && (
+                          <>
+                            {" "}· <Mono>+{hoursText(Math.max(0, unit.seconds - unit.secondsPrev))}</Mono> new in the
+                            latest ship
+                          </>
+                        )}
+                      </p>
+                    )}
+
+                    <ShippingInfo
+                      profileId={unit.profileId}
+                      load={loadShipping}
+                      reauthHref={reauthUrl("/admin/fulfillment")}
+                    />
+
+                    <details
+                      className="hc-details mt-4"
+                      open={Boolean(unit.grantSentAt) || /grant/i.test(unit.reward ?? "") || unitKey === grantWonder}
+                    >
+                      <summary>Send grant (surprise)</summary>
+                      <div className="hc-details-body flex flex-col gap-3">
+                        {unitKey === grantWonder && grantOutcome && GRANT_NOTICE[grantOutcome] && (
+                          <Callout tone={grantOutcome === "sent" ? "success" : "warning"} icon="important">
+                            {GRANT_NOTICE[grantOutcome]}
+                            {grantOutcome === "locked" && (
+                              <>
+                                {" "}
+                                <TextLink href={reauthUrl("/admin/fulfillment")}>Verify it&apos;s you</TextLink>
+                              </>
+                            )}
+                          </Callout>
+                        )}
+                        {unit.grantSentAt ? (
+                          <p className="hc-caption text-sm">
+                            Grant of <Mono>{formatDollars(unit.grantCents ?? 0)}</Mono> sent to{" "}
+                            <Mono>{unit.email}</Mono>
+                            {unit.grantId && (
+                              <>
+                                {" "}· <Mono>{unit.grantId}</Mono>
+                              </>
+                            )}
+                            .
+                          </p>
+                        ) : !hcbReady ? (
+                          <p className="hc-caption text-sm">
+                            HCB isn&apos;t connected yet. Set the HCB env vars to turn this on.
+                          </p>
+                        ) : !inUnified ? (
+                          <p className="hc-caption text-sm">
+                            Available once this person is in the Unified YSWS database.
+                          </p>
+                        ) : !canSendGrant ? (
+                          <p className="hc-caption text-sm">
+                            <TextLink href={reauthUrl("/admin/fulfillment")}>Verify it&apos;s you</TextLink> to send
+                            grants.
+                          </p>
+                        ) : (
+                          <form action={sendGrant} className="flex flex-col gap-3">
+                            <input type="hidden" name="id" value={project.id} />
+                            <input type="hidden" name="member" value={unit.profileId} />
+                            <p className="hc-caption text-sm">
+                              Goes to <Mono>{unit.email}</Mono> as an HCB card grant. Max{" "}
+                              {formatDollars(hcbMaxGrantCents())}.
+                            </p>
+                            <div className="flex flex-wrap gap-3">
+                              <Field label="Amount ($)" className="w-32">
+                                <Input name="amount" inputMode="decimal" placeholder="25" required />
+                              </Field>
+                              <Field label="What it's for" className="min-w-56 flex-1">
+                                <Input name="purpose" defaultValue="Wonders reward" required maxLength={200} />
+                              </Field>
+                            </div>
+                            <Field label="Message to them" hint="optional">
+                              <Input
+                                name="message"
+                                defaultValue="something for the wonder you built :3"
+                                maxLength={500}
+                              />
+                            </Field>
+                            <Field label="Keyword lock" hint="optional, limits where the card works">
+                              <Input name="keyword" maxLength={100} />
+                            </Field>
+                            <label className="flex items-center gap-2 text-sm">
+                              <input type="checkbox" name="one_time" />
+                              One time use
+                            </label>
+                            <div>
+                              <ActionButton pendingLabel="Sending…" icon="send">
+                                Send grant
+                              </ActionButton>
+                            </div>
+                          </form>
+                        )}
+                      </div>
+                    </details>
+
+                    <div className="mt-5 flex flex-wrap items-end gap-3 border-t border-[var(--border)] pt-5">
+                      <form action={saveReward} className="flex flex-1 flex-wrap items-end gap-2">
+                        <input type="hidden" name="id" value={project.id} />
+                        <input type="hidden" name="member" value={unit.profileId} />
+                        <Field label="Reward" className="w-full max-w-sm">
+                          <Input
+                            name="reward"
+                            defaultValue={unit.reward ?? ""}
+                            placeholder="e.g. hoodie + stickers"
+                          />
+                        </Field>
+                        <ActionButton pendingLabel="Saving…" variant="outline">
+                          Save
+                        </ActionButton>
+                      </form>
+
+                      {started && !unit.fulfilledAt && !unit.orderedAt && (
+                        <form action={markOrdered}>
+                          <input type="hidden" name="id" value={project.id} />
+                          <input type="hidden" name="member" value={unit.profileId} />
+                          <ActionButton
+                            pendingLabel="Marking…"
+                            variant="outline"
+                            icon="package"
+                            disabled={!inUnified}
+                          >
+                            Mark ordered
+                          </ActionButton>
+                        </form>
+                      )}
+
+                      {started && !unit.fulfilledAt && unit.orderedAt && !unit.sentAt && (
+                        <form action={markSent}>
+                          <input type="hidden" name="id" value={project.id} />
+                          <input type="hidden" name="member" value={unit.profileId} />
+                          <ActionButton pendingLabel="Marking…" variant="outline" icon="send" disabled={!inUnified}>
+                            Mark on its way
+                          </ActionButton>
+                        </form>
+                      )}
+
+                      {started && !unit.fulfilledAt && (
+                        <form action={markFulfilled}>
+                          <input type="hidden" name="id" value={project.id} />
+                          <input type="hidden" name="member" value={unit.profileId} />
+                          <ActionButton
+                            pendingLabel="Marking…"
+                            variant="success"
+                            icon="check-circle"
+                            disabled={!unit.reward || !inUnified}
+                          >
+                            Mark fulfilled
+                          </ActionButton>
+                        </form>
+                      )}
+                    </div>
+
+                    {!inUnified && (
+                      <p className="hc-caption mt-2 flex items-center gap-1 text-sm">
+                        <Icon glyph="important" size={18} />
+                        {unified.state === "not_pushed"
+                          ? "Not in Airtable yet. Use Push all missing, or push it from the review page."
+                          : unified.state === "error"
+                            ? `Couldn't check Airtable (${unified.error}).`
+                            : "Waiting for this person to reach the Unified YSWS database (status 2–Submitted in Airtable)."}
+                        {recordUrl && (
+                          <TextLink href={recordUrl} external>
+                            Open record
+                          </TextLink>
+                        )}
+                      </p>
+                    )}
+
+                    {started && !unit.fulfilledAt && !unit.reward && (
+                      <p className="hc-caption mt-2 flex items-center gap-1 text-sm">
+                        <Icon glyph="important" size={18} />
+                        Set a reward before marking this fulfilled.
+                      </p>
+                    )}
+                  </section>
+                );
+              })}
+            </Card>
           );
         })}
 

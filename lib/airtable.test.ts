@@ -1,5 +1,12 @@
 import { describe, expect, test } from "bun:test";
-import { absoluteImageUrl, buildAirtableFields, githubUsernameFromRepoUrl, hoursFromSeconds } from "./airtable-fields";
+import {
+  absoluteImageUrl,
+  buildAirtableFields,
+  contributionLines,
+  githubUsernameFromRepoUrl,
+  groupProjectNote,
+  hoursFromSeconds,
+} from "./airtable-fields";
 
 const base = {
   repoUrl: "https://github.com/ada/thing",
@@ -13,6 +20,7 @@ const base = {
   hackatimeProjects: [],
   hackatimeRanges: "",
   submitterHackatimeId: "",
+  groupNote: "",
   technicalNotes: "",
   additionalNotes: "",
   birthday: "",
@@ -56,6 +64,18 @@ describe("airtable fields", () => {
     expect(fields["Justification - Submitter Hackatime ID"]).toBe("42");
     const fallback = buildAirtableFields({ ...base, hackatimeProjects: ["a", "b"] });
     expect(fallback["Justification - Hackatime Project Name(s) + Date Range(s)"]).toBe("a, b");
+  });
+  test("group note and contributions", () => {
+    expect(groupProjectNote(["Ada"])).toBe("");
+    expect(groupProjectNote(["Ada", "Bo", "Ada"])).toContain("Submitters: Ada, Bo");
+    const fields = buildAirtableFields({ ...base, groupNote: "group" });
+    expect(fields["Optional - Override Duplicate Justification"]).toBe("group");
+    expect(
+      contributionLines([
+        { title: "wired the LEDs", content: "x", created_at: "2026-11-03T10:00:00Z" },
+        { title: null, content: "![a](http://x/y.png) built the case", created_at: "2026-11-02T10:00:00Z" },
+      ]),
+    ).toBe("- 2026-11-03: wired the LEDs\n- 2026-11-02: built the case");
   });
   test("helpers", () => {
     expect(githubUsernameFromRepoUrl("https://github.com/ada/thing")).toBe("ada");

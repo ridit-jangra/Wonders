@@ -289,3 +289,23 @@ create table if not exists dashboard_access (
   added_by text not null,
   created_at timestamptz not null default now()
 );
+
+alter table project_collaborators add column if not exists id bigint generated always as identity;
+create unique index if not exists project_collaborators_id_idx on project_collaborators (id);
+alter table project_collaborators add column if not exists hackatime_seconds integer;
+alter table project_collaborators add column if not exists hackatime_seconds_prev integer;
+alter table project_collaborators add column if not exists reward text;
+alter table project_collaborators add column if not exists reward_ordered_at timestamptz;
+alter table project_collaborators add column if not exists reward_sent_at timestamptz;
+alter table project_collaborators add column if not exists fulfilled_at timestamptz;
+alter table project_collaborators add column if not exists fulfilled_by text;
+alter table project_collaborators add column if not exists hcb_grant_id text;
+alter table project_collaborators add column if not exists hcb_grant_cents integer;
+alter table project_collaborators add column if not exists hcb_grant_sent_at timestamptz;
+alter table project_collaborators add column if not exists airtable_record_id text;
+alter table project_collaborators add column if not exists airtable_record_ids text[] not null default '{}';
+alter table project_collaborators add column if not exists airtable_pushed_at timestamptz;
+alter table project_collaborators add column if not exists airtable_error text;
+
+alter table projects add column if not exists owner_seconds integer;
+alter table projects add column if not exists owner_seconds_prev integer;

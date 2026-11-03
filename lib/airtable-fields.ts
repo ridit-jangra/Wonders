@@ -19,6 +19,7 @@ export type FieldName =
   | "Optional - Override Hours Spent"
   | "Justification - Hackatime Project Name(s) + Date Range(s)"
   | "Justification - Submitter Hackatime ID"
+  | "Optional - Override Duplicate Justification"
   | "Justification - Specific Technical Features"
   | "Justification - Additional Justification";
 
@@ -34,6 +35,7 @@ export interface AirtableInput {
   hackatimeProjects: string[];
   hackatimeRanges: string;
   submitterHackatimeId: string;
+  groupNote: string;
   technicalNotes: string;
   additionalNotes: string;
   birthday: string;
@@ -107,6 +109,9 @@ export function buildAirtableFields(input: AirtableInput): Partial<Record<FieldN
   if (input.submitterHackatimeId) {
     fields["Justification - Submitter Hackatime ID"] = input.submitterHackatimeId;
   }
+  if (input.groupNote) {
+    fields["Optional - Override Duplicate Justification"] = input.groupNote;
+  }
   if (input.technicalNotes) {
     fields["Justification - Specific Technical Features"] = input.technicalNotes;
   }
@@ -114,4 +119,26 @@ export function buildAirtableFields(input: AirtableInput): Partial<Record<FieldN
     fields["Justification - Additional Justification"] = input.additionalNotes;
   }
   return fields;
+}
+
+export function groupProjectNote(names: string[]): string {
+  const unique = [...new Set(names.map((name) => name.trim()).filter(Boolean))];
+  if (unique.length < 2) return "";
+  return `This is a group project, submitted separately by each member (one row per person, with their own hours). Submitters: ${unique.join(", ")}.`;
+}
+
+export function contributionLines(
+  entries: { title: string | null; content: string; created_at: string }[],
+): string {
+  return entries
+    .map((entry) => {
+      const text = (entry.title || entry.content)
+        .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 90);
+      return text ? `- ${String(entry.created_at).slice(0, 10)}: ${text}` : "";
+    })
+    .filter(Boolean)
+    .join("\n");
 }

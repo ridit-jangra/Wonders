@@ -179,6 +179,7 @@ export function JournalPanel({ entries }: { entries: JournalEntry[] }) {
         <li key={entry.id} className="flex flex-col gap-2 border-b border-[var(--border)] p-4 last:border-b-0">
           <div className="flex flex-wrap items-center gap-2">
             {entry.title && <strong>{entry.title}</strong>}
+            {entry.authorName && <Badge tone="neutral">{entry.authorName}</Badge>}
             <Muted className="text-sm">
               <Mono>{formatDateTime(entry.createdAt)}</Mono>
               {entry.editedAt && " · edited"}

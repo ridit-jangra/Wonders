@@ -19,6 +19,7 @@ const MESSAGES = {
   own: "that's your own wonder :3",
   full: "that wonder's team is full :c",
   banned: "that code doesn't match a wonder, double check it :c",
+  closed: "that wonder is all wrapped up already :3",
 } as const;
 
 export async function joinWonder(_previous: JoinState, formData: FormData): Promise<JoinState> {

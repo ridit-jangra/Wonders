@@ -8,8 +8,9 @@ import { requireAccess, type AdminUser } from "@/lib/admin";
 import { canFulfill, canReview } from "@/lib/security/roles";
 import { blocksOwnReview } from "@/lib/security/own-wonder";
 import { claimBlockedBy, claimReview, clearClaim, releaseReview } from "@/lib/review-claims";
-import { getAirtableState, pushWonderToAirtable } from "@/lib/airtable";
+import { getAirtableState, pushWonderToAirtable, pushWonderUnits } from "@/lib/airtable";
 import { listMacros } from "@/lib/review-macros";
+import { listUnits } from "@/lib/units";
 import { listCollaboratorSlackIds, listMembers } from "@/lib/collaborators";
 import { writeAudit } from "@/lib/audit";
 import { getSlackActors } from "@/lib/profiles";
@@ -91,6 +92,8 @@ async function reviewBlock(
   }
   return null;
 }
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function optionalUrl(value: FormDataEntryValue | null): string | null {
   const text = String(value ?? "").trim();
@@ -283,16 +286,17 @@ export default async function AdminReviewPanelPage({
 
       if (toStatus === "shipped" || toStatus === "fulfillment_started") {
         after(async () => {
-          const result = await pushWonderToAirtable(Number(id), {
-            forceNew: existing.hackatime_seconds_prev !== null,
-          });
-          await writeAudit({
-            actor: admin.slackId,
-            action: result.ok ? "airtable.push" : "airtable.push_failed",
-            target: id,
-            detail: result.ok ? { recordId: result.recordId } : { error: result.error },
-            sensitive: true,
-          });
+          for (const unit of await pushWonderUnits(Number(id))) {
+            await writeAudit({
+              actor: admin.slackId,
+              action: unit.result.ok ? "airtable.push" : "airtable.push_failed",
+              target: id,
+              detail: unit.result.ok
+                ? { recordId: unit.result.recordId, profileId: unit.profileId }
+                : { error: unit.result.error, profileId: unit.profileId },
+              sensitive: true,
+            });
+          }
         });
       }
     }
@@ -387,19 +391,23 @@ export default async function AdminReviewPanelPage({
     await releaseReview(id, admin.slackId);
   }
 
-  async function retryAirtable() {
+  async function retryAirtable(formData: FormData) {
     "use server";
     const admin = await requireAccess(canFulfill);
+    const profileId = String(formData.get("profile") ?? "");
+    if (!UUID_PATTERN.test(profileId)) {
+      return;
+    }
     const existing = await getProjectWithOwner(id);
     if (!existing || !["shipped", "fulfillment_started", "fulfilled"].includes(existing.status)) {
       return;
     }
-    const result = await pushWonderToAirtable(Number(id));
+    const result = await pushWonderToAirtable(Number(id), { profileId });
     await writeAudit({
       actor: admin.slackId,
       action: result.ok ? "airtable.push" : "airtable.push_failed",
       target: id,
-      detail: result.ok ? { recordId: result.recordId } : { error: result.error },
+      detail: result.ok ? { recordId: result.recordId, profileId } : { error: result.error, profileId },
       sensitive: true,
     });
     revalidateReview(id);
@@ -438,17 +446,28 @@ export default async function AdminReviewPanelPage({
       </Callout>
     ) : null;
 
-  const newHoursCallout =
-    project.hackatime_seconds_prev !== null && project.hackatime_seconds !== null ? (
-      <Callout tone="info" icon="clock">
-        Shipped again: <Mono>+{((project.hackatime_seconds - project.hackatime_seconds_prev) / 3600).toFixed(1)}h</Mono> new
-        hours since the last ship (<Mono>{(project.hackatime_seconds / 3600).toFixed(1)}h</Mono> total).
-      </Callout>
-    ) : null;
+  const units = (await listUnits([project.id])).get(project.id) ?? [];
+  const hoursLine = (hours: number) => `${(hours / 3600).toFixed(1)}h`;
+  const hoursCallout = units.some((unit) => unit.seconds !== null) ? (
+    <Callout tone="info" icon="clock">
+      Hours:{" "}
+      {units
+        .filter((unit) => unit.seconds !== null)
+        .map((unit, index) => (
+          <span key={unit.profileId}>
+            {index > 0 && ", "}
+            {unit.name} <Mono>{hoursLine(unit.seconds ?? 0)}</Mono>
+            {unit.secondsPrev !== null && (
+              <> (<Mono>+{hoursLine(Math.max(0, (unit.seconds ?? 0) - unit.secondsPrev))}</Mono> new)</>
+            )}
+          </span>
+        ))}
+    </Callout>
+  ) : null;
 
   const reviewTab = (
     <div className="flex flex-col gap-4 pt-4 [&>*:only-child]:flex-1">
-      {newHoursCallout}
+      {hoursCallout}
       {isBanned && (
         <Callout tone="danger" icon="forbidden">
           This wonder is banned{project.banned_by ? ` (by ${project.banned_by})` : ""}: &ldquo;{project.ban_reason}&rdquo;.
@@ -615,23 +634,31 @@ export default async function AdminReviewPanelPage({
         )}
       </Card>
       )}
-      {airtable && (
+      {airtable && airtable.length > 0 && (
         <Card>
           <CardHeader title="Airtable" icon="send" />
-          <form action={retryAirtable} className="flex flex-col gap-3">
-            {airtable.airtable_pushed_at ? (
-              <Callout tone="info">Pushed to the YSWS base ({airtable.airtable_record_id}).</Callout>
-            ) : (
-              <Callout tone={airtable.airtable_error ? "danger" : "warning"}>
-                {airtable.airtable_error ? `Push failed: ${airtable.airtable_error}` : "Not pushed yet."}
-              </Callout>
-            )}
-            <div className="[&>button]:w-full">
-              <ActionButton pendingLabel="Pushing…">
-                {airtable.airtable_pushed_at ? "Push again" : "Push to Airtable"}
-              </ActionButton>
-            </div>
-          </form>
+          <div className="flex flex-col gap-4">
+            {airtable.map((unit) => (
+              <form key={unit.profileId} action={retryAirtable} className="flex flex-col gap-3">
+                <input type="hidden" name="profile" value={unit.profileId} />
+                <p className="hc-caption text-sm">
+                  {unit.name} · {unit.kind === "owner" ? "owner" : "collaborator"}
+                </p>
+                {unit.pushedAt ? (
+                  <Callout tone="info">Pushed to the YSWS base ({unit.recordId}).</Callout>
+                ) : (
+                  <Callout tone={unit.error ? "danger" : "warning"}>
+                    {unit.error ? `Push failed: ${unit.error}` : "Not pushed yet."}
+                  </Callout>
+                )}
+                <div className="[&>button]:w-full">
+                  <ActionButton pendingLabel="Pushing…">
+                    {unit.pushedAt ? "Push again" : "Push to Airtable"}
+                  </ActionButton>
+                </div>
+              </form>
+            ))}
+          </div>
         </Card>
       )}
       {!ownWonder && (

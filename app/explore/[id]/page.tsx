@@ -151,7 +151,7 @@ export default async function ExploreWonderPage({ params }: { params: Promise<{ 
   return (
     <div className="relative min-h-screen px-6 py-10 md:px-10">
       <img className="fixed inset-0 -z-10 h-full w-full object-cover" src="/bg-effect-4.png" alt="" />
-      <div className="mx-auto flex max-w-3xl flex-col gap-5">
+      <div className="flex w-full flex-col gap-5">
         <Link href="/explore" className="font-finger-paint text-lg text-[#F2B3AD] hover:underline">
           &lt; back to explore
         </Link>

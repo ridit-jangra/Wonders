@@ -8,8 +8,11 @@ export interface Question {
 const questions: Question[] = [
   {
     question: "When will it start?",
-    answer:
-      "No release date decided yet but you can expect it after December 2026 or January 2027",
+    answer: "January 1st",
+  },
+  {
+    question: "When will it end?",
+    answer: "January 15th",
   },
   {
     question: "How does it work?",
@@ -41,8 +44,8 @@ const questions: Question[] = [
       "Uhhhhh AI? (kidding) but uh keep it under 25% and you'll be just fine",
   },
   {
-    question: "When does time tracking start?",
-    answer: "Uhhh let it release first gng but anyways not decided yet.",
+    question: "When tracking time starts?",
+    answer: "January 1st",
   },
 ];
 
@@ -80,7 +83,8 @@ export function Faq() {
           >
             #wonders
           </a>
-          !
+          {" "}
+          and ping @wonderful-folks! and a wonderful helpers will help you
         </p>
       </div>
     </div>

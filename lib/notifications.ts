@@ -52,7 +52,7 @@ function messageFor(event: WonderEvent, title: string, note: string) {
     return `your wonder *${title}* was banned :c\nhere's why:\n${quote(note)}\nit can't be edited, shipped or deleted while it's banned. if you think this is a mistake, ask in the Wonders channel`;
   }
   if (event === "unbanned") {
-    return `good news, the ban on your wonder *${title}* was lifted :D\nyou can pick it back up on your dashboard :3`;
+    return `good news, the ban on your wonder *${title}* was lifted :D\n${note ? `the reviewer said:\n${quote(note)}\n` : ""}you can pick it back up on your dashboard :3`;
   }
   if (event === "fulfillment_started") {
     return `your surprise for *${title}* is being put together :roo-gift:\nno peeking! i'll let you know when it's on the move :3`;

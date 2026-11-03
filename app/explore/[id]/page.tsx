@@ -53,6 +53,14 @@ function refresh(id: string) {
   revalidatePath(`/admin/review/${id}`);
 }
 
+async function guard(): Promise<{ admin: Awaited<ReturnType<typeof requireAccess>> } | { error: string }> {
+  const current = await requireAccess(canManagePlayers);
+  if (!(await checkRateLimit("explore-moderate", current.slackId, 20, 60)).allowed) {
+    return { error: "slow down a little :3" };
+  }
+  return { admin: current };
+}
+
 const BUTTON =
   "w-full rounded-md px-5 py-2 text-center font-finger-paint text-lg text-black/50 transition-all hover:zoom-110 sm:w-auto";
 
@@ -68,14 +76,6 @@ export default async function ExploreWonderPage({ params }: { params: Promise<{ 
 
   const session = verifySessionCookie((await cookies()).get(SESSION_COOKIE)?.value);
   const showRefers = session ? await canUseReferrals(session.slackId) : false;
-
-  async function guard(): Promise<{ admin: Awaited<ReturnType<typeof requireAccess>> } | { error: string }> {
-    const current = await requireAccess(canManagePlayers);
-    if (!(await checkRateLimit("explore-moderate", current.slackId, 20, 60)).allowed) {
-      return { error: "slow down a little :3" };
-    }
-    return { admin: current };
-  }
 
   async function ban(reasonInput: string): Promise<ActionResult> {
     "use server";
@@ -101,21 +101,25 @@ export default async function ExploreWonderPage({ params }: { params: Promise<{ 
     return { ok: true };
   }
 
-  async function unban(): Promise<void> {
+  async function unban(reasonInput: string): Promise<ActionResult> {
     "use server";
     const checked = await guard();
-    if ("error" in checked) return;
+    if ("error" in checked) return { ok: false, error: checked.error };
+    const reason = cleanReason(reasonInput);
+    if (!reason) return { ok: false, error: `reason must be ${MIN_REASON}-${MAX_REASON} characters` };
+
     const existing = await getProjectWithOwner(id);
-    if (!existing) return;
-    if (!(await unbanProject(id))) return;
+    if (!existing) return { ok: false, error: "wonder not found" };
+    if (!(await unbanProject(id))) return { ok: false, error: "it isn't banned" };
     await writeAudit({
       actor: checked.admin.slackId,
       action: "project.unban",
       target: id,
-      detail: { title: existing.title, owner: existing.profile?.slack_id },
+      detail: { title: existing.title, owner: existing.profile?.slack_id, reason },
     });
-    notifyPlayer(existing.profile?.slack_id, "unbanned", { title: existing.title });
+    notifyPlayer(existing.profile?.slack_id, "unbanned", { title: existing.title, note: reason });
     refresh(id);
+    return { ok: true };
   }
 
   async function unship(reasonInput: string): Promise<ActionResult> {
@@ -241,11 +245,15 @@ export default async function ExploreWonderPage({ params }: { params: Promise<{ 
             />
           )}
           {banned ? (
-            <form action={unban} className="w-full sm:w-auto">
-              <button type="submit" className={`${BUTTON} bg-[#D1E4B5]`}>
-                Unban project
-              </button>
-            </form>
+            <ReasonDialogButton
+              action={unban}
+              label="Unban project"
+              prompt="unban this wonder? the owner is DM'd your reason"
+              placeholder="why is the ban being lifted?"
+              confirmLabel="unban it"
+              pendingLabel="unbanning..."
+              className={`${BUTTON} bg-[#D1E4B5]`}
+            />
           ) : (
             <ReasonDialogButton
               action={ban}

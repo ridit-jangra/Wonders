@@ -39,7 +39,7 @@ export default function JoinWonderButton({
     <>
       <button
         type="button"
-        className={className}
+        className={`cursor-pointer ${className ?? ""}`}
         onClick={() => {
           onOpenAction?.();
           setOpen(true);

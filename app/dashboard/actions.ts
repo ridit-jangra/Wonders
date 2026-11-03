@@ -3,7 +3,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { isStaffSlackId } from "@/lib/admin";
+import { hasDashboardAccess } from "@/lib/dashboard-access";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
 import { getSessionProfile } from "@/lib/profiles";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -24,7 +24,7 @@ const MESSAGES = {
 export async function joinWonder(_previous: JoinState, formData: FormData): Promise<JoinState> {
   const store = await cookies();
   const session = verifySessionCookie(store.get(SESSION_COOKIE)?.value);
-  if (!session || !(await isStaffSlackId(session.slackId))) {
+  if (!session || !(await hasDashboardAccess(session.slackId))) {
     return { error: "sign in again and try once more :c" };
   }
   const profile = await getSessionProfile(session);

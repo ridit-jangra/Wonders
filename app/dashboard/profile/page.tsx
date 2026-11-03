@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { isStaffSlackId } from "@/lib/admin";
+import { hasDashboardAccess } from "@/lib/dashboard-access";
 import UnderConstruction from "@/app/components/UnderConstruction";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -55,7 +55,7 @@ export default async function ProfilePage() {
     // redirect("/login");
     return <UnderConstruction />;
   }
-  if (!(await isStaffSlackId(session.slackId))) {
+  if (!(await hasDashboardAccess(session.slackId))) {
     return <UnderConstruction />;
   }
 

@@ -283,3 +283,9 @@ create table if not exists project_collaborators (
   primary key (project_id, profile_id)
 );
 create index if not exists project_collaborators_profile_idx on project_collaborators (profile_id);
+
+create table if not exists dashboard_access (
+  slack_id text primary key,
+  added_by text not null,
+  created_at timestamptz not null default now()
+);

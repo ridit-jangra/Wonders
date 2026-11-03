@@ -6,6 +6,7 @@ export const NAV: { href: string; label: string; glyph: GlyphName; keywords: str
   { href: "/admin/macros", label: "Saved replies", glyph: "message", keywords: "macros templates canned replies notes" },
   { href: "/admin/fulfillment", label: "Fulfillment", glyph: "package", keywords: "rewards orders ship" },
   { href: "/admin/referrals", label: "Referrals", glyph: "like", keywords: "refers pins stickers invites" },
+  { href: "/admin/access", label: "Access", glyph: "door-enter", keywords: "dashboard slack ids allow invite" },
   { href: "/admin/users", label: "Users", glyph: "people-3", keywords: "players people ban" },
   { href: "/admin/wonders", label: "Wonders", glyph: "rep", keywords: "projects all" },
   { href: "/admin/history", label: "History", glyph: "history", keywords: "activity status changes" },

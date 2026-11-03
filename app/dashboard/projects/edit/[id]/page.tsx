@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { isStaffSlackId } from "@/lib/admin";
+import { hasDashboardAccess } from "@/lib/dashboard-access";
 import UnderConstruction from "@/app/components/UnderConstruction";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
@@ -65,7 +65,7 @@ type JournalGuard = { error: string; profileId?: undefined } | { error?: undefin
 async function journalGuard(id: string, bucket: string, limit: number): Promise<JournalGuard | null> {
   const store = await cookies();
   const current = verifySessionCookie(store.get(SESSION_COOKIE)?.value);
-  if (!current || !(await isStaffSlackId(current.slackId))) {
+  if (!current || !(await hasDashboardAccess(current.slackId))) {
     return null;
   }
   const currentProfile = await getSessionProfile(current);
@@ -88,7 +88,7 @@ async function journalGuard(id: string, bucket: string, limit: number): Promise<
 async function memberContext(id: string) {
   const store = await cookies();
   const current = verifySessionCookie(store.get(SESSION_COOKIE)?.value);
-  if (!current || !(await isStaffSlackId(current.slackId))) {
+  if (!current || !(await hasDashboardAccess(current.slackId))) {
     return null;
   }
   const profile = await getSessionProfile(current);
@@ -123,7 +123,7 @@ export default async function EditProjectPage({
     return <UnderConstruction />;
   }
 
-  if (!(await isStaffSlackId(session.slackId))) {
+  if (!(await hasDashboardAccess(session.slackId))) {
     return <UnderConstruction />;
   }
 
@@ -201,7 +201,7 @@ export default async function EditProjectPage({
     if (!current) {
       redirect("/login");
     }
-    if (!(await isStaffSlackId(current.slackId))) {
+    if (!(await hasDashboardAccess(current.slackId))) {
       redirect("/");
     }
 
@@ -266,7 +266,7 @@ export default async function EditProjectPage({
 
     const store = await cookies();
     const current = verifySessionCookie(store.get(SESSION_COOKIE)?.value);
-    if (!current || !(await isStaffSlackId(current.slackId))) {
+    if (!current || !(await hasDashboardAccess(current.slackId))) {
       return { ok: false };
     }
 
@@ -345,7 +345,7 @@ export default async function EditProjectPage({
     if (!current) {
       redirect("/login");
     }
-    if (!(await isStaffSlackId(current.slackId))) {
+    if (!(await hasDashboardAccess(current.slackId))) {
       redirect("/");
     }
 
@@ -431,7 +431,7 @@ export default async function EditProjectPage({
     if (!current) {
       redirect("/login");
     }
-    if (!(await isStaffSlackId(current.slackId))) {
+    if (!(await hasDashboardAccess(current.slackId))) {
       redirect("/");
     }
 
@@ -542,7 +542,7 @@ export default async function EditProjectPage({
     if (!current) {
       redirect("/login");
     }
-    if (!(await isStaffSlackId(current.slackId))) {
+    if (!(await hasDashboardAccess(current.slackId))) {
       redirect("/");
     }
 

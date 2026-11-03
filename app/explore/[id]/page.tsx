@@ -5,6 +5,7 @@ import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
 import { canUseReferrals } from "@/lib/referrals";
 import Sidebar from "@/app/dashboard/components/Sidebar";
 import { Profile } from "@/app/dashboard/components/Profile";
+import TopBlur from "@/app/dashboard/components/TopBlur";
 import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getAdminSession, requireAccess } from "@/lib/admin";
@@ -163,16 +164,18 @@ export default async function ExploreWonderPage({ params }: { params: Promise<{ 
   return (
     <div className="relative flex min-h-screen">
       <img className="fixed inset-0 -z-10 h-full w-full object-cover" src="/bg-effect-4.png" alt="" />
+      <div className="pointer-events-none fixed top-0 right-[2%] bottom-0 left-0 -z-10 hidden md:left-[calc(100vh*554/1080-10vh)] md:block">
+        <img src="/new-or-edit-projects-template.png" alt="" className="h-full w-full object-fill" />
+      </div>
+      <TopBlur />
       {session && <Sidebar showRefers={showRefers} />}
-      <main
-        className={`relative min-w-0 flex-1 pr-6 pb-10 md:pr-10 md:pt-10 ${session ? "pt-20 pl-6 md:pl-0" : "pt-10 pl-6 md:pl-10"}`}
-      >
-      <div className="flex w-full flex-col gap-5">
-        <Link href="/explore" className="font-finger-paint text-lg text-[#F2B3AD] hover:underline">
+      <main className="relative min-w-0 flex-1 bg-[#F0EBD1] px-6 pb-10 pt-24 sm:px-10 md:bg-transparent md:py-16 md:pl-4 md:pr-14 lg:py-24">
+      <div className="flex w-full flex-col gap-5 md:max-w-[90%]">
+        <Link href="/explore" className="font-finger-paint text-lg text-[#5C4A2E]/70 hover:underline">
           &lt; back to explore
         </Link>
 
-        <article className="flex flex-col gap-4 rounded-lg bg-[#D8D1AC] p-4 sm:p-6">
+        <article className="flex flex-col gap-4">
           <img
             src={project.image_url || "/project-image-fallback.png"}
             alt=""
@@ -201,7 +204,7 @@ export default async function ExploreWonderPage({ params }: { params: Promise<{ 
             <p className="text-[#7A6B4A]">{owner?.slack_id}</p>
           </div>
 
-          <p className="whitespace-pre-wrap wrap-break-word font-finger-paint text-[#5C4A2E]">{project.description}</p>
+          <p className="whitespace-pre-wrap wrap-break-word rounded-md bg-[#E7E2C9] p-3 font-finger-paint text-[#5C4A2E]">{project.description}</p>
 
           {(project.github_url || project.link_url) && (
             <div className="flex flex-col gap-3 sm:flex-row">

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { COUNTRIES, normalizePhone, splitPhone } from "./phone";
+import { COUNTRIES, countryName, normalizePhone, splitPhone } from "./phone";
 
 describe("phone", () => {
   test("normalizes to e164", () => {
@@ -22,5 +22,12 @@ describe("phone", () => {
     const isos = COUNTRIES.map((c) => c.iso);
     expect(new Set(isos).size).toBe(isos.length);
     expect(COUNTRIES[0].flag).toBe("🇺🇸");
+  });
+
+  test("country names from codes", () => {
+    expect(countryName("IN")).toBe("India");
+    expect(countryName("us")).toBe("United States");
+    expect(countryName("Germany")).toBe("Germany");
+    expect(countryName("")).toBe("");
   });
 });

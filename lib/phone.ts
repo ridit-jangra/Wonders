@@ -233,3 +233,17 @@ export function splitPhone(value: string | null | undefined): { iso: string; num
   }
   return { iso: best.iso, number: digits.slice(best.dial.length) };
 }
+
+export function countryName(value: string | null | undefined): string {
+  const code = (value ?? "").trim();
+  if (!/^[A-Za-z]{2}$/.test(code)) {
+    return code;
+  }
+  try {
+    const name = new Intl.DisplayNames(["en"], { type: "region" }).of(code.toUpperCase());
+    if (name && name !== code.toUpperCase()) {
+      return name;
+    }
+  } catch {}
+  return findCountry(code.toUpperCase())?.name ?? code;
+}

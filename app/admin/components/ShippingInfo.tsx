@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { countryName } from "@/lib/phone";
 import { Button, ButtonLink, Callout, DescriptionList, Mono } from "./ui";
 
 export interface ShippingData {
@@ -102,7 +103,7 @@ export default function ShippingInfo({
                         <br />
                         {[result.data.city, result.data.state, result.data.postal].filter(Boolean).join(", ")}
                         <br />
-                        {result.data.country}
+                        {countryName(result.data.country)}
                       </address>
                     ) : null,
                   ],

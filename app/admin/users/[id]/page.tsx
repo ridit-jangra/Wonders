@@ -23,6 +23,7 @@ import {
 } from "../../components/ui";
 import Select from "../../components/Select";
 import { hasRecentAuth, reauthUrl, requireAccess } from "@/lib/admin";
+import { countryName } from "@/lib/phone";
 import { writeAudit } from "@/lib/audit";
 import { banPlayer, getActiveBan, unbanPlayer } from "@/lib/bans";
 import { canManagePlayers } from "@/lib/security/roles";
@@ -113,7 +114,7 @@ export default async function AdminUserDetailPage({
         <br />
         {[address.city, address.state, address.postal].filter(Boolean).join(", ")}
         <br />
-        {address.country}
+        {countryName(address.country)}
       </address>
     );
   }

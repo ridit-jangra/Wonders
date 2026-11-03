@@ -142,6 +142,10 @@ Player docs (what Wonders is, what counts, making/shipping a wonder, review, the
 
 `fumadocs-ui`/`fumadocs-core`/`fumadocs-mdx` are pinned to exact versions, and `package.json` `overrides` pins `mdast-util-to-markdown` to `2.1.2`: 2.2.0 makes Fumadocs 16.15's search-index stringifier recurse forever (every docs page 500s with "Maximum call stack size exceeded"). Don't lift that override without bumping Fumadocs and checking `/docs` still renders. After changing these packages, delete `.next/dev` — Turbopack's cache keeps serving the old broken compile otherwise.
 
+### Share pages (`/w/[id]`)
+
+`/w/<id>` (`app/w/[id]/page.tsx`, `lib/share.ts`) is a public page for a shipped wonder (`shipped`/`fulfillment_started`/`fulfilled`, not banned; anything else is a 404): thumbnail, title, description, the makers' Slack display names and avatars, and the demo and repo links. Its `generateMetadata` sets Open Graph and Twitter large-card tags with the thumbnail (made absolute with `absoluteImageUrl`, falling back to `/opengraph-image.png`), so links look right in Slack and Twitter. `getSharedWonder` selects explicit columns only: never the reward, hours, journal or any PII. Owners and collaborators see a copyable share link on the edit page once the wonder is shipped.
+
 ### "Projects" in code, "Wonders" in the UI
 
 The DB tables, `lib/projects.ts`, and the `/dashboard/projects/*` routes all say *projects*. Everything user-facing says *Wonders*, including the `/wonders` route and `/api/public/wonders`. Recent commits renamed the user-facing layer only — don't propagate the rename into the DB or `lib/`.

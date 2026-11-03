@@ -610,6 +610,18 @@ export default async function EditProjectPage({
       <h1 className="font-finger-paint text-3xl text-[#5C4A2E] sm:text-4xl lg:text-5xl">
         Edit your Wonder
       </h1>
+      {(project.status === "shipped" ||
+        project.status === "fulfillment_started" ||
+        project.status === "fulfilled") &&
+        !isBanned && (
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="font-finger-paint text-[#5C4A2E]/70">share it :3</p>
+            <code className="rounded-md bg-[#E7E2C9] px-3 py-1 font-mono text-sm text-[#5C4A2E]">
+              {`https://wonders.hackclub.com/w/${project.id}`}
+            </code>
+            <CopyCode code={`https://wonders.hackclub.com/w/${project.id}`} />
+          </div>
+        )}
       {isCollaborator && ownerMember && (
         <p className="font-finger-paint text-[#5C4A2E]/70">
           you&apos;re on {ownerMember.name}&apos;s team for this one :3 you can edit it and ship it, only they can delete it

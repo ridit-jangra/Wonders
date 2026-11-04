@@ -31,14 +31,9 @@ function staleHours(): number {
 
 const queuedAt = () => sql`
   coalesce(
-    (select min(h.created_at) from project_history h
-      where h.project_id = p.id and h.to_status = 'in_review'
-        and h.created_at > coalesce(
-          (select max(a.created_at) from project_history a
-            where a.project_id = p.id and a.to_status in ('shipped', 'fulfillment_started')),
-          '-infinity'::timestamptz
-        )),
-    p.created_at
+    (select max(h.created_at) from project_history h
+      where h.project_id = p.id and h.to_status = p.status),
+    p.updated_at
   )
 `;
 

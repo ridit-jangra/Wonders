@@ -1,4 +1,6 @@
-const PUBLIC_ORIGIN = "https://wonders.hackclub.com";
+import { YSWS } from "@/lib/ysws-config";
+
+const PUBLIC_ORIGIN = YSWS.origin;
 
 export type FieldName =
   | "Code URL"

@@ -13,6 +13,8 @@ import {
 } from "@/lib/airtable";
 import { createCardGrant, hcbMaxGrantCents, isHcbConfigured } from "@/lib/hcb";
 import { formatDollars, parseGrantInput } from "@/lib/hcb-grant";
+import { money } from "@/lib/budget-math";
+import { YSWS, dollars, hoursValueCents } from "@/lib/ysws-config";
 import ShippingInfo, { type ShippingResult } from "../components/ShippingInfo";
 import { canFulfill } from "@/lib/security/roles";
 import { listAllProjects, getProjectWithOwner, startFulfillment } from "@/lib/projects";
@@ -445,11 +447,12 @@ export default async function AdminFulfillmentPage({
                     </p>
                     {unit.seconds !== null && (
                       <p className="hc-caption mt-1 text-sm">
-                        Hours shipped: <Mono>{hoursText(unit.seconds)}</Mono>
+                        Hours shipped: <Mono>{hoursText(unit.seconds)}</Mono> × <Mono>{dollars(YSWS.rates.hourlyCents)}/h</Mono>{" "}
+                        = <Mono>{money(hoursValueCents(unit.seconds))}</Mono>
                         {unit.secondsPrev !== null && (
                           <>
                             {" "}· <Mono>+{hoursText(Math.max(0, unit.seconds - unit.secondsPrev))}</Mono> new in the
-                            latest ship
+                            latest ship (<Mono>{money(hoursValueCents(Math.max(0, unit.seconds - unit.secondsPrev)))}</Mono>)
                           </>
                         )}
                       </p>

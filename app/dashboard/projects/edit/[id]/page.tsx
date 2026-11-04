@@ -52,6 +52,7 @@ import LockRibbons from "@/app/dashboard/components/LockRibbons";
 import ProjectTimeline from "@/app/dashboard/components/ProjectTimeline";
 import DeleteProjectButton from "@/app/dashboard/components/DeleteProjectButton";
 import CopyCode from "@/app/dashboard/components/CopyCode";
+import { YSWS } from "@/lib/ysws-config";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -620,9 +621,9 @@ export default async function EditProjectPage({
           <div className="flex flex-wrap items-center gap-3">
             <p className="font-finger-paint text-[#5C4A2E]/70">share it :3</p>
             <code className="rounded-md bg-[#E7E2C9] px-3 py-1 font-mono text-sm text-[#5C4A2E]">
-              {`https://wonders.hackclub.com/w/${project.id}`}
+              {`${YSWS.origin}/w/${project.id}`}
             </code>
-            <CopyCode code={`https://wonders.hackclub.com/w/${project.id}`} />
+            <CopyCode code={`${YSWS.origin}/w/${project.id}`} />
           </div>
         )}
       {isCollaborator && ownerMember && (

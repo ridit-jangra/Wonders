@@ -1,14 +1,15 @@
 import "server-only";
+import { YSWS } from "@/lib/ysws-config";
 
 const HCB_BASE = "https://hcb.hackclub.com";
 
 export function hcbOrgId(): string | null {
-  return process.env.HCB_ORG_ID?.trim() || null;
+  return process.env.HCB_ORG_ID?.trim() || YSWS.hcbOrg;
 }
 
 export function hcbMaxGrantCents(): number {
   const parsed = parseInt(process.env.HCB_GRANT_MAX_CENTS ?? "", 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 50000;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : YSWS.rates.grantMaxCents;
 }
 
 export function isHcbConfigured(): boolean {

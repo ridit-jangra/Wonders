@@ -1,5 +1,6 @@
 import "server-only";
 import { sql } from "@/lib/db";
+import { YSWS } from "@/lib/ysws-config";
 import { PRECHECK_HIDE_MINUTES } from "@/lib/precheck/store";
 import { postChannelMessage } from "@/lib/slack";
 import {
@@ -9,9 +10,9 @@ import {
   type WeeklyDigest,
 } from "@/lib/staff-messages";
 
-const DEFAULT_CHANNEL = "C0C6E5XN45C";
-const STALE_PING = ["U0ARC79GEAV"];
-const DIGEST_PING = ["U0ARC79GEAV", "U07UK4S94KC"];
+const DEFAULT_CHANNEL = YSWS.slack.staffChannelId;
+const STALE_PING = [...YSWS.slack.staleQueuePing];
+const DIGEST_PING = [...YSWS.slack.weeklySummaryPing];
 const TICK_MS = 15 * 60 * 1000;
 const DIGEST_HOUR_UTC = 4;
 
@@ -20,12 +21,12 @@ function channel(): string {
 }
 
 function baseUrl(): string {
-  return (process.env.APP_URL?.trim() || "https://wonders.hackclub.com").replace(/\/$/, "");
+  return (process.env.APP_URL?.trim() || YSWS.origin).replace(/\/$/, "");
 }
 
 function staleHours(): number {
   const parsed = parseInt(process.env.QUEUE_STALE_HOURS ?? "", 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 72;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : YSWS.limits.staleQueueHours;
 }
 
 const queuedAt = () => sql`

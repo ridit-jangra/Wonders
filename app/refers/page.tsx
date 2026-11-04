@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
+import { YSWS } from "@/lib/ysws-config";
 import { notFound, redirect } from "next/navigation";
 import { cookies, headers } from "next/headers";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
@@ -23,7 +24,7 @@ export const metadata = { title: "Refers - Wonders" };
 async function siteOrigin() {
   const h = await headers();
   const host = h.get("x-forwarded-host") ?? h.get("host");
-  if (process.env.NODE_ENV === "production" || !host) return "https://wonders.hackclub.com";
+  if (process.env.NODE_ENV === "production" || !host) return YSWS.origin;
   return `http://${host}`;
 }
 

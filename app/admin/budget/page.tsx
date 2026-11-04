@@ -10,6 +10,7 @@ import {
   saveBudgetEstimate,
 } from "@/lib/budget";
 import { money, parseDollarsToCents, reservedCents } from "@/lib/budget-math";
+import { YSWS, dollars, hoursValueCents } from "@/lib/ysws-config";
 import {
   ActionButton,
   Callout,
@@ -182,6 +183,15 @@ export default async function AdminBudgetPage() {
             Save estimate
           </ActionButton>
         </form>
+      </Card>
+
+      <Card>
+        <CardHeader title="Hours shipped" />
+        <p className="hc-caption text-sm">
+          <Mono>{(position.shippedSeconds / 3600).toFixed(1)}h</Mono> × <Mono>{dollars(YSWS.rates.hourlyCents)}/h</Mono>{" "}
+          = <Mono>{money(hoursValueCents(position.shippedSeconds))}</Mono> of work across everyone with a shipped
+          wonder. Rate comes from <Mono>lib/ysws-config.ts</Mono>.
+        </p>
       </Card>
 
       <Card>

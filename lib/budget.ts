@@ -1,10 +1,11 @@
 import "server-only";
 import { sql } from "@/lib/db";
+import { YSWS } from "@/lib/ysws-config";
 import { summarizeCash, type CashLedger, type CashTransaction } from "@/lib/budget-math";
 
-const HCB_ORG = "wonders-ysws";
+const HCB_ORG = YSWS.hcbOrg;
 const API = `https://hcb.hackclub.com/api/v3/organizations/${HCB_ORG}`;
-export const HCB_TRANSACTIONS_URL = `https://hcb.hackclub.com/${HCB_ORG}/transactions`;
+export const HCB_TRANSACTIONS_URL = `${YSWS.hcbUrl}/transactions`;
 
 async function loadCash(): Promise<CashLedger> {
   const signal = AbortSignal.timeout(12_000);
@@ -62,6 +63,7 @@ export interface BudgetPosition {
   inReview: number;
   grants: number;
   grantedCents: number;
+  shippedSeconds: number;
   perPersonCents: number;
   readAt: string;
 }
@@ -75,14 +77,17 @@ export async function getBudgetPosition(): Promise<BudgetPosition> {
       in_review: number;
       grants: number;
       granted_cents: string;
+      shipped_seconds: string;
       read_at: string;
     }[]
   >`
     with units as (
-      select p.status, p.fulfilled_at, p.hcb_grant_cents, p.hcb_grant_sent_at
+      select p.status, p.fulfilled_at, p.hcb_grant_cents, p.hcb_grant_sent_at,
+        coalesce(p.owner_seconds, p.hackatime_seconds, 0) as seconds
       from projects p where p.banned_at is null
       union all
-      select p.status, c.fulfilled_at, c.hcb_grant_cents, c.hcb_grant_sent_at
+      select p.status, c.fulfilled_at, c.hcb_grant_cents, c.hcb_grant_sent_at,
+        coalesce(c.hackatime_seconds, 0) as seconds
       from project_collaborators c join projects p on p.id = c.project_id
       where p.banned_at is null
     )
@@ -92,7 +97,8 @@ export async function getBudgetPosition(): Promise<BudgetPosition> {
       count(*) filter (where fulfilled_at is not null)::int as fulfilled,
       count(*) filter (where status in ('in_review', 'second_pass'))::int as in_review,
       count(*) filter (where hcb_grant_sent_at is not null)::int as grants,
-      coalesce(sum(hcb_grant_cents) filter (where hcb_grant_sent_at is not null), 0)::text as granted_cents
+      coalesce(sum(hcb_grant_cents) filter (where hcb_grant_sent_at is not null), 0)::text as granted_cents,
+      coalesce(sum(seconds) filter (where status in ('shipped', 'fulfillment_started', 'fulfilled')), 0)::text as shipped_seconds
     from units
   `;
   const [settings] = await sql<{ per_person_cents: number }[]>`
@@ -105,6 +111,7 @@ export async function getBudgetPosition(): Promise<BudgetPosition> {
     inReview: row.in_review,
     grants: row.grants,
     grantedCents: Number(row.granted_cents),
+    shippedSeconds: Number(row.shipped_seconds),
     perPersonCents: settings?.per_person_cents ?? 0,
     readAt: new Date(row.read_at).toISOString(),
   };

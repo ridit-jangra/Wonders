@@ -1,8 +1,9 @@
 import crypto from "node:crypto";
+import { YSWS } from "@/lib/ysws-config";
 
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
-export const MAX_COLLABORATORS = 5;
+export const MAX_COLLABORATORS = YSWS.limits.maxCollaborators;
 
 export function generateInviteCode(): string {
   let raw = "";

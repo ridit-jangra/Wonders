@@ -1,3 +1,4 @@
+import { YSWS } from "@/lib/ysws-config";
 import type { Metadata } from "next";
 import { Finger_Paint, Geist, Inter, JetBrains_Mono, Poppins } from "next/font/google";
 import "./globals.css";
@@ -30,7 +31,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://wonders.hackclub.com"),
+  metadataBase: new URL(YSWS.origin),
   title: "Wonders",
   description: "Just ship it.",
 };

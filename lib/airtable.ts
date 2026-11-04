@@ -1,5 +1,6 @@
 import "server-only";
 import { sql } from "@/lib/db";
+import { YSWS } from "@/lib/ysws-config";
 import { decryptPII } from "@/lib/crypto";
 import { listUnits } from "@/lib/units";
 import { fetchHackatimeAirtableInfo } from "@/lib/hackatime";
@@ -12,8 +13,8 @@ import {
   type AirtableInput,
 } from "@/lib/airtable-fields";
 
-const BASE_ID = "appNO48Yez9uXr3WO";
-const TABLE_ID = "tblhePZpKLlIA3ZHh";
+const BASE_ID = YSWS.airtable.baseId;
+const TABLE_ID = YSWS.airtable.tableId;
 const TIMEOUT_MS = 10_000;
 
 function normalizeBirthday(value: string): string {

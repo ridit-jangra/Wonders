@@ -1,4 +1,5 @@
 import "server-only";
+import { YSWS } from "@/lib/ysws-config";
 import { sql } from "@/lib/db";
 import { normalizeUrl } from "@/lib/url";
 import {
@@ -124,7 +125,7 @@ export async function updateProject(
   `;
 }
 
-export const SHIP_AGAIN_MIN_SECONDS = 3600;
+export const SHIP_AGAIN_MIN_SECONDS = YSWS.limits.shipAgainMinSeconds;
 
 export async function shipProject(
   id: ProjectId,

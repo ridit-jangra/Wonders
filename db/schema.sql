@@ -309,3 +309,10 @@ alter table project_collaborators add column if not exists airtable_error text;
 
 alter table projects add column if not exists owner_seconds integer;
 alter table projects add column if not exists owner_seconds_prev integer;
+
+create table if not exists budget_settings (
+  id boolean primary key default true check (id),
+  per_person_cents integer not null default 0,
+  updated_by text,
+  updated_at timestamptz not null default now()
+);

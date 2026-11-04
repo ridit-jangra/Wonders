@@ -48,6 +48,7 @@ export default async function AdminLayout({
     "/admin/access": canManagePlayers(admin),
     "/admin/audit": canViewAudit(admin),
     "/admin/team": canManageTeam(admin),
+    "/admin/budget": canManageTeam(admin),
   };
   const commandItems = NAV.filter((item) => allowedByHref[item.href] ?? true).map((item) => ({
     ...item,

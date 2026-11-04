@@ -216,6 +216,10 @@ Failures never block a wonder: a lookup that can't run (GitHub rate limit, a dem
 - Saved replies (`review_macros`, `lib/review-macros.ts`, `/admin/macros`, `canReview`): reviewers add reusable text; the review form's three note boxes get an "Insert a saved reply" picker that appends the text. Creators delete their own, admins any. Replies are shown to players when used as the note to the user, so they must never mention the reward.
 - `.github/dependabot.yml` (weekly bun and Actions PRs) and a non-blocking `bun audit` step in CI.
 
+### Budget (`/admin/budget`)
+
+Owner-only (`canManageTeam`), modelled on Pixl's budget tab. `lib/budget.ts` reads the public HCB v3 API for the `wonders-ysws` org (it's a transparent org, no token needed; balance plus up to 20 pages of transactions, cached 60 s in memory; `lib/budget-math.ts` is the pure summary with tests) and counts the people still owed a reward from the database (`getBudgetPosition`: shipped or in fulfillment, not fulfilled, no grant sent yet; collaborators count as people). The owner sets an estimated cost per person (`budget_settings`, audit `budget.estimate`); reserved = owed people × estimate, remaining = HCB balance − reserved. Also shows grants sent from the dashboard, spending by category (memo and tag based labels in `spendingLabel`) and per-month totals. Wonders rewards are free text with no cost field, which is why the per-person estimate exists. If HCB can't be read the cash and remaining figures are hidden.
+
 ### Explore admin tools (ban, unship, search)
 
 Only owners and `admin`-role staff (`canManagePlayers`) with a valid `/admin` session get these; everyone else, including plain reviewers and anyone with only a player session, gets nothing: no links, no search box, a 404 from `/explore/[id]` and from `/api/admin/explore`. Every check is server-side (`getAdminSession()` + `canManagePlayers`), never a client flag, and each action re-verifies with `requireAccess(canManagePlayers)`, rate-limits (`explore-moderate`) and writes an audit row (`project.ban`, `project.unban`, `project.unship`).

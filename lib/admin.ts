@@ -165,6 +165,8 @@ export function reauthUrl(returnTo: string) {
 
 export interface StaffMember {
   slack_id: string;
+  name: string | null;
+  profile_id: string | null;
   roles: StaffRole[];
   updated_by: string | null;
   updated_at: string;
@@ -172,12 +174,43 @@ export interface StaffMember {
 
 export async function listStaff(): Promise<StaffMember[]> {
   const rows = await sql<
-    { slack_id: string; roles: string[]; updated_by: string | null; updated_at: string }[]
+    {
+      slack_id: string;
+      name: string | null;
+      profile_id: string | null;
+      roles: string[];
+      updated_by: string | null;
+      updated_at: string;
+    }[]
   >`
-    select slack_id, roles, updated_by, updated_at from staff_roles
-    order by updated_at desc
+    select s.slack_id, coalesce(nullif(p.slack_display_name, ''), p.name) as name,
+      p.id as profile_id, s.roles, s.updated_by, s.updated_at
+    from staff_roles s
+    left join profiles p on p.slack_id = s.slack_id
+    order by s.updated_at desc
   `;
   return rows.map((row) => ({ ...row, roles: parseRoles(row.roles) }));
+}
+
+export interface TeamCandidate {
+  slack_id: string;
+  name: string | null;
+  email: string | null;
+  slack_avatar_url: string | null;
+}
+
+export async function searchProfilesForTeam(query: string): Promise<TeamCandidate[]> {
+  const q = query.trim();
+  if (!q) return [];
+  const like = `%${q.replace(/[\\%_]/g, "\\$&")}%`;
+  return sql<TeamCandidate[]>`
+    select slack_id, coalesce(nullif(slack_display_name, ''), name) as name, email, slack_avatar_url
+    from profiles
+    where slack_id is not null
+      and (name ilike ${like} or slack_display_name ilike ${like} or email ilike ${like} or slack_id ilike ${like})
+    order by created_at desc
+    limit 8
+  `;
 }
 
 export async function setStaffRoles(slackId: string, roles: StaffRole[], updatedBy: string) {

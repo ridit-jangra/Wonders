@@ -1,9 +1,12 @@
+import Link from "next/link";
 import { revalidatePath } from "next/cache";
-import { hasRecentAuth, listStaff, reauthUrl, requireAccess, setStaffRoles } from "@/lib/admin";
+import { hasRecentAuth, listStaff, searchProfilesForTeam, reauthUrl, requireAccess, setStaffRoles } from "@/lib/admin";
 import { writeAudit } from "@/lib/audit";
+import { YSWS } from "@/lib/ysws-config";
 import { STAFF_ROLES, canManageTeam, parseRoles } from "@/lib/security/roles";
 import {
   ActionButton,
+  Avatar,
   Badge,
   ButtonLink,
   Callout,
@@ -19,10 +22,17 @@ import {
 
 const SLACK_ID = /^[UW][A-Z0-9]{6,}$/;
 
-export default async function AdminTeamPage() {
+export default async function AdminTeamPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q } = await searchParams;
   const admin = await requireAccess(canManageTeam);
   const unlocked = await hasRecentAuth(admin.slackId);
   const staff = await listStaff();
+  const candidates = await searchProfilesForTeam(q ?? "");
+  const staffIds = new Set(staff.map((member) => member.slack_id));
 
   async function save(formData: FormData) {
     "use server";
@@ -61,14 +71,25 @@ export default async function AdminTeamPage() {
 
       <Card padding="flush">
         <CardHeader title="Members" icon="people-3" />
-        <Table headers={["Slack ID", "Roles", "Edit"]}>
+        <Table headers={["Member", "Roles", "Edit"]}>
           {staff.length === 0 ? (
             <EmptyRow colSpan={3} title="No role-based staff yet" />
           ) : (
             staff.map((member) => (
               <tr key={member.slack_id}>
                 <td>
-                  <Mono>{member.slack_id}</Mono>
+                  {member.profile_id ? (
+                    <Link href={`/admin/users/${member.profile_id}`} className="font-bold">
+                      {member.name || member.slack_id}
+                    </Link>
+                  ) : (
+                    <Mono>{member.slack_id}</Mono>
+                  )}
+                  {member.name && (
+                    <div>
+                      <Mono>{member.slack_id}</Mono>
+                    </div>
+                  )}
                 </td>
                 <td>
                   <span className="flex gap-1">
@@ -104,24 +125,48 @@ export default async function AdminTeamPage() {
 
       <Card>
         <CardHeader title="Add someone" icon="person-card" />
-        <form action={save} className="flex flex-col gap-3">
-          <Field label="Slack ID" hint="like U0123ABCD">
-            <Input name="slack_id" required pattern="[UWuw][A-Za-z0-9]{6,}" />
-          </Field>
-          <div className="flex flex-wrap gap-4">
-            {STAFF_ROLES.map((role) => (
-              <label key={role} className="flex items-center gap-1 text-sm">
-                <input type="checkbox" name="role" value={role} />
-                {role}
-              </label>
-            ))}
-          </div>
-          <div>
-            <ActionButton pendingLabel="Adding..." size="sm" disabled={!unlocked}>
-              Add
+        <div className="flex flex-col gap-4">
+          <form method="get" className="flex flex-wrap items-end gap-3">
+            <Field label="Find a Wonders account" hint="name, Slack name, email or Slack ID">
+              <Input name="q" defaultValue={q ?? ""} />
+            </Field>
+            <ActionButton pendingLabel="Searching..." variant="outline" size="sm">
+              Search
             </ActionButton>
-          </div>
-        </form>
+          </form>
+          <Callout tone="info" icon="info">
+            Only people with a Wonders account can be added. If they are not listed, ask them to sign in at{" "}
+            {YSWS.origin}/login once, then search again.
+          </Callout>
+          {q && candidates.length === 0 && <p className="text-sm">No Wonders accounts match that.</p>}
+          {candidates.map((person) => (
+            <form key={person.slack_id} action={save} className="flex flex-wrap items-center gap-3">
+              <input type="hidden" name="slack_id" value={person.slack_id} />
+              <Avatar src={person.slack_avatar_url} />
+              <span className="min-w-40 font-bold">
+                {person.name || person.email}
+                <span className="block text-xs font-normal">
+                  <Mono>{person.slack_id}</Mono>
+                </span>
+              </span>
+              {staffIds.has(person.slack_id) ? (
+                <Badge>already on the team</Badge>
+              ) : (
+                <>
+                  {STAFF_ROLES.map((role) => (
+                    <label key={role} className="flex items-center gap-1 text-sm">
+                      <input type="checkbox" name="role" value={role} />
+                      {role}
+                    </label>
+                  ))}
+                  <ActionButton pendingLabel="Adding..." size="sm" disabled={!unlocked}>
+                    Add
+                  </ActionButton>
+                </>
+              )}
+            </form>
+          ))}
+        </div>
       </Card>
     </div>
   );

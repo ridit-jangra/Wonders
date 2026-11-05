@@ -106,9 +106,9 @@ export default function ExploreClient({
         src="/bg-effect-4.png"
         alt=""
       />
-      {loggedIn && <Sidebar showRefers={showRefers} />}
+      <Sidebar showRefers={showRefers} loggedOut={!loggedIn} />
       <main
-        className={`relative min-w-0 flex-1 pr-6 md:pr-10 md:pt-10 ${loggedIn ? "pt-20 pl-6 md:pl-0" : "pt-10 pl-6 md:pl-10"}`}
+        className="relative min-w-0 flex-1 pt-20 pr-6 pl-6 md:pt-10 md:pr-10 md:pl-0"
       >
         <h1 className="font-finger-paint text-4xl text-[#BFD8A8]">Explore</h1>
 

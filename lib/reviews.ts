@@ -85,16 +85,20 @@ export async function listRecentReviews(opts: {
 }): Promise<{ rows: ReviewedRow[]; total: number }> {
   const [rows, [{ total }]] = await Promise.all([
     sql<ReviewedRow[]>`
-      select r.id, r.project_id, p.title, r.pass, r.verdict, r.reviewed_by, r.created_at,
-        coalesce(nullif(o.slack_display_name, ''), o.name) as owner_name,
-        o.slack_id as owner_slack_id, o.id as owner_profile_id
-      from project_reviews r
-      join projects p on p.id = r.project_id
-      join profiles o on o.id = p.profile_id
-      order by r.created_at desc
+      select * from (
+        select distinct on (r.project_id)
+          r.id, r.project_id, p.title, r.pass, r.verdict, r.reviewed_by, r.created_at,
+          coalesce(nullif(o.slack_display_name, ''), o.name) as owner_name,
+          o.slack_id as owner_slack_id, o.id as owner_profile_id
+        from project_reviews r
+        join projects p on p.id = r.project_id
+        join profiles o on o.id = p.profile_id
+        order by r.project_id, r.created_at desc
+      ) latest
+      order by created_at desc
       limit ${opts.limit} offset ${opts.offset}
     `,
-    sql<{ total: number }[]>`select count(*)::int as total from project_reviews`,
+    sql<{ total: number }[]>`select count(distinct project_id)::int as total from project_reviews`,
   ]);
   return { rows, total };
 }

@@ -17,7 +17,7 @@ export default function SidebarNav({
   showRefers?: boolean;
 } = {}) {
   return (
-    <nav className="absolute inset-0 flex flex-col gap-4 pt-32">
+    <nav className="absolute inset-0 flex flex-col gap-4 pt-32 max-md:gap-5 max-md:pt-28">
       {links.map((link) => (
         <Link
           key={link.href}
@@ -28,9 +28,9 @@ export default function SidebarNav({
           <img
             src={link.src}
             alt=""
-            className="h-auto w-80 group-hover:w-85 transition-all"
+            className="h-auto w-80 group-hover:w-85 transition-all max-md:w-[94%] max-md:group-hover:w-full"
           />
-          <span className="absolute inset-0 flex items-center justify-center font-finger-paint text-3xl tracking-wide text-[#16213E]">
+          <span className="absolute inset-0 flex items-center justify-center font-finger-paint text-3xl tracking-wide text-[#16213E] max-md:text-4xl">
             {link.label}
           </span>
         </Link>
@@ -40,7 +40,7 @@ export default function SidebarNav({
           <Link
             href="/refers"
             onClick={onNavigateAction}
-            className="ml-6 self-start font-finger-paint text-xl text-[#16213E] underline decoration-[#16213E]/40 underline-offset-4 hover:decoration-[#16213E]"
+            className="ml-6 self-start font-finger-paint text-xl max-md:text-2xl text-[#16213E] underline decoration-[#16213E]/40 underline-offset-4 hover:decoration-[#16213E]"
           >
             refer friends, get a pin &lt;3
           </Link>
@@ -48,7 +48,7 @@ export default function SidebarNav({
       <Link
         href="/docs"
         onClick={onNavigateAction}
-        className="ml-6 self-start font-finger-paint text-xl text-[#16213E] underline decoration-[#16213E]/40 underline-offset-4 hover:decoration-[#16213E]"
+        className="ml-6 self-start font-finger-paint text-xl max-md:text-2xl text-[#16213E] underline decoration-[#16213E]/40 underline-offset-4 hover:decoration-[#16213E]"
       >
         need help? read the docs :3
       </Link>

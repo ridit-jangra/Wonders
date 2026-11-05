@@ -49,27 +49,36 @@ function tagText(project: ExploreProject) {
 
 function StackedCard({ project }: { project: ExploreProject }) {
   return (
-    <article className="flex flex-col gap-3 rounded-lg bg-[#D8D1AC] p-3 md:hidden">
-      <img
-        src={project.image_url || "/project-image-fallback.png"}
-        alt=""
-        className="aspect-video w-full rounded-md object-cover"
-      />
-      <div className="flex items-start justify-between gap-3">
-        <h3 className="min-w-0 wrap-break-word font-finger-paint text-xl text-[#5C4A2E]">{project.name}</h3>
-        <span className="shrink-0 pt-1 font-finger-paint text-xs text-[#7A6B4A]">
+    <article className="flex flex-col gap-3 md:hidden">
+      <div className="relative aspect-square w-full">
+        <img
+          src="/project-template-base-with-inputs.png"
+          alt=""
+          className="absolute inset-0 h-full w-full"
+        />
+        <img
+          src={project.image_url || "/project-image-fallback.png"}
+          alt=""
+          className="absolute top-[6%] left-[12%] right-[8%] h-[40%] w-[80%] rounded-md object-cover"
+        />
+        <div className="absolute top-[51%] left-[14%] right-[6%] flex h-[11%] items-center overflow-hidden">
+          <h3 className="truncate font-finger-paint text-lg text-[#5C4A2E]">{project.name}</h3>
+        </div>
+        <p className="absolute top-[66%] left-[14%] right-[6%] h-[24%] overflow-hidden font-finger-paint text-xs text-[#5C4A2E]">
+          {project.description}
+        </p>
+        <span className="absolute bottom-[5%] right-[9%] font-finger-paint text-[10px] text-[#7A6B4A]">
           {tagText(project)}
         </span>
       </div>
-      <p className="line-clamp-4 font-finger-paint text-sm text-[#5C4A2E]">{project.description}</p>
       {(project.repo_url || project.demo_url) && (
-        <div className="flex gap-3">
+        <div className="flex gap-3 px-1">
           {project.repo_url && (
             <a
               href={project.repo_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="relative z-10 flex-1 rounded-lg bg-[#D0E4B4] py-1.5 text-center font-finger-paint text-lg text-black/45"
+              className="relative z-10 flex-1 rounded-lg bg-[#D0E4B4] py-1.5 text-center font-finger-paint text-lg text-black/45 transition-all hover:zoom-110"
             >
               Repo :D
             </a>
@@ -79,7 +88,7 @@ function StackedCard({ project }: { project: ExploreProject }) {
               href={project.demo_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="relative z-10 flex-1 rounded-lg bg-[#F0E27D] py-1.5 text-center font-finger-paint text-lg text-black/45"
+              className="relative z-10 flex-1 rounded-lg bg-[#F0E27D] py-1.5 text-center font-finger-paint text-lg text-black/45 transition-all hover:zoom-110"
             >
               Demo :3
             </a>

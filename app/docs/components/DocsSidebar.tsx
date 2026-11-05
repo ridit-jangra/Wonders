@@ -56,7 +56,7 @@ function DocsSidebarNav({
       <Link
         href="/dashboard"
         onClick={onNavigateAction}
-        className="absolute bottom-6 left-6 font-finger-paint text-xl max-md:text-2xl text-[#16213E] underline hover:zoom-110 transition-all"
+        className="absolute bottom-6 left-6 font-finger-paint text-xl max-md:text-2xl text-[#16213E] underline hover:zoom-110 transition-[zoom]"
       >
         back to dashboard :)
       </Link>

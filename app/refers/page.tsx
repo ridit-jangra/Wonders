@@ -16,6 +16,7 @@ import BackButton from "@/app/dashboard/components/BackButton";
 import { Profile } from "@/app/dashboard/components/Profile";
 import LocalTime from "@/app/dashboard/components/LocalTime";
 import PageList from "@/app/dashboard/components/PageList";
+import ClickRow from "./ClickRow";
 import CopyLink from "./CopyLink";
 import PinHero from "./PinHero";
 import Panel from "./Panel";
@@ -156,18 +157,7 @@ export default async function RefersPage() {
               ) : (
                 <PageList as="div" className="flex flex-col gap-2">
                   {stats.recentClicks.map((at, i) => (
-                    <div key={`${at}-${i}`} className="flex items-center gap-3 rounded-md bg-[#E7E2C9] p-3">
-                      <span className="h-10 w-10 shrink-0 rounded-full bg-[#8C8368]/30" />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate font-finger-paint text-base text-[#5C4A2E]">someone opened your link</p>
-                        <p className="font-finger-paint text-xs text-[#5C4A2E]/60">
-                          <LocalTime iso={at} />
-                        </p>
-                      </div>
-                      <span className="rounded-full bg-[#8C8368]/25 px-3 py-1 font-finger-paint text-xs text-[#5C4A2E]">
-                        click
-                      </span>
-                    </div>
+                    <ClickRow key={`${at}-${i}`} at={at} />
                   ))}
                 </PageList>
               )}

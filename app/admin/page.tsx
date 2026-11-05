@@ -13,7 +13,7 @@ import {
   TextLink,
 } from "./components/ui";
 import { requireAdmin } from "@/lib/admin";
-import { canFulfill, canReview } from "@/lib/security/roles";
+import { canFulfill } from "@/lib/security/roles";
 
 const EMPTY = { projects: [] as ProjectWithOwner[], total: 0 };
 
@@ -72,14 +72,10 @@ function Ticket({
 
 export default async function AdminOverviewPage() {
   const admin = await requireAdmin();
-  const showReview = canReview(admin);
   const showFulfil = canFulfill(admin);
 
-  const [stats, review, fulfil, recent] = await Promise.all([
+  const [stats, fulfil, recent] = await Promise.all([
     getOverviewStats(),
-    showReview
-      ? listAllProjects({ status: ["in_review", "second_pass"], limit: 30, offset: 0 })
-      : EMPTY,
     showFulfil
       ? listAllProjects({ status: ["shipped", "fulfillment_started"], limit: 30, offset: 0 })
       : EMPTY,
@@ -87,7 +83,6 @@ export default async function AdminOverviewPage() {
   ]);
 
   const summary = [
-    showReview ? `${review.total} to review` : null,
     showFulfil ? `${fulfil.total} to fulfil` : null,
     `${stats.totalUsers} players`,
     `${stats.totalWonders} wonders`,
@@ -96,39 +91,13 @@ export default async function AdminOverviewPage() {
     .filter(Boolean)
     .join(" \u00b7 ");
 
-  const lanes = showReview && showFulfil ? "lg:grid-cols-2" : "";
   const list = "hc-scroll flex min-h-0 max-h-80 flex-col gap-2 overflow-y-auto lg:max-h-none lg:flex-1 [&>*]:shrink-0";
 
   return (
     <div className="flex flex-col gap-6 lg:h-[calc(100svh-7.75rem)]">
       <PageHeader title="Inbox" description={summary} />
 
-      <div className={`grid gap-8 lg:h-1/2 lg:shrink-0 ${lanes}`}>
-        {showReview && (
-          <section className="flex min-h-0 flex-col">
-            <div className="hc-lane-head">
-              Review <Badge>{review.total}</Badge>
-              <TextLink href="/admin/review">all</TextLink>
-            </div>
-            {review.projects.length === 0 ? (
-              <EmptyState title="Inbox zero" icon="checkmark-all">
-                Nothing is waiting on review.
-              </EmptyState>
-            ) : (
-              <div className={list}>
-                {review.projects.map((project) => (
-                  <Ticket
-                    key={project.id}
-                    project={project}
-                    href={`/admin/review/${project.id}`}
-                    extra={<StatusBadge status={project.status} />}
-                  />
-                ))}
-              </div>
-            )}
-          </section>
-        )}
-
+      <div className="grid gap-8 lg:h-1/2 lg:shrink-0">
         {showFulfil && (
           <section className="flex min-h-0 flex-col">
             <div className="hc-lane-head">
@@ -166,7 +135,7 @@ export default async function AdminOverviewPage() {
           <ul className="hc-feed hc-scroll max-h-80 min-h-0 overflow-y-auto lg:max-h-none lg:flex-1">
             {recent.entries.map((entry) => (
               <li key={entry.id}>
-                <TextLink href={`/admin/review/${entry.project_id}`}>
+                <TextLink href={`/admin/wonders/${entry.project_id}`}>
                   wonder #{entry.project_id}
                 </TextLink>
                 <StatusBadge status={entry.to_status} />

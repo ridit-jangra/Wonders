@@ -512,7 +512,7 @@ export function HistoryTimeline({
             <Icon glyph="view-forward" size={18} className="hc-muted" />
             <StatusBadge status={entry.to_status} />
             {linkProjects && (
-              <TextLink href={`/admin/review/${entry.project_id}`} className="hc-muted">
+              <TextLink href={`/admin/wonders/${entry.project_id}`} className="hc-muted">
                 wonder #{entry.project_id}
               </TextLink>
             )}

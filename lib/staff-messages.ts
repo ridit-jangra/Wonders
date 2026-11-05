@@ -36,7 +36,7 @@ export function formatStaleMessage(
 ): string {
   const lines = items.map((item) => {
     const pass = item.status === "second_pass" ? "second pass" : "first pass";
-    return `• <${baseUrl}/admin/review/${item.id}|${item.title}> (${pass}), waiting ${formatWait(item.waitingHours)}`;
+    return `• <${baseUrl}/admin/wonders/${item.id}|${item.title}> (${pass}), waiting ${formatWait(item.waitingHours)}`;
   });
   const noun = items.length === 1 ? "wonder has" : "wonders have";
   return `${pings.map(mention).join(" ")} ${items.length} ${noun} been sitting in the review queue for a while:\n${lines.join("\n")}`;
@@ -50,7 +50,7 @@ export function formatDigest(digest: WeeklyDigest, baseUrl: string, pings: strin
   return [
     `${pings.map(mention).join(" ")} weekly wonders summary :3`,
     "",
-    `*Queue right now:* ${digest.firstPass} in first pass, ${digest.secondPass} in second pass, ${digest.onHold} on hold. ${oldest}. <${baseUrl}/admin/review|open the queue>`,
+    `*Queue right now:* ${digest.firstPass} in first pass, ${digest.secondPass} in second pass, ${digest.onHold} on hold. ${oldest}. <${baseUrl}/admin/wonders?status=in_review|open the wonders>`,
     `*Last 7 days:* ${digest.submitted} submitted, ${digest.passedFirst} passed first pass, ${digest.approved} approved and shipped, ${digest.sentBack} sent back, ${digest.fulfilled} fulfilled.`,
     `*Fulfillment:* ${digest.awaitingFulfillment} waiting to start, ${digest.inFulfillment} in progress. <${baseUrl}/admin/fulfillment|open fulfillment>`,
   ].join("\n");

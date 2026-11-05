@@ -69,15 +69,6 @@ export async function listMembers(projectId: ProjectId): Promise<Member[]> {
   }));
 }
 
-export async function listCollaboratorSlackIds(projectId: ProjectId): Promise<string[]> {
-  const rows = await sql<{ slack_id: string }[]>`
-    select o.slack_id from project_collaborators c
-    join profiles o on o.id = c.profile_id
-    where c.project_id = ${projectId}
-  `;
-  return rows.map((row) => row.slack_id);
-}
-
 export async function getInviteCode(projectId: ProjectId, ownerProfileId: string): Promise<string | null> {
   const [row] = await sql<{ invite_code: string | null }[]>`
     select invite_code from projects where id = ${projectId} and profile_id = ${ownerProfileId}

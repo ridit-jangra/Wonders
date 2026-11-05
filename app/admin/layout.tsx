@@ -12,7 +12,6 @@ import {
   canFulfill,
   canManagePlayers,
   canManageTeam,
-  canReview,
   canViewAudit,
 } from "@/lib/security/roles";
 import CommandBar from "./components/CommandBar";
@@ -35,13 +34,10 @@ export default async function AdminLayout({
   ]);
 
   const navCounts: Record<string, number> = {
-    "/admin/review": byStatus.in_review + byStatus.second_pass,
     "/admin/fulfillment": byStatus.shipped + byStatus.fulfillment_started,
   };
 
   const allowedByHref: Record<string, boolean> = {
-    "/admin/review": canReview(admin),
-    "/admin/macros": canReview(admin),
     "/admin/fulfillment": canFulfill(admin),
     "/admin/referrals": canFulfill(admin),
     "/admin/users": canManagePlayers(admin),

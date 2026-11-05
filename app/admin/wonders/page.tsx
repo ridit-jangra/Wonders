@@ -69,7 +69,7 @@ export default async function AdminWondersPage({
           {projects.map((project) => (
             <tr key={project.id}>
               <td>
-                <TextLink href={`/admin/review/${project.id}`} className="font-bold">
+                <TextLink href={`/admin/wonders/${project.id}`} className="font-bold">
                   {project.title}
                 </TextLink>
               </td>

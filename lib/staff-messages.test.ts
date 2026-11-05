@@ -14,7 +14,7 @@ describe("staff messages", () => {
       ["U1"],
     );
     expect(text).toContain("<@U1>");
-    expect(text).toContain("https://x.test/admin/review/4");
+    expect(text).toContain("https://x.test/admin/wonders/4");
     expect(text).toContain("3d");
   });
 

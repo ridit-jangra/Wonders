@@ -32,10 +32,6 @@ export function canReview(access: StaffAccess) {
   return has(access, "admin", "reviewer");
 }
 
-export function canReviewOwn(access: StaffAccess) {
-  return has(access, "admin");
-}
-
 export function canFulfill(access: StaffAccess) {
   return has(access, "admin", "fulfiller");
 }

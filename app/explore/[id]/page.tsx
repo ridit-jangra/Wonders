@@ -12,7 +12,6 @@ import { getAdminSession, requireAccess } from "@/lib/admin";
 import { canManagePlayers } from "@/lib/security/roles";
 import { adminUnshipProject, banProject, getProjectWithOwner, unbanProject } from "@/lib/projects";
 import { recordProjectHistory } from "@/lib/project-history";
-import { clearClaim } from "@/lib/review-claims";
 import { notifyTeam } from "@/lib/notifications";
 import { getExploreWonder } from "@/lib/share";
 import PublicWonder from "./PublicWonder";
@@ -51,9 +50,7 @@ function refresh(id: string) {
   revalidatePath("/dashboard");
   revalidatePath("/wonders");
   revalidatePath("/admin");
-  revalidatePath("/admin/review");
   revalidatePath("/admin/fulfillment");
-  revalidatePath(`/admin/review/${id}`);
 }
 
 async function guard(): Promise<{ admin: Awaited<ReturnType<typeof requireAccess>> } | { error: string }> {
@@ -99,7 +96,6 @@ export default async function ExploreWonderPage({ params }: { params: Promise<{ 
     if (!(await banProject(id, reason, checked.admin.slackId))) {
       return { ok: false, error: "already banned" };
     }
-    await clearClaim(id);
     await writeAudit({
       actor: checked.admin.slackId,
       action: "project.ban",
@@ -144,7 +140,6 @@ export default async function ExploreWonderPage({ params }: { params: Promise<{ 
     const from = await adminUnshipProject(id, reason);
     if (!from) return { ok: false, error: "this wonder can't be unshipped from its current status" };
 
-    await clearClaim(id);
     await recordProjectHistory({
       projectId: id,
       profileId: existing.profile_id,
@@ -242,9 +237,6 @@ export default async function ExploreWonderPage({ params }: { params: Promise<{ 
         </article>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          <Link href={`/admin/review/${project.id}`} className={`${BUTTON} bg-[#A8C7E0]`}>
-            Go to review page
-          </Link>
           {canUnship && (
             <ReasonDialogButton
               action={unship}

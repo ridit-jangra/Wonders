@@ -241,7 +241,7 @@ export default async function AdminUserDetailPage({
                 key={project.id}
                 className="flex items-center justify-between gap-4 border-b border-[var(--border)] px-4 py-3 last:border-b-0"
               >
-                <TextLink href={`/admin/review/${project.id}`} className="font-bold">
+                <TextLink href={`/admin/wonders/${project.id}`} className="font-bold">
                   {project.title}
                 </TextLink>
                 <StatusBadge status={project.status} />

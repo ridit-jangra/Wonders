@@ -429,7 +429,7 @@ export default async function AdminFulfillmentPage({
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <TextLink href={`/admin/review/${project.id}`} className="hc-heading text-lg">
+                    <TextLink href={`/admin/wonders/${project.id}`} className="hc-heading text-lg">
                       {project.title}
                     </TextLink>
                     <StatusBadge status={project.status} />

@@ -220,23 +220,6 @@ async function recordFailure(
   return { ok: false, error };
 }
 
-export async function pushWonderUnits(
-  projectId: number,
-  opts: { onlyMissing?: boolean } = {},
-): Promise<{ profileId: string; name: string; result: PushResult }[]> {
-  const units = (await listUnits([projectId])).get(projectId) ?? [];
-  const out: { profileId: string; name: string; result: PushResult }[] = [];
-  for (const unit of units) {
-    if (opts.onlyMissing && unit.airtableRecordId) continue;
-    const result = await pushWonderToAirtable(projectId, {
-      profileId: unit.profileId,
-      forceNew: !opts.onlyMissing && unit.secondsPrev !== null,
-    });
-    out.push({ profileId: unit.profileId, name: unit.name, result });
-  }
-  return out;
-}
-
 export interface AirtableUnitState {
   profileId: string;
   name: string;
@@ -244,18 +227,6 @@ export interface AirtableUnitState {
   recordId: string | null;
   pushedAt: string | null;
   error: string | null;
-}
-
-export async function getAirtableState(projectId: number): Promise<AirtableUnitState[]> {
-  const units = (await listUnits([projectId])).get(projectId) ?? [];
-  return units.map((unit) => ({
-    profileId: unit.profileId,
-    name: unit.name,
-    kind: unit.kind,
-    recordId: unit.airtableRecordId,
-    pushedAt: unit.airtablePushedAt,
-    error: unit.airtableError,
-  }));
 }
 
 export const AIRTABLE_STATUS_FIELD = "Automation - Status";

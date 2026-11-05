@@ -60,13 +60,6 @@ export async function listJournalAdmin(projectId: ProjectId): Promise<JournalEnt
   `;
 }
 
-export async function countJournalAdmin(projectId: ProjectId): Promise<number> {
-  const [row] = await sql<{ total: number }[]>`
-    select count(*)::int as total from project_journal where project_id = ${projectId}
-  `;
-  return row?.total ?? 0;
-}
-
 function clean(title: string, content: string) {
   return {
     title: title.trim().slice(0, JOURNAL_MAX_TITLE) || null,

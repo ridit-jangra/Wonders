@@ -1,3 +1,4 @@
+import { TENTATIVE_NOTE, YSWS } from "@/lib/ysws-config";
 import { FaqList } from "./FaqList";
 
 export interface Question {
@@ -8,11 +9,11 @@ export interface Question {
 export const questions: Question[] = [
   {
     question: "When will it start?",
-    answer: "January 1st",
+    answer: `${YSWS.starts} ${TENTATIVE_NOTE}`,
   },
   {
     question: "When will it end?",
-    answer: "January 15th",
+    answer: `${YSWS.ends} ${TENTATIVE_NOTE}`,
   },
   {
     question: "How does it work?",
@@ -45,7 +46,7 @@ export const questions: Question[] = [
   },
   {
     question: "When tracking time starts?",
-    answer: "January 1st",
+    answer: `${YSWS.starts} ${TENTATIVE_NOTE}`,
   },
 ];
 

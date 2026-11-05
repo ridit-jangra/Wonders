@@ -3,10 +3,11 @@ export const YSWS = {
   fullName: "Wonders - YSWS",
   slug: "wonders",
   origin: "https://wonders.hackclub.com",
-  starts: "January 1st",
+  starts: "November 12th",
   ends: "January 15th",
-  startsIso: "2027-01-01",
+  startsIso: "2026-11-12",
   endsIso: "2027-01-15",
+  datesTentative: true,
   tagline: "A Hack Club YSWS where you make something you have wanted to make, ship it, and get a surprise.",
 
   reviewTool: {
@@ -45,6 +46,14 @@ export const YSWS = {
     tableId: "tblhePZpKLlIA3ZHh",
   },
 } as const;
+
+export function shippingOpen(now: Date = new Date()): boolean {
+  const start = Date.parse(`${YSWS.startsIso}T00:00:00Z`);
+  const end = Date.parse(`${YSWS.endsIso}T00:00:00Z`) + 24 * 3600 * 1000;
+  return now.getTime() >= start && now.getTime() < end;
+}
+
+export const TENTATIVE_NOTE = "(not decided yet, this can change)";
 
 export function hoursValueCents(seconds: number, rateCents: number = YSWS.rates.hourlyCents): number {
   return Math.round((Math.max(0, seconds) / 3600) * rateCents);

@@ -64,7 +64,8 @@ import ProjectTimeline from "@/app/dashboard/components/ProjectTimeline";
 import DeleteProjectButton from "@/app/dashboard/components/DeleteProjectButton";
 import CopyCode from "@/app/dashboard/components/CopyCode";
 import BackButton from "@/app/dashboard/components/BackButton";
-import { YSWS } from "@/lib/ysws-config";
+import { shippingOpen, TENTATIVE_NOTE, YSWS } from "@/lib/ysws-config";
+import { getAdminSession } from "@/lib/admin";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -191,6 +192,8 @@ export default async function EditProjectPage({
     !liveEdit ||
     (currentTrackedSeconds !== null &&
       currentTrackedSeconds >= (project.hackatime_seconds ?? 0) + SHIP_AGAIN_MIN_SECONDS);
+
+  const shippingClosed = !shippingOpen() && !(await getAdminSession());
 
   const hackatimeChoices = [
     ...new Set([
@@ -376,6 +379,9 @@ export default async function EditProjectPage({
       redirect("/wonders");
     }
     const asCollaborator = memberRole === "collaborator";
+    if (!shippingOpen() && !(await getAdminSession())) {
+      return;
+    }
     if (!(await checkRateLimit("project-ship", current.slackId, 10, 60)).allowed) {
       return;
     }
@@ -771,6 +777,11 @@ export default async function EditProjectPage({
             <div className="mt-6 flex justify-end">
               <AutoSave action={autosaveProject} />
             </div>
+            {shippingClosed && (
+              <p className="mt-3 font-finger-paint text-sm text-[#5C4A2E]/70">
+                shipping opens on {YSWS.starts} {TENTATIVE_NOTE}. keep building until then :3
+              </p>
+            )}
             <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:justify-end">
               {liveEdit || isCollaborator ? (
                 <button
@@ -797,7 +808,7 @@ export default async function EditProjectPage({
                 shipAction={shipProjectAction}
                 isReship={isReship}
                 shipMore={liveEdit}
-                disabled={missingForShip.length > 0 || !canShipAgain}
+                disabled={missingForShip.length > 0 || !canShipAgain || shippingClosed}
                 initialIso={phoneStart?.iso ?? "US"}
                 initialNumber={phoneStart?.number ?? ""}
                 fromAuth={phonePrefill.fromAuth}

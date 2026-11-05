@@ -656,7 +656,7 @@ export default async function EditProjectPage({
           </div>
         )}
       {queue && (
-        <p className="w-fit rounded-md bg-[#E7E2C9] px-4 py-2 font-finger-paint text-lg text-[#5C4A2E]">
+        <p className="w-full rounded-md bg-[#E7E2C9] px-4 py-2 font-finger-paint text-lg text-[#5C4A2E] md:max-w-[90%]">
           you&apos;re <span className="text-[#3e7d7d]">#{queue.position}</span> in the review queue
           <span className="text-[#5C4A2E]/60"> (of {queue.total})</span> :3
         </p>

@@ -5,7 +5,7 @@ export interface Question {
   answer: string;
 }
 
-const questions: Question[] = [
+export const questions: Question[] = [
   {
     question: "When will it start?",
     answer: "January 1st",

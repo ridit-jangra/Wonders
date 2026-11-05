@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import { cookies } from "next/headers";
@@ -63,6 +64,8 @@ async function guard(): Promise<{ admin: Awaited<ReturnType<typeof requireAccess
 
 const BUTTON =
   "w-full rounded-md px-5 py-2 text-center font-finger-paint text-lg text-black/50 transition-all hover:zoom-110 sm:w-auto";
+
+export const metadata: Metadata = { robots: { index: false, follow: true } };
 
 export default async function ExploreWonderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

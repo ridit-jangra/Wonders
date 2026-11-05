@@ -32,8 +32,11 @@ export async function generateMetadata({ params }: PageProps<"/docs/[[...slug]]"
   const page = source.getPage(slug);
   if (!page) notFound();
 
+  const title = `${page.data.title} · Wonders docs`;
   return {
-    title: `${page.data.title} · Wonders docs`,
+    title,
     description: page.data.description,
+    alternates: { canonical: page.url },
+    openGraph: { type: "article", title, description: page.data.description, url: page.url },
   };
 }

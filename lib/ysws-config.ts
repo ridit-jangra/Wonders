@@ -5,6 +5,9 @@ export const YSWS = {
   origin: "https://wonders.hackclub.com",
   starts: "January 1st",
   ends: "January 15th",
+  startsIso: "2027-01-01",
+  endsIso: "2027-01-15",
+  tagline: "A Hack Club YSWS where you make something you have wanted to make, ship it, and get a surprise.",
 
   hcbOrg: "wonders-ysws",
   hcbUrl: "https://hcb.hackclub.com/wonders-ysws",

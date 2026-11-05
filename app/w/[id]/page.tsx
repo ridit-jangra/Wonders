@@ -4,6 +4,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSharedWonder } from "@/lib/share";
 import { absoluteImageUrl } from "@/lib/airtable-fields";
+import { creativeWorkJsonLd, jsonLdScript } from "@/lib/seo";
+import { YSWS } from "@/lib/ysws-config";
 
 type Params = Promise<{ id: string }>;
 
@@ -24,7 +26,8 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   return {
     title,
     description,
-    openGraph: { title, description, type: "website", images: [{ url: image }] },
+    alternates: { canonical: `/w/${wonder.id}` },
+    openGraph: { title, description, type: "article", url: `/w/${wonder.id}`, images: [{ url: image }] },
     twitter: { card: "summary_large_image", title, description, images: [image] },
   };
 }
@@ -34,8 +37,20 @@ export default async function SharedWonderPage({ params }: { params: Params }) {
   const wonder = await getSharedWonder(id);
   if (!wonder) notFound();
 
+  const image = absoluteImageUrl(wonder.image_url) || `${YSWS.origin}/opengraph-image.png`;
+  const structured = creativeWorkJsonLd({
+    id: wonder.id,
+    title: wonder.title,
+    description: wonder.description,
+    image,
+    makers: wonder.makers.map((maker) => maker.name),
+    repo: wonder.github_url,
+    demo: wonder.link_url,
+  });
+
   return (
     <div className="relative flex min-h-screen items-center justify-center px-4 py-10">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(structured) }} />
       <img className="fixed inset-0 -z-10 h-full w-full object-cover" src="/bg-effect-4.png" alt="" />
       <article className="w-full max-w-2xl rounded-2xl bg-[#F0EBD1] p-5 shadow-xl sm:p-8">
         <img

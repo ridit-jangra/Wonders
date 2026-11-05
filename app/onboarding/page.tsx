@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
 /* eslint-disable @next/next/no-img-element */
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
 import { getSessionProfile, saveInterest } from "@/lib/profiles";
 import SubmitButton from "@/app/dashboard/components/SubmitButton";
+
+export const metadata: Metadata = {
+  title: "Welcome",
+  robots: { index: false, follow: false },
+};
 
 export default async function OnboardingPage() {
   const cookieStore = await cookies();

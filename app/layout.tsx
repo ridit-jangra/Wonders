@@ -1,5 +1,6 @@
 import { YSWS } from "@/lib/ysws-config";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import { SITE_DESCRIPTION, SITE_KEYWORDS, SITE_TITLE } from "@/lib/seo";
 import { Finger_Paint, Geist, Inter, JetBrains_Mono, Poppins } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
@@ -42,8 +43,35 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   metadataBase: new URL(YSWS.origin),
-  title: "Wonders",
-  description: "Just ship it.",
+  title: { default: SITE_TITLE, template: "%s · Wonders" },
+  description: SITE_DESCRIPTION,
+  keywords: SITE_KEYWORDS,
+  applicationName: "Wonders",
+  authors: [{ name: "Hack Club", url: "https://hackclub.com" }],
+  creator: "Hack Club",
+  publisher: "Hack Club",
+  category: "education",
+  openGraph: {
+    type: "website",
+    siteName: "Wonders",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 },
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#5aa8a8",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

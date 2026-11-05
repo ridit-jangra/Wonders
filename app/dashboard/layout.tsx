@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 /* eslint-disable @next/next/no-img-element */
 
 import { redirect } from "next/navigation";
@@ -9,6 +10,8 @@ import UnderConstruction from "@/app/components/UnderConstruction";
 import Sidebar from "./components/Sidebar";
 import TopBlur from "./components/TopBlur";
 import { Profile } from "./components/Profile";
+
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function DashLayout({
   children,

@@ -20,6 +20,7 @@ import { Button, ButtonLink, Mono } from "./components/ui";
 
 export const metadata: Metadata = {
   title: "Wonders - Admin",
+  robots: { index: false, follow: false },
 };
 
 export default async function AdminLayout({

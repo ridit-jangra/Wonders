@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 /* eslint-disable @next/next/no-img-element */
 import { YSWS } from "@/lib/ysws-config";
 import { notFound, redirect } from "next/navigation";
@@ -22,7 +23,7 @@ import PinHero from "./PinHero";
 import Panel from "./Panel";
 import TopBlur from "@/app/dashboard/components/TopBlur";
 
-export const metadata = { title: "Refers - Wonders" };
+export const metadata: Metadata = { title: "Refers", robots: { index: false, follow: false } };
 
 async function siteOrigin() {
   const h = await headers();

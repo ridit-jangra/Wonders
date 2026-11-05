@@ -1,5 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
+import { preload } from "react-dom";
+
 export function Hero() {
+  preload("/hero-bg.png", { as: "image", fetchPriority: "high" });
   return (
     <div
       className="relative w-full min-h-[100svh] bg-no-repeat bg-center bg-contain md:bg-cover"
@@ -8,6 +11,9 @@ export function Hero() {
         backgroundColor: "#5aa8a8",
       }}
     >
+      <h1 className="sr-only">
+        Wonders, a Hack Club YSWS: make something you have wanted to make, ship it, and get a surprise
+      </h1>
       <a
         href="https://rsvp.hackclub.community/wonders"
         target="_blank"
@@ -15,7 +21,7 @@ export function Hero() {
       >
         <img
           src="/rsvp.png"
-          alt="rsvp"
+          alt="RSVP to Wonders, the Hack Club YSWS"
           className="absolute z-20 bottom-6 sm:bottom-10 left-1/2 -translate-x-1/2 w-40 sm:w-52 md:w-66 h-auto group-hover:w-44 sm:group-hover:w-58 md:group-hover:w-77 transition-all"
         />
       </a>

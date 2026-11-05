@@ -5,7 +5,10 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
 import { getSessionProfile } from "@/lib/profiles";
-import { deleteProject, type Project } from "@/lib/projects";
+import { deleteProject, updateProjectImage, type Project } from "@/lib/projects";
+import { uploadThumbnail } from "@/lib/storage";
+import { checkRateLimit } from "@/lib/rate-limit";
+import CardImageUpload from "./CardImageUpload";
 import DeleteProjectButton from "./DeleteProjectButton";
 import LinkPending from "./LinkPending";
 
@@ -28,6 +31,12 @@ export default function ProjectCardWide({
   className?: string;
 }) {
   const editable = (project.status === "building" || project.status === "rejected") && !project.banned_at;
+  const imageEditable =
+    !project.banned_at &&
+    (project.status === "building" ||
+      project.status === "rejected" ||
+      project.status === "shipped" ||
+      project.status === "fulfillment_started");
   const lockedLabel = project.banned_at
     ? "banned :("
     : project.status === "in_review" || project.status === "second_pass"
@@ -53,6 +62,42 @@ export default function ProjectCardWide({
     revalidatePath("/wonders");
   }
 
+  async function changeImageAction(formData: FormData): Promise<string | null> {
+    "use server";
+
+    const cookieStore = await cookies();
+    const session = verifySessionCookie(cookieStore.get(SESSION_COOKIE)?.value);
+    if (!session) {
+      redirect("/login");
+    }
+
+    const profile = await getSessionProfile(session);
+    if (!profile) {
+      redirect("/onboarding");
+    }
+
+    if (!(await checkRateLimit("card-image", session.slackId, 20, 3600)).allowed) {
+      return "slow down :(";
+    }
+
+    const file = formData.get("thumbnail");
+    if (!(file instanceof File) || file.size === 0) {
+      return "pick an image first";
+    }
+
+    try {
+      const url = await uploadThumbnail(file, profile.id);
+      if (!(await updateProjectImage(project.id, profile.id, url))) {
+        return "can't change this one right now";
+      }
+    } catch {
+      return "that image didn't work :(";
+    }
+    revalidatePath("/dashboard");
+    revalidatePath("/wonders");
+    return null;
+  }
+
   return (
     <div className={`relative aspect-1327/345 overflow-hidden ${className}`}>
       <img
@@ -60,11 +105,19 @@ export default function ProjectCardWide({
         alt=""
         className="absolute top-[-51.01%] left-[-25.62%] w-[144.69%] max-w-none"
       />
-      <img
-        src={project.image_url || "/project-image-fallback.png"}
-        alt=""
-        className="absolute top-[5%] left-[3%] h-[74%] w-[36%] rounded-md object-cover"
-      />
+      {imageEditable ? (
+        <CardImageUpload
+          src={project.image_url || "/project-image-fallback.png"}
+          action={changeImageAction}
+          className="absolute top-[5%] left-[3%] h-[74%] w-[36%]"
+        />
+      ) : (
+        <img
+          src={project.image_url || "/project-image-fallback.png"}
+          alt=""
+          className="absolute top-[5%] left-[3%] h-[74%] w-[36%] rounded-md object-cover"
+        />
+      )}
       <div className="absolute top-[5.5%] left-[43%] h-[16%] w-[56%] flex items-center overflow-hidden">
         <h3 className="truncate font-finger-paint text-lg text-[#5C4A2E]">
           {project.title}

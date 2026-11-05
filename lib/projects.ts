@@ -125,6 +125,18 @@ export async function updateProject(
   `;
 }
 
+export async function updateProjectImage(id: ProjectId, profileId: string, imageUrl: string) {
+  const rows = await sql`
+    update projects set image_url = ${imageUrl}, updated_at = now()
+    where id = ${id}
+      and ${memberOf(profileId)}
+      and status in ('building', 'rejected', 'shipped', 'fulfillment_started')
+      and banned_at is null
+    returning id
+  `;
+  return rows.length > 0;
+}
+
 export const SHIP_AGAIN_MIN_SECONDS = YSWS.limits.shipAgainMinSeconds;
 
 export async function shipProject(

@@ -1,5 +1,5 @@
 import { revalidatePath } from "next/cache";
-import { requireAccess } from "@/lib/admin";
+import { requireAccess, searchProfilesForTeam } from "@/lib/admin";
 import { writeAudit } from "@/lib/audit";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { YSWS } from "@/lib/ysws-config";
@@ -13,6 +13,8 @@ import {
 } from "@/lib/dashboard-access";
 import {
   ActionButton,
+  Avatar,
+  Badge,
   Card,
   CardHeader,
   EmptyRow,
@@ -20,12 +22,19 @@ import {
   Mono,
   PageHeader,
   Table,
-  Textarea,
+  Input,
 } from "../components/ui";
 
-export default async function AdminAccessPage() {
+export default async function AdminAccessPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
   await requireAccess(canManagePlayers);
+  const { q } = await searchParams;
   const rows = await listDashboardAccess();
+  const candidates = await searchProfilesForTeam(q ?? "");
+  const hasAccess = new Set(rows.map((row) => row.slack_id));
 
   async function grant(formData: FormData) {
     "use server";
@@ -69,16 +78,38 @@ export default async function AdminAccessPage() {
 
       <Card>
         <CardHeader title="Give access" />
-        <form action={grant} className="flex flex-col gap-3">
-          <Field label="Slack IDs" hint="One or more, separated by spaces, commas or new lines. Looks like U0123ABCD.">
-            <Textarea name="slack_ids" rows={3} required placeholder="U0123ABCD U0456EFGH" />
-          </Field>
-          <div>
-            <ActionButton pendingLabel="Adding…" icon="plus">
-              Give access
+        <div className="flex flex-col gap-4">
+          <form method="get" className="flex flex-wrap items-end gap-3">
+            <Field label="Find a Wonders account" hint="name, Slack name, email or Slack ID">
+              <Input name="q" defaultValue={q ?? ""} />
+            </Field>
+            <ActionButton pendingLabel="Searching…" variant="outline" size="sm">
+              Search
             </ActionButton>
-          </div>
-        </form>
+          </form>
+          {q && candidates.length === 0 && (
+            <p className="text-sm">No Wonders accounts match that. They need to sign in once first.</p>
+          )}
+          {candidates.map((person) => (
+            <form key={person.slack_id} action={grant} className="flex flex-wrap items-center gap-3">
+              <input type="hidden" name="slack_ids" value={person.slack_id} />
+              <Avatar src={person.slack_avatar_url} />
+              <span className="min-w-40 font-bold">
+                {person.name || person.email}
+                <span className="block text-xs font-normal">
+                  <Mono>{person.slack_id}</Mono>
+                </span>
+              </span>
+              {hasAccess.has(person.slack_id) ? (
+                <Badge>already has access</Badge>
+              ) : (
+                <ActionButton pendingLabel="Adding…" icon="plus" size="sm">
+                  Give access
+                </ActionButton>
+              )}
+            </form>
+          ))}
+        </div>
       </Card>
 
       <Table headers={["Slack ID", "Name", "Added by", "Added", ""]}>

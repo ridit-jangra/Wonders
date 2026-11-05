@@ -878,7 +878,17 @@ export default async function EditProjectPage({
         </div>
       )}
       <section className="w-full rounded-md bg-[#E7E2C9] p-4 md:max-w-[90%]">
-        <h2 className="font-finger-paint text-xl text-[#5C4A2E]">the team :3</h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-finger-paint text-xl text-[#5C4A2E]">the team :3</h2>
+          <a
+            href="/docs/collaborators"
+            target="_blank"
+            rel="noopener"
+            className="font-finger-paint text-[#5C4A2E] underline underline-offset-4 hover:text-[#3e7d7d]"
+          >
+            why collaborate?
+          </a>
+        </div>
         <ul className="mt-3 flex flex-col gap-2">
           {members.map((member) => (
             <li key={member.profileId} className="flex items-center gap-3">

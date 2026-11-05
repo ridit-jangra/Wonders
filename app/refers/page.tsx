@@ -156,13 +156,16 @@ export default async function RefersPage() {
               ) : (
                 <PageList as="div" className="flex flex-col gap-2">
                   {stats.recentClicks.map((at, i) => (
-                    <div
-                      key={`${at}-${i}`}
-                      className="flex items-center justify-between rounded-md bg-[#E7E2C9] px-4 py-3 font-finger-paint text-sm text-[#5C4A2E]"
-                    >
-                      <span>someone opened your link</span>
-                      <span className="text-[#5C4A2E]/60">
-                        <LocalTime iso={at} />
+                    <div key={`${at}-${i}`} className="flex items-center gap-3 rounded-md bg-[#E7E2C9] p-3">
+                      <span className="h-10 w-10 shrink-0 rounded-full bg-[#8C8368]/30" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-finger-paint text-base text-[#5C4A2E]">someone opened your link</p>
+                        <p className="font-finger-paint text-xs text-[#5C4A2E]/60">
+                          <LocalTime iso={at} />
+                        </p>
+                      </div>
+                      <span className="rounded-full bg-[#8C8368]/25 px-3 py-1 font-finger-paint text-xs text-[#5C4A2E]">
+                        click
                       </span>
                     </div>
                   ))}

@@ -101,6 +101,13 @@ export default function ShipDialogButton({
                     ? "this number came from Hack Club Auth and might be old. give us a new one if it changed!"
                     : "we need a phone number for shipping. it can be a new one, not just the one on your Hack Club Auth account!"}
                 </p>
+                <p className="font-finger-paint text-xs text-[#5C4A2E]/70 sm:text-sm">
+                  you can also update it anytime in your{" "}
+                  <a href="/dashboard/profile" target="_blank" rel="noopener" className="underline underline-offset-2">
+                    account settings
+                  </a>
+                  .
+                </p>
                 <div className="flex w-full items-stretch gap-2">
                   <CountrySelect value={iso} onChange={setIso} />
                   <input type="hidden" name="phone_country" value={iso} />

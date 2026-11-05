@@ -7,12 +7,17 @@ import { cookies, headers } from "next/headers";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
 import {
   getProfileAddress,
+  getPhonePrefill,
   getSessionProfile,
   revokeSessions,
+  saveShippingPhone,
   updateInterest,
 } from "@/lib/profiles";
 import { getProjects, type ProjectStatus } from "@/lib/projects";
 import SubmitButton from "../components/SubmitButton";
+import PhoneForm from "../components/PhoneForm";
+import { normalizePhone, splitPhone } from "@/lib/phone";
+import { checkRateLimit } from "@/lib/rate-limit";
 import BackButton from "@/app/dashboard/components/BackButton";
 
 const STAT_GROUPS: { label: string; statuses: ProjectStatus[] }[] = [
@@ -63,6 +68,8 @@ export default async function ProfilePage() {
   if (!profile) redirect("/onboarding");
 
   const address = await getProfileAddress(profile.id);
+  const phonePrefill = await getPhonePrefill(profile.id);
+  const phoneStart = splitPhone(phonePrefill.phone);
   const userAgent = (await headers()).get("user-agent") ?? "unknown device";
   const hackatimeConnected = Boolean(profile.hackatime_connected_at);
   const projects = await getProjects(profile.id);
@@ -84,6 +91,25 @@ export default async function ProfilePage() {
     if (!interest) return;
 
     await updateInterest(currentProfile.id, interest);
+    revalidatePath("/dashboard/profile");
+  }
+
+  async function savePhoneAction(formData: FormData) {
+    "use server";
+
+    const current = verifySessionCookie((await cookies()).get(SESSION_COOKIE)?.value);
+    if (!current) redirect("/login");
+    const currentProfile = await getSessionProfile(current);
+    if (!currentProfile) redirect("/onboarding");
+    if (!(await checkRateLimit("phone-save", current.slackId, 20, 60)).allowed) return;
+
+    const phone = normalizePhone(
+      String(formData.get("phone_country") ?? ""),
+      String(formData.get("phone_number") ?? ""),
+    );
+    if (!phone) return;
+
+    await saveShippingPhone(currentProfile.id, phone);
     revalidatePath("/dashboard/profile");
   }
 
@@ -207,6 +233,12 @@ export default async function ProfilePage() {
             no address on file yet :c
           </p>
         )}
+        <PhoneForm
+          action={savePhoneAction}
+          initialIso={phoneStart?.iso ?? "US"}
+          initialNumber={phoneStart?.number ?? ""}
+          fromAuth={phonePrefill.fromAuth}
+        />
         <p className="mt-3 font-finger-paint text-sm text-[#5C4A2E]/70">
           wrong or out of date?{" "}
           <a

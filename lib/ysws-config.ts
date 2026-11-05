@@ -10,7 +10,7 @@ export const YSWS = {
   tagline: "A Hack Club YSWS where you make something you have wanted to make, ship it, and get a surprise.",
 
   reviewTool: {
-    name: "Ari",
+    name: "Uri",
     urlTemplate: "",
   },
 

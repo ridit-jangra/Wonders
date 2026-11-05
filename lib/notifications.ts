@@ -1,9 +1,10 @@
 import "server-only";
+import { YSWS } from "@/lib/ysws-config";
 import { listMembers } from "@/lib/collaborators";
 import { after } from "next/server";
 import { sendDirectMessage } from "@/lib/slack";
 
-const DASHBOARD_URL = "https://wonders.ridit.space/dashboard";
+const DASHBOARD_URL = `${YSWS.origin}/dashboard`;
 
 export type WonderEvent =
   | "in_review"

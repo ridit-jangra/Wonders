@@ -45,6 +45,7 @@ export default async function AdminLayout({
     "/admin/fulfillment": canFulfill(admin),
     "/admin/referrals": canFulfill(admin),
     "/admin/users": canManagePlayers(admin),
+    "/admin/deletions": canManagePlayers(admin),
     "/admin/audit": canViewAudit(admin),
     "/admin/team": canManageTeam(admin),
     "/admin/budget": canManageTeam(admin),

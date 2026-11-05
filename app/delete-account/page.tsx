@@ -46,7 +46,7 @@ export default async function DeleteAccountPage({
       actor: current.slackId,
       action: "account.delete_request",
       target: owner.id,
-      detail: { reason },
+      detail: { reason, name: owner.slack_display_name || owner.name, slack_id: current.slackId },
       sensitive: true,
     });
     await postChannelMessage(

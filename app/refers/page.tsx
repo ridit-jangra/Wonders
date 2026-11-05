@@ -14,6 +14,7 @@ import {
 import Sidebar from "@/app/dashboard/components/Sidebar";
 import { Profile } from "@/app/dashboard/components/Profile";
 import LocalTime from "@/app/dashboard/components/LocalTime";
+import PageList from "@/app/dashboard/components/PageList";
 import CopyLink from "./CopyLink";
 import PinHero from "./PinHero";
 import Panel from "./Panel";
@@ -151,9 +152,9 @@ export default async function RefersPage() {
               {stats.recentClicks.length === 0 ? (
                 <p className="rounded-md bg-[#E7E2C9] px-4 py-3 font-finger-paint text-base text-[#5C4A2E]/70">no clicks yet.</p>
               ) : (
-                <ul className="flex flex-col gap-2">
+                <PageList as="div" className="flex flex-col gap-2">
                   {stats.recentClicks.map((at, i) => (
-                    <li
+                    <div
                       key={`${at}-${i}`}
                       className="flex items-center justify-between rounded-md bg-[#E7E2C9] px-4 py-3 font-finger-paint text-sm text-[#5C4A2E]"
                     >
@@ -161,9 +162,9 @@ export default async function RefersPage() {
                       <span className="text-[#5C4A2E]/60">
                         <LocalTime iso={at} />
                       </span>
-                    </li>
+                    </div>
                   ))}
-                </ul>
+                </PageList>
               )}
               <p className="mt-3 font-finger-paint text-xs text-[#5C4A2E]/60">
                 clicks are anonymous. you see names once someone signs up.

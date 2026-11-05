@@ -50,7 +50,7 @@ export default function PinHero({
         </div>
       </div>
 
-      <div className="flex flex-col items-center gap-4 rounded-lg border-2 border-[#8C8368]/30 bg-[#E7E2C9] p-5 text-center @4xl:hidden">
+      <div className="flex flex-col items-center gap-4 rounded-lg bg-[#E7E2C9] p-5 text-center @4xl:hidden">
         <img src="/hc-pin.png" alt="Hack Club enamel pin" className="w-56 -rotate-6" />
         <h2 className="font-finger-paint text-2xl text-[#5C4A2E]">
           bring <span className="font-poppins">{REFERRALS_FOR_PIN}</span> friends, get a Hack Club pin

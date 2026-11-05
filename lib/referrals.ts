@@ -110,7 +110,7 @@ export async function getReferralStats(profileId: string): Promise<ReferralStats
   const recent = await sql<{ created_at: string }[]>`
     select created_at from referral_clicks
     where referrer_id = ${profileId}
-    order by created_at desc limit 8
+    order by created_at desc limit 50
   `;
   return {
     slug: profile.referral_slug,

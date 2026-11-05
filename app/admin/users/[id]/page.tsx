@@ -27,6 +27,7 @@ import { countryName } from "@/lib/phone";
 import { writeAudit } from "@/lib/audit";
 import { banPlayer, getActiveBan, unbanPlayer } from "@/lib/bans";
 import { canManagePlayers } from "@/lib/security/roles";
+import AdminTime from "@/app/admin/components/AdminTime";
 
 export default async function AdminUserDetailPage({
   params,
@@ -153,7 +154,7 @@ export default async function AdminUserDetailPage({
               ["Email", profile.email],
               ["Slack ID", <Mono key="slack">{profile.slack_id}</Mono>],
               ["Interest", profile.interest],
-              ["Joined", <Mono key="joined">{new Date(profile.created_at).toLocaleString()}</Mono>],
+              ["Joined", <Mono key="joined"><AdminTime iso={profile.created_at} /></Mono>],
             ]}
           />
         </Card>
@@ -193,7 +194,7 @@ export default async function AdminUserDetailPage({
         {ban ? (
           <form action={unban} className="flex flex-col gap-3">
             <Callout tone="danger">
-              Banned {ban.expires_at ? `until ${new Date(ban.expires_at).toLocaleDateString()}` : "permanently"}:{" "}
+              Banned {ban.expires_at ? `until $<AdminTime iso={ban.expires_at} />` : "permanently"}:{" "}
               {ban.reason}
             </Callout>
             <div>

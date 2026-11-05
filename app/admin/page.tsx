@@ -14,6 +14,7 @@ import {
 } from "./components/ui";
 import { requireAdmin } from "@/lib/admin";
 import { canFulfill } from "@/lib/security/roles";
+import AdminTime from "@/app/admin/components/AdminTime";
 
 const EMPTY = { projects: [] as ProjectWithOwner[], total: 0 };
 
@@ -63,7 +64,7 @@ function Ticket({
           </div>
         </div>
         <Muted className="shrink-0 text-sm">
-          <Mono>{new Date(project.created_at).toLocaleDateString()}</Mono>
+          <Mono><AdminTime iso={project.created_at} /></Mono>
         </Muted>
       </div>
     </CardLink>
@@ -143,7 +144,7 @@ export default async function AdminOverviewPage() {
                   <Mono>{entry.reviewed_by}</Mono>
                 </Muted>
                 <Muted className="ml-auto">
-                  <Mono>{new Date(entry.created_at).toLocaleString()}</Mono>
+                  <Mono><AdminTime iso={entry.created_at} /></Mono>
                 </Muted>
               </li>
             ))}

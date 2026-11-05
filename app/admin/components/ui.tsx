@@ -4,6 +4,7 @@ import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import HcIcon, { type GlyphName } from "@hackclub/icons";
 import SubmitButton from "@/app/dashboard/components/SubmitButton";
 import type { ProjectHistoryEntry } from "@/lib/project-history";
+import AdminTime from "./AdminTime";
 
 export type { GlyphName };
 
@@ -518,7 +519,7 @@ export function HistoryTimeline({
             )}
           </div>
           <p className="hc-caption mt-1 text-xs">
-            <Mono>{new Date(entry.created_at).toLocaleString()}</Mono> · by{" "}
+            <Mono><AdminTime iso={entry.created_at} /></Mono> · by{" "}
             <Mono>{entry.reviewed_by}</Mono>
           </p>
           {entry.reviewer_note && <p className="mt-1">&ldquo;{entry.reviewer_note}&rdquo;</p>}

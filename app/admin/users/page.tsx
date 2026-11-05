@@ -13,6 +13,7 @@ import {
 } from "../components/ui";
 import { requireAccess } from "@/lib/admin";
 import { canManagePlayers } from "@/lib/security/roles";
+import AdminTime from "@/app/admin/components/AdminTime";
 
 const PER_PAGE = 25;
 
@@ -61,7 +62,7 @@ export default async function AdminUsersPage({
               </td>
               <td>
                 <Muted>
-                  <Mono>{new Date(profile.created_at).toLocaleDateString()}</Mono>
+                  <Mono><AdminTime iso={profile.created_at} /></Mono>
                 </Muted>
               </td>
             </tr>

@@ -25,6 +25,7 @@ import {
   Table,
   TextLink,
 } from "../../components/ui";
+import AdminTime from "@/app/admin/components/AdminTime";
 
 const hours = (seconds: number) => `${(seconds / 3600).toFixed(1)}h`;
 
@@ -87,7 +88,7 @@ export default async function AdminWonderPage({ params }: { params: Promise<{ id
             <DescriptionList
               items={[
                 ["Owner", owner ? <TextLink href={`/admin/users/${project.profile_id}`}>{owner.name || owner.email}</TextLink> : null],
-                ["Created", <Mono key="c">{new Date(project.created_at).toLocaleString()}</Mono>],
+                ["Created", <Mono key="c"><AdminTime iso={project.created_at} /></Mono>],
                 [
                   "Repo",
                   project.github_url ? (
@@ -227,7 +228,7 @@ export default async function AdminWonderPage({ params }: { params: Promise<{ id
                     {review.verdict === "approved" ? "Approved" : "Changes requested"}
                   </Badge>
                   <Muted>
-                    <Mono>{review.reviewed_by}</Mono> · <Mono>{new Date(review.created_at).toLocaleString()}</Mono>
+                    <Mono>{review.reviewed_by}</Mono> · <Mono><AdminTime iso={review.created_at} /></Mono>
                   </Muted>
                 </div>
                 {review.feedback && <p className="whitespace-pre-wrap">&ldquo;{review.feedback}&rdquo;</p>}
@@ -255,7 +256,7 @@ export default async function AdminWonderPage({ params }: { params: Promise<{ id
                   {entry.title && <strong>{entry.title}</strong>}
                   {entry.authorName && <Badge>{entry.authorName}</Badge>}
                   <Muted>
-                    <Mono>{new Date(entry.createdAt).toLocaleString()}</Mono>
+                    <Mono><AdminTime iso={entry.createdAt} /></Mono>
                   </Muted>
                 </div>
                 <p className="whitespace-pre-wrap">{entry.content}</p>

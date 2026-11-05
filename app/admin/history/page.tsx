@@ -13,6 +13,7 @@ import {
   TextLink,
 } from "../components/ui";
 import { requireAdmin } from "@/lib/admin";
+import AdminTime from "@/app/admin/components/AdminTime";
 
 const PER_PAGE = 50;
 
@@ -40,7 +41,7 @@ export default async function AdminHistoryPage({
             <tr key={entry.id}>
               <td className="whitespace-nowrap">
                 <Muted>
-                  <Mono>{new Date(entry.created_at).toLocaleString()}</Mono>
+                  <Mono><AdminTime iso={entry.created_at} /></Mono>
                 </Muted>
               </td>
               <td className="whitespace-nowrap">

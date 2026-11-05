@@ -17,6 +17,7 @@ import {
 } from "../components/ui";
 import { requireAccess } from "@/lib/admin";
 import { canReview } from "@/lib/security/roles";
+import AdminTime from "@/app/admin/components/AdminTime";
 
 const PER_PAGE = 25;
 
@@ -198,7 +199,7 @@ export default async function AdminReviewQueuePage({
                 </td>
                 <td>
                   <Muted>
-                    <Mono>{new Date(project.created_at).toLocaleDateString()}</Mono>
+                    <Mono><AdminTime iso={project.created_at} /></Mono>
                   </Muted>
                 </td>
               </tr>

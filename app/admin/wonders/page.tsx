@@ -15,6 +15,7 @@ import {
 } from "../components/ui";
 import Select from "../components/Select";
 import { requireAdmin } from "@/lib/admin";
+import AdminTime from "@/app/admin/components/AdminTime";
 
 const PER_PAGE = 25;
 
@@ -83,7 +84,7 @@ export default async function AdminWondersPage({
               </td>
               <td>
                 <Muted>
-                  <Mono>{new Date(project.created_at).toLocaleDateString()}</Mono>
+                  <Mono><AdminTime iso={project.created_at} /></Mono>
                 </Muted>
               </td>
             </tr>

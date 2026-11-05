@@ -618,7 +618,6 @@
   font-size: 14px;
   color: var(--text);
   background: color-mix(in srgb, var(--tone) 10%, var(--surface));
-  border: 1px solid color-mix(in srgb, var(--tone) 35%, transparent);
 }
 
 .hc-callout > svg {

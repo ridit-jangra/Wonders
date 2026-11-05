@@ -31,6 +31,7 @@ import { fetchHackatimeProjects } from "@/lib/hackatime";
 import {
   deleteProject,
   getProject,
+  getQueuePosition,
   SHIP_AGAIN_MIN_SECONDS,
   shipProject,
   unshipProject,
@@ -165,6 +166,7 @@ export default async function EditProjectPage({
   const liveEdit = (project.status === "shipped" || project.status === "fulfillment_started") && !isBanned;
   const editable = ((project.status === "building" || project.status === "rejected") && !isBanned) || liveEdit;
   const underReview = project.status === "in_review" || project.status === "second_pass";
+  const queue = underReview ? await getQueuePosition(project.id) : null;
   const lockedLabel = isBanned ? "banned :(" : underReview ? "in review :3" : "shipped :D";
 
   const timeline = await getProjectTimeline(project.id, project.profile_id);
@@ -653,6 +655,12 @@ export default async function EditProjectPage({
             <CopyCode code={`${YSWS.origin}/w/${project.id}`} />
           </div>
         )}
+      {queue && (
+        <p className="w-fit rounded-md bg-[#E7E2C9] px-4 py-2 font-finger-paint text-lg text-[#5C4A2E]">
+          you&apos;re <span className="text-[#3e7d7d]">#{queue.position}</span> in the review queue
+          <span className="text-[#5C4A2E]/60"> (of {queue.total})</span> :3
+        </p>
+      )}
       {isCollaborator && ownerMember && (
         <p className="font-finger-paint text-[#5C4A2E]/70">
           you&apos;re on {ownerMember.name}&apos;s team for this one :3 you can edit it and ship it, only they can delete it

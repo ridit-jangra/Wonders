@@ -391,3 +391,28 @@ export async function adminUnshipProject(
   return rows.length > 0 ? row.status : null;
 }
 
+
+export async function getQueuePosition(id: ProjectId): Promise<{ position: number; total: number } | null> {
+  const [row] = await sql<{ position: number; total: number }[]>`
+    with queue as (
+      select p.id,
+        row_number() over (
+          order by coalesce(
+            (select min(h.created_at) from project_history h
+              where h.project_id = p.id and h.to_status = 'in_review'
+                and h.created_at > coalesce(
+                  (select max(a.created_at) from project_history a
+                    where a.project_id = p.id and a.to_status in ('shipped', 'fulfillment_started')),
+                  '-infinity'::timestamptz
+                )),
+            p.created_at
+          ) asc, p.id asc
+        )::int as position,
+        count(*) over ()::int as total
+      from projects p
+      where p.status in ('in_review', 'second_pass') and p.banned_at is null
+    )
+    select position, total from queue where id = ${id}
+  `;
+  return row ?? null;
+}

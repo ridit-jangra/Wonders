@@ -1,5 +1,17 @@
 import { listRecentHistory } from "@/lib/project-history";
-import { Card, HistoryTimeline, PageHeader, Pagination } from "../components/ui";
+import {
+  Badge,
+  Card,
+  EmptyRow,
+  Icon,
+  Mono,
+  Muted,
+  PageHeader,
+  Pagination,
+  StatusBadge,
+  Table,
+  TextLink,
+} from "../components/ui";
 import { requireAdmin } from "@/lib/admin";
 
 const PER_PAGE = 50;
@@ -22,8 +34,37 @@ export default async function AdminHistoryPage({
     <div>
       <PageHeader title="Activity" count={total} description="Every status change, newest first." />
 
-      <Card>
-        <HistoryTimeline entries={entries} linkProjects />
+      <Card padding="flush">
+        <Table headers={["When", "Wonder", "Change", "By", "Note"]}>
+          {entries.map((entry) => (
+            <tr key={entry.id}>
+              <td className="whitespace-nowrap">
+                <Muted>
+                  <Mono>{new Date(entry.created_at).toLocaleString()}</Mono>
+                </Muted>
+              </td>
+              <td className="whitespace-nowrap">
+                <TextLink href={`/admin/wonders/${entry.project_id}`} className="font-bold">
+                  #{entry.project_id}
+                </TextLink>
+              </td>
+              <td>
+                <span className="inline-flex items-center gap-2 whitespace-nowrap">
+                  {entry.from_status ? <StatusBadge status={entry.from_status} /> : <Badge>New</Badge>}
+                  <Icon glyph="view-forward" size={16} className="hc-muted" />
+                  <StatusBadge status={entry.to_status} />
+                </span>
+              </td>
+              <td className="whitespace-nowrap">
+                <Mono>{entry.reviewed_by}</Mono>
+              </td>
+              <td className="max-w-md">
+                {entry.reviewer_note ? <span className="line-clamp-2">&ldquo;{entry.reviewer_note}&rdquo;</span> : <Muted>—</Muted>}
+              </td>
+            </tr>
+          ))}
+          {entries.length === 0 && <EmptyRow colSpan={5} title="No activity yet" icon="history" />}
+        </Table>
       </Card>
 
       <Pagination

@@ -38,7 +38,7 @@ export default async function ProjectsPage() {
       <Sidebar showRefers={await canUseReferrals(profile.slack_id)} />
       <Profile />
       <main className="relative min-w-0 flex-1 pr-6 pt-20 md:pr-10 md:pt-10">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col items-start gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
           <h1 className="font-finger-paint text-4xl text-[#BFD8A8]">
             Your Wonders
           </h1>

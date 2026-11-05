@@ -168,10 +168,20 @@ export default async function AdminReviewQueuePage({
             {queue.projects.map((project) => (
               <tr key={project.id}>
                 <td>
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={project.image_url || "/project-image-fallback.png"}
+                      alt=""
+                      className="h-10 w-14 rounded object-cover"
+                    />
+                    <div className="flex flex-wrap items-center gap-2">
                     <WonderLink id={project.id} title={project.title} />
+                    <Muted>
+                      <Mono>#{project.id}</Mono>
+                    </Muted>
                     {project.on_hold && <Badge tone="warning">On hold</Badge>}
                     {project.ai_review_status === "flagged" && <Badge tone="warning">Auto-check flagged</Badge>}
+                    </div>
                   </div>
                 </td>
                 <td>

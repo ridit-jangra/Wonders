@@ -5,6 +5,7 @@ import { Profile } from "@/app/dashboard/components/Profile";
 import { canUseReferrals } from "@/lib/referrals";
 import { getAdminSession } from "@/lib/admin";
 import { canManagePlayers } from "@/lib/security/roles";
+import { canCreateWonders } from "@/lib/creation";
 import ExploreClient from "./_components/ExploreClient";
 
 export const metadata: Metadata = {
@@ -28,7 +29,7 @@ export default async function ExplorePage() {
 
   return (
     <>
-      <ExploreClient loggedIn={Boolean(session)} showRefers={showRefers} isAdmin={isAdmin} />
+      <ExploreClient loggedIn={Boolean(session)} showRefers={showRefers} isAdmin={isAdmin} canCreate={await canCreateWonders()} />
       {session && <Profile />}
     </>
   );

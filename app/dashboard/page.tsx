@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
+import { canCreateWonders } from "@/lib/creation";
 import { hasDashboardAccess } from "@/lib/dashboard-access";
 import UnderConstruction from "@/app/components/UnderConstruction";
 import { redirect } from "next/navigation";
@@ -12,6 +13,7 @@ import AddProjectCard from "./components/AddProjectCard";
 import AddProjectCardWide from "./components/AddProjectCardWide";
 
 export default async function DashPage() {
+  const canCreate = await canCreateWonders();
   const cookieStore = await cookies();
   const session = verifySessionCookie(cookieStore.get(SESSION_COOKIE)?.value);
 
@@ -58,12 +60,16 @@ export default async function DashPage() {
               size="aspect-square w-full"
             />
           ))}
-          <div className="lg:hidden">
-            <AddProjectCard size="aspect-square w-full" />
-          </div>
-          <div className="col-span-full hidden lg:block">
-            <AddProjectCardWide className="w-full" />
-          </div>
+          {canCreate && (
+            <>
+              <div className="lg:hidden">
+                <AddProjectCard size="aspect-square w-full" />
+              </div>
+              <div className="col-span-full hidden lg:block">
+                <AddProjectCardWide className="w-full" />
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

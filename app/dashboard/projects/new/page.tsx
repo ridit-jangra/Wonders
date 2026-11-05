@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
+import { canCreateWonders } from "@/lib/creation";
 import { hasDashboardAccess } from "@/lib/dashboard-access";
 import UnderConstruction from "@/app/components/UnderConstruction";
 import { redirect } from "next/navigation";
@@ -35,6 +36,16 @@ export default async function NewProjectPage({
     return <UnderConstruction />;
   }
 
+  if (!(await canCreateWonders())) {
+    return (
+      <div className="relative flex min-h-screen flex-col gap-6 bg-[#F0EBD1] px-6 pt-24 pb-10 sm:px-10 md:px-14 md:py-16">
+        <BackButton href="/wonders" />
+        <h1 className="font-finger-paint text-3xl text-[#5C4A2E] sm:text-4xl">Making wonders isn&apos;t open yet</h1>
+        <p className="font-finger-paint text-[#5C4A2E]/70">hang tight, it opens soon :3</p>
+      </div>
+    );
+  }
+
   async function submitProject(formData: FormData) {
     "use server";
 
@@ -45,6 +56,9 @@ export default async function NewProjectPage({
     }
     if (!(await hasDashboardAccess(current.slackId))) {
       redirect("/");
+    }
+    if (!(await canCreateWonders())) {
+      redirect("/wonders");
     }
 
     const profile = await getSessionProfile(current);

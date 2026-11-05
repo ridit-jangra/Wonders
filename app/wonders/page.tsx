@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
+import { canCreateWonders } from "@/lib/creation";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
@@ -14,6 +15,7 @@ import AddProjectCardWide from "@/app/dashboard/components/AddProjectCardWide";
 import JoinWonderButton from "@/app/dashboard/components/JoinWonderButton";
 
 export default async function ProjectsPage() {
+  const canCreate = await canCreateWonders();
   const cookieStore = await cookies();
   const session = verifySessionCookie(cookieStore.get(SESSION_COOKIE)?.value);
 
@@ -47,6 +49,10 @@ export default async function ProjectsPage() {
           </JoinWonderButton>
         </div>
 
+        {!canCreate && (
+          <p className="mt-4 font-finger-paint text-[#D9D3AF]">making new wonders opens soon :3</p>
+        )}
+
         <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 md:hidden">
           {projects.map((project) => (
             <ProjectCard
@@ -55,7 +61,7 @@ export default async function ProjectsPage() {
               size="aspect-square w-full"
             />
           ))}
-          <AddProjectCard size="aspect-square w-full" redirectTo="/wonders" />
+          {canCreate && <AddProjectCard size="aspect-square w-full" redirectTo="/wonders" />}
         </div>
 
         <div className="mt-8 hidden flex-col items-stretch gap-3 md:flex">
@@ -66,10 +72,12 @@ export default async function ProjectsPage() {
               className="w-full"
             />
           ))}
-          <AddProjectCardWide
-            className="w-full"
-            redirectTo="/wonders"
-          />
+          {canCreate && (
+            <AddProjectCardWide
+              className="w-full"
+              redirectTo="/wonders"
+            />
+          )}
         </div>
       </main>
     </div>

@@ -45,10 +45,12 @@ export default function ExploreClient({
   loggedIn,
   showRefers = false,
   isAdmin = false,
+  canCreate = true,
 }: {
   loggedIn: boolean;
   showRefers?: boolean;
   isAdmin?: boolean;
+  canCreate?: boolean;
 }) {
   const [tab, setTab] = useState<Tab>("wonders");
   const [query, setQuery] = useState("");
@@ -170,6 +172,7 @@ export default function ExploreClient({
                   <p className="max-w-md font-finger-paint text-lg text-[#5C4A2E]/70 sm:text-xl">
                     nobody has started a wonder yet, be the first :3
                   </p>
+                  {(canCreate || !loggedIn) && (
                   <Link
                     href={loggedIn ? "/dashboard/projects/new?redirect_to=%2Fexplore" : "/login"}
                     className="group relative mt-2 block"
@@ -183,6 +186,7 @@ export default function ExploreClient({
                       {loggedIn ? "Make a wonder :3" : "Log in to start :3"}
                     </span>
                   </Link>
+                  )}
                 </div>
               )}
             </div>

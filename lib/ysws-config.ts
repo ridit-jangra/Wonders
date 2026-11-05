@@ -21,6 +21,7 @@ export const YSWS = {
   access: {
     dashboardOpen: true,
     referralsOpen: true,
+    creationOpen: false,
   },
 
   rates: {

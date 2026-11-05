@@ -8,6 +8,7 @@ import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
 import { getSessionProfile } from "@/lib/profiles";
 import { getProjects } from "@/lib/projects";
 import ProjectCard from "./components/ProjectCard";
+import AddProjectCard from "./components/AddProjectCard";
 import AddProjectCardWide from "./components/AddProjectCardWide";
 
 export default async function DashPage() {
@@ -57,7 +58,10 @@ export default async function DashPage() {
               size="aspect-square w-full"
             />
           ))}
-          <div className="col-span-full">
+          <div className="lg:hidden">
+            <AddProjectCard size="aspect-square w-full" />
+          </div>
+          <div className="col-span-full hidden lg:block">
             <AddProjectCardWide className="w-full" />
           </div>
         </div>

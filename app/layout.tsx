@@ -51,6 +51,10 @@ export const metadata: Metadata = {
   creator: "Hack Club",
   publisher: "Hack Club",
   category: "education",
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION || undefined,
+    other: process.env.BING_SITE_VERIFICATION ? { "msvalidate.01": process.env.BING_SITE_VERIFICATION } : undefined,
+  },
   openGraph: {
     type: "website",
     siteName: "Wonders",

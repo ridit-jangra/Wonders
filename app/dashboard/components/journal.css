@@ -44,3 +44,15 @@
 .wonders-journal-md th,
 .wonders-journal-md td { border: 1px solid #b8ad85; padding: 0.25rem 0.6rem; }
 .wonders-journal-md hr { border-color: #b8ad85; }
+
+.wonders-journal-md.is-admin { font-family: inherit; color: inherit; }
+.wonders-journal-md.is-admin h1,
+.wonders-journal-md.is-admin h2,
+.wonders-journal-md.is-admin h3 { font-family: inherit; font-weight: 700; }
+.wonders-journal-md.is-admin a { color: inherit; opacity: 0.85; }
+.wonders-journal-md.is-admin blockquote { border-left-color: currentColor; color: inherit; opacity: 0.8; }
+.wonders-journal-md.is-admin code,
+.wonders-journal-md.is-admin pre { background: rgba(127, 127, 127, 0.2); }
+.wonders-journal-md.is-admin th,
+.wonders-journal-md.is-admin td,
+.wonders-journal-md.is-admin hr { border-color: rgba(127, 127, 127, 0.4); }

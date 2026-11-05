@@ -25,6 +25,7 @@ import {
   Table,
   TextLink,
 } from "../../components/ui";
+import JournalMarkdown from "@/app/dashboard/components/JournalMarkdown";
 import AdminTime from "@/app/admin/components/AdminTime";
 
 const hours = (seconds: number) => `${(seconds / 3600).toFixed(1)}h`;
@@ -259,7 +260,7 @@ export default async function AdminWonderPage({ params }: { params: Promise<{ id
                     <Mono><AdminTime iso={entry.createdAt} /></Mono>
                   </Muted>
                 </div>
-                <p className="whitespace-pre-wrap">{entry.content}</p>
+                <JournalMarkdown admin>{entry.content}</JournalMarkdown>
               </li>
             ))}
           </ul>

@@ -203,7 +203,7 @@ function createPortalToast(toast: Toast | null) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.98, transition: { duration: 0.15 } }}
             transition={{ type: "spring", stiffness: 420, damping: 30 }}
-            className={`flex w-fit max-w-[calc(100vw-9rem)] items-center justify-center gap-2 rounded-[12px] border border-[#8C8368]/30 bg-[#F0EBD1] px-5 py-3 font-finger-paint text-lg ${
+            className={`flex w-fit max-w-[calc(100vw-9rem)] items-center justify-center gap-2 rounded-[12px] bg-[#F0EBD1] px-5 py-3 font-finger-paint text-lg ${
               toast === "error" ? "text-[#A33B32]" : "text-[#5C4A2E]"
             }`}
           >

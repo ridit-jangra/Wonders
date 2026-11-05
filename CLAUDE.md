@@ -27,6 +27,8 @@ Next.js 16 App Router, React 19, Tailwind v4, framer-motion. Read `AGENTS.md` (i
 - `params` and `searchParams` are **Promises** and must be awaited (see `app/dashboard/projects/edit/[id]/page.tsx`).
 - Layouts use the generated `LayoutProps<"/">` helper type rather than hand-written props (see `app/layout.tsx`).
 
+Digits are always JetBrains Mono on player-facing pages: `app/fonts/jetbrains-mono-latin.woff2` is loaded with `next/font/local` as `--font-digits` (restricted to `U+0030-0039` with `adjustFontFallback: false` so it never catches letters), and `@theme` puts it first in the `font-finger-paint` and `font-poppins` stacks. Any text set in those two fonts gets mono digits automatically; Phantom Sans (landing FAQ, docs content) and the admin dashboard keep their own fonts.
+
 Tailwind v4 has **no `tailwind.config`**. Theme tokens live in the `@theme inline` block in `app/globals.css`; add new fonts/colors there. `font-finger-paint` is the signature display font used for nearly all UI copy.
 
 ## Architecture

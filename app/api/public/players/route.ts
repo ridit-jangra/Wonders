@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
+import { limitPublicApi } from "@/lib/public-api-limit";
 
 const PUBLIC_STATUSES = ["shipped", "fulfillment_started", "fulfilled"];
 
-export async function GET() {
+export async function GET(request: Request) {
+  const limited = await limitPublicApi(request, "public-players");
+  if (limited) return limited;
   let profiles, projects;
   try {
     [profiles, projects] = await Promise.all([

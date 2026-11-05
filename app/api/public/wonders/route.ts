@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
+import { limitPublicApi } from "@/lib/public-api-limit";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const limited = await limitPublicApi(request, "public-wonders");
+  if (limited) return limited;
   try {
     const data = await sql<
       {

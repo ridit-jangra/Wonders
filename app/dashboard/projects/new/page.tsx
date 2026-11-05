@@ -9,6 +9,7 @@ import { createProject } from "@/lib/projects";
 import { uploadThumbnail } from "@/lib/storage";
 import ThumbnailPicker from "@/app/dashboard/components/ThumbnailPicker";
 import SubmitButton from "@/app/dashboard/components/SubmitButton";
+import BackButton from "@/app/dashboard/components/BackButton";
 import LinkPending from "@/app/dashboard/components/LinkPending";
 import Link from "next/link";
 
@@ -84,6 +85,7 @@ export default async function NewProjectPage({
           className="h-full w-full object-fill"
         />
       </div>
+      <BackButton href="/wonders" />
       <h1 className="font-finger-paint text-3xl text-[#5C4A2E] sm:text-4xl lg:text-5xl">
         Create your Wonder
       </h1>

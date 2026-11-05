@@ -61,6 +61,7 @@ import LockRibbons from "@/app/dashboard/components/LockRibbons";
 import ProjectTimeline from "@/app/dashboard/components/ProjectTimeline";
 import DeleteProjectButton from "@/app/dashboard/components/DeleteProjectButton";
 import CopyCode from "@/app/dashboard/components/CopyCode";
+import BackButton from "@/app/dashboard/components/BackButton";
 import { YSWS } from "@/lib/ysws-config";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -636,6 +637,7 @@ export default async function EditProjectPage({
       </div>
       <div className="relative flex flex-col gap-6 md:-mr-14 md:-ml-4 md:pr-14 md:pl-4">
       {!editable && <LockRibbons />}
+      <BackButton href="/wonders" />
       <h1 className="font-finger-paint text-3xl text-[#5C4A2E] sm:text-4xl lg:text-5xl">
         Edit your Wonder
       </h1>

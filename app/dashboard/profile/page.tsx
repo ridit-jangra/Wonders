@@ -13,6 +13,7 @@ import {
 } from "@/lib/profiles";
 import { getProjects, type ProjectStatus } from "@/lib/projects";
 import SubmitButton from "../components/SubmitButton";
+import BackButton from "@/app/dashboard/components/BackButton";
 
 const STAT_GROUPS: { label: string; statuses: ProjectStatus[] }[] = [
   { label: "building :)", statuses: ["building"] },
@@ -107,6 +108,7 @@ export default async function ProfilePage() {
           className="h-full w-full object-fill"
         />
       </div>
+      <BackButton href="/dashboard" />
       <h1 className="font-finger-paint text-3xl text-[#5C4A2E] sm:text-4xl lg:text-5xl">
         Your account :3
       </h1>

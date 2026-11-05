@@ -12,6 +12,7 @@ import {
   REFERRALS_FOR_PIN,
 } from "@/lib/referrals";
 import Sidebar from "@/app/dashboard/components/Sidebar";
+import BackButton from "@/app/dashboard/components/BackButton";
 import { Profile } from "@/app/dashboard/components/Profile";
 import LocalTime from "@/app/dashboard/components/LocalTime";
 import PageList from "@/app/dashboard/components/PageList";
@@ -66,6 +67,7 @@ export default async function RefersPage() {
       <Profile />
       <main className="relative min-w-0 flex-1 bg-[#F0EBD1] px-6 pb-10 pt-24 sm:px-10 md:bg-transparent md:py-16 md:pl-4 md:pr-14 lg:py-24">
         <div className="flex flex-col gap-6 md:max-w-[90%]">
+          <BackButton href="/dashboard" />
           <h1 className="font-finger-paint text-3xl text-[#5C4A2E] sm:text-4xl lg:text-5xl">Refers</h1>
 
           {referredBy && (

@@ -37,12 +37,14 @@ export default async function ProjectsPage() {
       />
       <Sidebar showRefers={await canUseReferrals(profile.slack_id)} />
       <Profile />
-      <main className="relative min-w-0 flex-1 pr-6 pt-20 md:pr-10 md:pt-10">
-        <div className="flex flex-col items-start gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
-          <h1 className="font-finger-paint text-4xl text-[#BFD8A8]">
+      <main className="relative min-w-0 flex-1 pl-6 pr-6 pt-20 md:pl-0 md:pr-10 md:pt-10">
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="font-finger-paint text-3xl text-[#BFD8A8] sm:text-4xl">
             Your Wonders
           </h1>
-          <JoinWonderButton className="mr-0 rounded-lg bg-[#A8C7E0] px-4 py-2 font-finger-paint text-lg text-black/50 transition-all hover:zoom-110 md:mr-36" />
+          <JoinWonderButton className="font-finger-paint text-base text-[#5C4A2E] underline underline-offset-4 transition-all hover:zoom-110 hover:text-[#3e7d7d] md:mr-36">
+            join a wonder
+          </JoinWonderButton>
         </div>
 
         <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 md:hidden">

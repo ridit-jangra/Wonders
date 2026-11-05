@@ -5,6 +5,7 @@ export async function GET() {
   try {
     const data = await sql<
       {
+        id: number;
         title: string;
         description: string;
         github_url: string | null;
@@ -14,7 +15,7 @@ export async function GET() {
       }[]
     >`
       select
-        title, description, github_url, link_url, image_url,
+        id, title, description, github_url, link_url, image_url,
         case
           when status in ('shipped', 'fulfillment_started', 'fulfilled') then 'shipped'
           when status in ('in_review', 'second_pass', 'approved') then 'in_review'
@@ -26,6 +27,7 @@ export async function GET() {
     `;
 
     const projects = data.map((p) => ({
+      id: p.id,
       name: p.title,
       description: p.description,
       repo_url: p.github_url,

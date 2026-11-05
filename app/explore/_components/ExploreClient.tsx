@@ -152,7 +152,7 @@ export default function ExploreClient({
                   project={p}
                   key={p.id ?? i}
                   className="w-full"
-                  href={isAdmin && p.id ? `/explore/${p.id}` : undefined}
+                  href={p.id ? `/explore/${p.id}` : undefined}
                 />
               ))}
               {visible.length === 0 && needle && (

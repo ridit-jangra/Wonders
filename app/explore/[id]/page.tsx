@@ -14,6 +14,8 @@ import { adminUnshipProject, banProject, getProjectWithOwner, unbanProject } fro
 import { recordProjectHistory } from "@/lib/project-history";
 import { clearClaim } from "@/lib/review-claims";
 import { notifyTeam } from "@/lib/notifications";
+import { getExploreWonder } from "@/lib/share";
+import PublicWonder from "./PublicWonder";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { writeAudit } from "@/lib/audit";
 import ReasonDialogButton from "../_components/ReasonDialogButton";
@@ -67,9 +69,16 @@ const BUTTON =
 
 export default async function ExploreWonderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const admin = await getAdminSession();
-  if (!admin || !canManagePlayers(admin) || !/^\d{1,9}$/.test(id)) {
+  if (!/^\d{1,9}$/.test(id)) {
     notFound();
+  }
+  const admin = await getAdminSession();
+  if (!admin || !canManagePlayers(admin)) {
+    const wonder = await getExploreWonder(id);
+    if (!wonder) notFound();
+    const viewer = verifySessionCookie((await cookies()).get(SESSION_COOKIE)?.value);
+    const viewerRefers = viewer ? await canUseReferrals(viewer.slackId) : false;
+    return <PublicWonder wonder={wonder} loggedIn={Boolean(viewer)} showRefers={viewerRefers} />;
   }
 
   const project = await getProjectWithOwner(id);

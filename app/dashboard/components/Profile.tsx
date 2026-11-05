@@ -17,7 +17,7 @@ export async function Profile() {
     <div className="fixed top-4 right-4 z-50 flex items-center gap-3">
       {showAdmin && (
         <a
-          href="/admin/access"
+          href="/admin"
           className="rounded-full bg-[#16213E]/80 px-3 py-1.5 font-finger-paint text-sm text-white shadow-md transition-all hover:zoom-110"
         >
           admin :D

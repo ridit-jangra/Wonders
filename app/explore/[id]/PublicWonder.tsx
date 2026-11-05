@@ -23,6 +23,85 @@ export default function PublicWonder({
   loggedIn: boolean;
   showRefers: boolean;
 }) {
+  const content = (
+    <>
+      <Link href="/explore" className="font-finger-paint text-lg text-[#5C4A2E]/70 hover:underline">
+        &lt; back to explore
+      </Link>
+
+      <article className="flex flex-col gap-4">
+        <img
+          src={wonder.image_url || "/project-image-fallback.png"}
+          alt=""
+          className="aspect-video w-full rounded-md object-cover"
+        />
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <h1 className="min-w-0 wrap-break-word font-finger-paint text-3xl text-[#5C4A2E]">{wonder.title}</h1>
+          <span className="rounded-full bg-[#E7E2C9] px-3 py-1 font-finger-paint text-sm text-[#7A6B4A]">
+            {TAG[wonder.tag]}
+          </span>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3 rounded-md bg-[#E7E2C9] p-3 font-finger-paint text-sm text-[#5C4A2E]">
+          <span>by</span>
+          {wonder.makers.map((maker, index) => (
+            <span key={index} className="flex items-center gap-2">
+              {maker.avatarUrl && <img src={maker.avatarUrl} alt="" className="h-6 w-6 rounded-full" />}
+              {maker.name}
+            </span>
+          ))}
+        </div>
+
+        <p className="whitespace-pre-wrap wrap-break-word rounded-md bg-[#E7E2C9] p-3 font-finger-paint text-[#5C4A2E]">
+          {wonder.description}
+        </p>
+
+        {(wonder.github_url || wonder.link_url) && (
+          <div className="flex flex-col gap-3 sm:flex-row">
+            {wonder.github_url && (
+              <a
+                href={wonder.github_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`${BUTTON} bg-[#D0E4B4]`}
+              >
+                Repo :D
+              </a>
+            )}
+            {wonder.link_url && (
+              <a
+                href={wonder.link_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`${BUTTON} bg-[#F0E27D]`}
+              >
+                Demo :3
+              </a>
+            )}
+          </div>
+        )}
+      </article>
+
+    </>
+  );
+
+  if (!loggedIn) {
+    return (
+      <div className="relative flex min-h-screen items-center justify-center px-4 py-10">
+        <img className="fixed inset-0 -z-10 h-full w-full object-cover" src="/bg-effect-4.png" alt="" />
+        <div className="flex w-full max-w-2xl flex-col gap-5 rounded-2xl bg-[#F0EBD1] p-5 shadow-xl sm:p-8">
+          {content}
+          <Link
+            href="/login"
+            className={`${BUTTON} bg-[#A8C7E0]`}
+          >
+            make your own wonder :D
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative flex min-h-screen">
       <img className="fixed inset-0 -z-10 h-full w-full object-cover" src="/bg-effect-4.png" alt="" />
@@ -30,68 +109,11 @@ export default function PublicWonder({
         <img src="/new-or-edit-projects-template.png" alt="" className="h-full w-full object-fill" />
       </div>
       <TopBlur />
-      {loggedIn && <Sidebar showRefers={showRefers} />}
+      <Sidebar showRefers={showRefers} />
       <main className="relative min-w-0 flex-1 bg-[#F0EBD1] px-6 pb-10 pt-24 sm:px-10 md:bg-transparent md:py-16 md:pl-4 md:pr-14 lg:py-24">
-        <div className="flex w-full flex-col gap-5 md:max-w-[90%]">
-          <Link href="/explore" className="font-finger-paint text-lg text-[#5C4A2E]/70 hover:underline">
-            &lt; back to explore
-          </Link>
-
-          <article className="flex flex-col gap-4">
-            <img
-              src={wonder.image_url || "/project-image-fallback.png"}
-              alt=""
-              className="aspect-video w-full rounded-md object-cover"
-            />
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <h1 className="min-w-0 wrap-break-word font-finger-paint text-3xl text-[#5C4A2E]">{wonder.title}</h1>
-              <span className="rounded-full bg-[#E7E2C9] px-3 py-1 font-finger-paint text-sm text-[#7A6B4A]">
-                {TAG[wonder.tag]}
-              </span>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3 rounded-md bg-[#E7E2C9] p-3 font-finger-paint text-sm text-[#5C4A2E]">
-              <span>by</span>
-              {wonder.makers.map((maker, index) => (
-                <span key={index} className="flex items-center gap-2">
-                  {maker.avatarUrl && <img src={maker.avatarUrl} alt="" className="h-6 w-6 rounded-full" />}
-                  {maker.name}
-                </span>
-              ))}
-            </div>
-
-            <p className="whitespace-pre-wrap wrap-break-word rounded-md bg-[#E7E2C9] p-3 font-finger-paint text-[#5C4A2E]">
-              {wonder.description}
-            </p>
-
-            {(wonder.github_url || wonder.link_url) && (
-              <div className="flex flex-col gap-3 sm:flex-row">
-                {wonder.github_url && (
-                  <a
-                    href={wonder.github_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`${BUTTON} bg-[#D0E4B4]`}
-                  >
-                    Repo :D
-                  </a>
-                )}
-                {wonder.link_url && (
-                  <a
-                    href={wonder.link_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`${BUTTON} bg-[#F0E27D]`}
-                  >
-                    Demo :3
-                  </a>
-                )}
-              </div>
-            )}
-          </article>
-        </div>
+        <div className="flex w-full flex-col gap-5 md:max-w-[90%]">{content}</div>
       </main>
-      {loggedIn && <Profile />}
+      <Profile />
     </div>
   );
 }

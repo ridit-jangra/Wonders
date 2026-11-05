@@ -145,6 +145,7 @@ export async function getReferredBy(profileId: string) {
 export interface PinDue {
   profile_id: string;
   name: string;
+  email: string;
   slack_id: string;
   qualified: number;
 }
@@ -160,7 +161,7 @@ export interface StickerDue {
 
 export async function listPinsDue(): Promise<PinDue[]> {
   return sql<PinDue[]>`
-    select p.id as profile_id, p.name, p.slack_id, count(*)::int as qualified
+    select p.id as profile_id, p.name, p.email, p.slack_id, count(*)::int as qualified
     from profiles p
     join referrals r on r.referrer_id = p.id
     join profiles rp on rp.id = r.referred_id
@@ -254,4 +255,8 @@ export async function refreshPendingVerifications(referrerId?: string) {
     limit 25
   `;
   await Promise.all(rows.map((row) => refreshVerification(row.id, row.slack_id)));
+}
+
+export async function hasPinDue(profileId: string): Promise<boolean> {
+  return (await listPinsDue()).some((pin) => pin.profile_id === profileId);
 }

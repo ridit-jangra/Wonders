@@ -33,6 +33,7 @@ import {
   type FulfillmentUnit,
 } from "@/lib/units";
 import { recordProjectHistory } from "@/lib/project-history";
+import { hasPinDue, listPinsDue, markPinSent, REFERRALS_FOR_PIN } from "@/lib/referrals";
 import { notifyPlayer, notifyTeam } from "@/lib/notifications";
 import {
   ActionButton,
@@ -98,6 +99,7 @@ export default async function AdminFulfillmentPage({
     limit: PER_PAGE,
     offset: (currentPage - 1) * PER_PAGE,
   });
+  const pins = currentPage === 1 ? await listPinsDue() : [];
   const unitsByProject = await listUnits(projects.map((p) => p.id));
   const unifiedStates = await fetchSubmissionStates(
     [...unitsByProject.values()].flat().flatMap((unit) => unit.airtableIds),
@@ -113,7 +115,7 @@ export default async function AdminFulfillmentPage({
     if (!(await hasRecentAuth(actor.slackId))) {
       return { ok: false, reason: "locked" };
     }
-    if (!(await hasFulfillableUnit(profileId))) {
+    if (!(await hasFulfillableUnit(profileId)) && !(await hasPinDue(profileId))) {
       return { ok: false, reason: "denied" };
     }
     const identity = await getProfileIdentityAdmin(profileId, true);
@@ -225,6 +227,19 @@ export default async function AdminFulfillmentPage({
     });
     revalidatePath("/admin/fulfillment");
     redirect(`/admin/fulfillment?airtable=${result.pushed}-${result.failed}`);
+  }
+
+  async function sendPin(formData: FormData) {
+    "use server";
+
+    const actor = await requireAccess(canFulfill);
+    const id = String(formData.get("id") ?? "");
+    if (!UUID.test(id)) return;
+    if (!(await hasPinDue(id))) return;
+    await markPinSent(id);
+    await writeAudit({ actor: actor.slackId, action: "referral.pin_sent", target: id });
+    revalidatePath("/admin/fulfillment");
+    revalidatePath("/admin/referrals");
   }
 
   async function saveReward(formData: FormData) {
@@ -373,6 +388,38 @@ export default async function AdminFulfillmentPage({
       )}
 
       <div className="flex flex-col gap-4">
+        {pins.map((pin) => (
+          <Card key={`pin-${pin.profile_id}`}>
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="hc-heading text-lg">Hack Club pin</span>
+                  <Badge tone="purple">For referrals</Badge>
+                  <Badge tone="warning">{pin.qualified} counted referrals</Badge>
+                </div>
+                <p className="hc-caption mt-1 text-sm">
+                  For{" "}
+                  <TextLink href={`/admin/users/${pin.profile_id}`}>{pin.name || pin.slack_id}</TextLink> · {pin.email} ·{" "}
+                  <Mono>{pin.slack_id}</Mono>
+                </p>
+                <p className="hc-caption mt-1 text-sm">
+                  Earned by bringing in {REFERRALS_FOR_PIN}+ verified players with their referral link.
+                </p>
+              </div>
+              <form action={sendPin}>
+                <input type="hidden" name="id" value={pin.profile_id} />
+                <ActionButton pendingLabel="Saving…" icon="send">
+                  Mark pin sent
+                </ActionButton>
+              </form>
+            </div>
+            <ShippingInfo
+              profileId={pin.profile_id}
+              load={loadShipping}
+              reauthHref={reauthUrl("/admin/fulfillment")}
+            />
+          </Card>
+        ))}
         {projects.map((project) => {
           const units = unitsByProject.get(project.id) ?? [];
           const unifiedByUnit = units.map((unit) => summarizeUnified(unit.airtableIds, unifiedStates));
@@ -631,7 +678,7 @@ export default async function AdminFulfillmentPage({
           );
         })}
 
-        {projects.length === 0 && (
+        {projects.length === 0 && pins.length === 0 && (
           <Card>
             <EmptyState title="Nothing to fulfill" icon="package">
               Published wonders show up here once they need a reward sent.

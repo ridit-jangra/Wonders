@@ -256,6 +256,10 @@ export default async function ProfilePage() {
             Log out everywhere :(
           </SubmitButton>
         </form>
+        <p className="mt-4 font-finger-paint text-sm text-[#7A6B4A]">
+          want your data gone?{" "}
+          <LinkButton href="/delete-account">delete my account</LinkButton>
+        </p>
       </Section>
     </div>
   );

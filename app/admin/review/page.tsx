@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import { listAllProjects } from "@/lib/projects";
 import { listRecentReviews } from "@/lib/reviews";
@@ -20,6 +21,33 @@ import { canReview } from "@/lib/security/roles";
 const PER_PAGE = 25;
 
 type Pass = "first" | "second" | "reviewed";
+
+function ago(iso: string): string {
+  const hours = (Date.now() - new Date(iso).getTime()) / 3_600_000;
+  if (hours < 1) return `${Math.max(1, Math.round(hours * 60))}m`;
+  if (hours < 48) return `${Math.round(hours)}h`;
+  return `${Math.floor(hours / 24)}d`;
+}
+
+function logged(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  return `${h}h ${m}m`;
+}
+
+function Reviewer({
+  slackId,
+  name,
+  profileId,
+}: {
+  slackId: string | null;
+  name: string | null;
+  profileId: string | null;
+}) {
+  if (!slackId) return <Muted>-</Muted>;
+  if (profileId) return <TextLink href={`/admin/users/${profileId}`}>@{name || slackId}</TextLink>;
+  return <Mono>{slackId}</Mono>;
+}
 
 function WonderLink({ id, title }: { id: number; title: string }) {
   const external = reviewToolUrl(id);
@@ -82,33 +110,55 @@ export default async function AdminReviewQueuePage({
         </div>
 
         {active === "reviewed" ? (
-          <Table headers={["Wonder", "Owner", "Pass", "Verdict", "Reviewed by", "When"]}>
+          <Table headers={["Project", "Maker", "Status", "Reviewer", "Reviewed"]}>
             {reviewed.rows.map((row) => (
               <tr key={row.id}>
                 <td>
-                  <WonderLink id={row.project_id} title={row.title} />
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={row.image_url || "/project-image-fallback.png"}
+                      alt=""
+                      className="h-10 w-14 rounded object-cover"
+                    />
+                    <div className="flex flex-wrap items-center gap-2">
+                      <WonderLink id={row.project_id} title={row.title} />
+                      <Muted>
+                        <Mono>#{row.project_id}</Mono>
+                      </Muted>
+                    </div>
+                  </div>
                 </td>
                 <td>
-                  <TextLink href={`/admin/users/${row.owner_profile_id}`}>{row.owner_name}</TextLink>
+                  <TextLink href={`/admin/users/${row.owner_profile_id}`}>@{row.owner_name}</TextLink>
                 </td>
-                <td>{row.pass === "first" ? "First pass" : "Second pass"}</td>
                 <td>
                   <Badge tone={row.verdict === "approved" ? "success" : "danger"}>
-                    {row.verdict === "approved" ? "Approved" : "Changes requested"}
+                    {row.verdict === "approved" ? "Approved" : "Needs changes"}
                   </Badge>
                 </td>
                 <td>
-                  <Mono>{row.reviewed_by}</Mono>
+                  <Reviewer slackId={row.first_reviewed_by} name={row.first_reviewer_name} profileId={row.first_reviewer_profile_id} />
+                  {row.pass === "second" && (
+                    <div>
+                      <Muted>2nd: </Muted>
+                      <Reviewer slackId={row.reviewed_by} name={row.reviewer_name} profileId={row.reviewer_profile_id} />
+                    </div>
+                  )}
                 </td>
                 <td className="whitespace-nowrap">
-                  <Muted>
-                    <Mono>{new Date(row.created_at).toLocaleString()}</Mono>
-                  </Muted>
+                  <Mono>{ago(row.created_at)}</Mono>
+                  {row.hackatime_seconds ? (
+                    <div>
+                      <Muted>
+                        <Mono>{logged(row.hackatime_seconds)} logged</Mono>
+                      </Muted>
+                    </div>
+                  ) : null}
                 </td>
               </tr>
             ))}
             {reviewed.rows.length === 0 && (
-              <EmptyRow colSpan={6} title="Nothing reviewed yet" icon="history">
+              <EmptyRow colSpan={5} title="Nothing reviewed yet" icon="history">
                 Reviews show up here once they are recorded.
               </EmptyRow>
             )}

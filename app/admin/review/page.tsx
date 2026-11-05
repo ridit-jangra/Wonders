@@ -190,7 +190,11 @@ export default async function AdminReviewQueuePage({
                   </TextLink>
                 </td>
                 <td>
-                  <Mono>{project.profile?.slack_id}</Mono>
+                  {project.profile?.slack_id ? (
+                    <TextLink href={`https://hackclub.slack.com/team/${project.profile.slack_id}`} external>
+                      <Mono>{project.profile.slack_id}</Mono>
+                    </TextLink>
+                  ) : null}
                 </td>
                 <td>
                   <Muted>

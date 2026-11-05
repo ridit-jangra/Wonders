@@ -147,11 +147,11 @@ export default async function EditProjectPage({
 
   const project = await getProject(id);
   if (!project) {
-    redirect("/wonders");
+    redirect("/explore");
   }
   const role = await getRole(project.id, profile.id);
   if (!role) {
-    redirect("/wonders");
+    redirect(`/explore/${project.id}`);
   }
   const isCollaborator = role === "collaborator";
   const members = await listMembers(project.id);

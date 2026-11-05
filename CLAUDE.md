@@ -240,4 +240,6 @@ Only owners and `admin`-role staff (`canManagePlayers`) with a valid `/admin` se
 - `lib/audit.ts` writes `audit_logs` (never throws; viewed at `/admin/audit`). `lib/bans.ts` + `account_bans` back the ban/unban controls on the user page; banned players are redirected out by `getSessionProfile` and refused at login. Apply the new tables in `db/schema.sql` to Orchard by hand before deploying.
 - CI (`.github/workflows/ci.yml`) runs lint, tsc and `bun test`.
 
+`scripts/clear-test-data.ts` wipes all wonders and what hangs off them (history, reviews, drafts, journals, collaborators, claims, thumbnails) and the matching Airtable staging rows, restarts the wonder ids at 1, and keeps profiles, staff roles and settings, saved replies, dashboard access, the budget estimate and the audit log. Run it in the app pod: `bun scripts/clear-test-data.ts` is a dry run, add `--apply` to delete (and `--skip-airtable` to leave Airtable alone). Irreversible, so use it once before launch.
+
 `scripts/migrate-thumbnails.ts` is a one-off that moves thumbnails still stored in Postgres to the Hack Club CDN and rewrites `projects.image_url` and journal image links. Run it inside the app pod (it needs `DATABASE_URL` and `HACKCLUB_CDN_API_KEY`): `bun scripts/migrate-thumbnails.ts` is a dry run, add `--apply` to upload. It keeps the `thumbnails` rows as a backup.

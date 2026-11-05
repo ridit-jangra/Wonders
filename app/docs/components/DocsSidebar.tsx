@@ -9,8 +9,6 @@ import { FullSearchTrigger } from "fumadocs-ui/layouts/shared/slots/search-trigg
 import { DOCS_SIDEBAR_COOKIE } from "./sidebar-cookie";
 import DrawerFrame from "../../dashboard/components/DrawerFrame";
 
-const ITEM_COLORS = ["#F2B3AD", "#F0E27D", "#D0E4B4", "#B9DCEB", "#E7D3F0"];
-
 export interface DocsSidebarPage {
   url: string;
   title: string;
@@ -37,7 +35,7 @@ function DocsSidebarNav({
             <FullSearchTrigger className="w-full border-[#1f2528] bg-[#2a3135] font-poppins text-[#eaf5f3] hover:bg-[#1f2528] hover:text-white [&_kbd]:border-[#454e53] [&_kbd]:bg-[#1f2528] [&_kbd]:text-[#eaf5f3]" />
           </div>
           <div className="wonders-docs-sidebar-scroll -mr-3 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto pr-3">
-            {pages.map((page, index) => {
+            {pages.map((page) => {
               const active = pathname === page.url;
               return (
                 <Link
@@ -45,9 +43,8 @@ function DocsSidebarNav({
                   href={page.url}
                   onClick={onNavigateAction}
                   data-active={active}
-                  style={{ backgroundColor: ITEM_COLORS[index % ITEM_COLORS.length] }}
                   aria-current={active ? "page" : undefined}
-                  className="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start font-bold text-[#16213E] wrap-anywhere transition-all hover:zoom-105 data-[active=true]:ring-2 data-[active=true]:ring-[#16213E]"
+                  className="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors"
                 >
                   {page.title}
                 </Link>
@@ -59,7 +56,7 @@ function DocsSidebarNav({
       <Link
         href="/dashboard"
         onClick={onNavigateAction}
-        className="absolute bottom-6 left-6 font-finger-paint text-xl max-md:text-2xl text-[#16213E] underline hover:zoom-110 transition-all"
+        className="absolute bottom-6 left-6 font-finger-paint text-xl max-md:text-2xl text-[#16213E] underline decoration-[#16213E]/40 underline-offset-4 hover:decoration-[#16213E]"
       >
         back to dashboard :)
       </Link>

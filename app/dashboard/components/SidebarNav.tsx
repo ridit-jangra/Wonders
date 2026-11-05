@@ -12,9 +12,11 @@ const links = [
 export default function SidebarNav({
   onNavigateAction,
   showRefers = false,
+  loggedOut = false,
 }: {
   onNavigateAction?: () => void;
   showRefers?: boolean;
+  loggedOut?: boolean;
 } = {}) {
   return (
     <nav className="absolute inset-0 flex flex-col gap-4 pt-32 max-md:gap-5 max-md:pt-28">
@@ -54,7 +56,7 @@ export default function SidebarNav({
       </Link>
       </div>
       <a
-        href="/api/hc-auth/logout"
+        href={loggedOut ? "/login" : "/api/hc-auth/logout"}
         onClick={onNavigateAction}
         className="relative block self-start group"
       >
@@ -64,7 +66,7 @@ export default function SidebarNav({
           className="h-auto w-95 group-hover:w-100 transition-all"
         />
         <span className="absolute inset-0 flex items-center justify-center font-finger-paint text-lg tracking-wide text-white">
-          Log out :(
+          {loggedOut ? "Log in :D" : "Log out :("}
         </span>
       </a>
     </nav>

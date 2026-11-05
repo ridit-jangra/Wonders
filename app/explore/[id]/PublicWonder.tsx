@@ -85,23 +85,6 @@ export default function PublicWonder({
     </>
   );
 
-  if (!loggedIn) {
-    return (
-      <div className="relative flex min-h-screen items-center justify-center px-4 py-10">
-        <img className="fixed inset-0 -z-10 h-full w-full object-cover" src="/bg-effect-4.png" alt="" />
-        <div className="flex w-full max-w-2xl flex-col gap-5 rounded-2xl bg-[#F0EBD1] p-5 shadow-xl sm:p-8">
-          {content}
-          <Link
-            href="/login"
-            className={`${BUTTON} bg-[#A8C7E0]`}
-          >
-            make your own wonder :D
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="relative flex min-h-screen">
       <img className="fixed inset-0 -z-10 h-full w-full object-cover" src="/bg-effect-4.png" alt="" />
@@ -109,11 +92,11 @@ export default function PublicWonder({
         <img src="/new-or-edit-projects-template.png" alt="" className="h-full w-full object-fill" />
       </div>
       <TopBlur />
-      <Sidebar showRefers={showRefers} />
+      <Sidebar showRefers={showRefers} loggedOut={!loggedIn} />
       <main className="relative min-w-0 flex-1 bg-[#F0EBD1] px-6 pb-10 pt-24 sm:px-10 md:bg-transparent md:py-16 md:pl-4 md:pr-14 lg:py-24">
         <div className="flex w-full flex-col gap-5 md:max-w-[90%]">{content}</div>
       </main>
-      <Profile />
+      {loggedIn && <Profile />}
     </div>
   );
 }

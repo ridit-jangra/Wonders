@@ -3,6 +3,7 @@ import crypto from "node:crypto";
 import { sql } from "@/lib/db";
 import { getStaffAccess } from "@/lib/admin";
 import { canManagePlayers } from "@/lib/security/roles";
+import { YSWS } from "@/lib/ysws-config";
 
 export const REFERRAL_COOKIE = "wonders_ref";
 export const REFERRAL_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
@@ -24,6 +25,7 @@ export function visitorHash(ip: string, userAgent: string) {
 }
 
 export async function canUseReferrals(slackId: string) {
+  if (YSWS.access.referralsOpen) return true;
   return canManagePlayers(await getStaffAccess(slackId));
 }
 

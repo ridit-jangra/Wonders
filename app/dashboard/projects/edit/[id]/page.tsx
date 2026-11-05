@@ -131,8 +131,7 @@ export default async function EditProjectPage({
   const cookieStore = await cookies();
   const session = verifySessionCookie(cookieStore.get(SESSION_COOKIE)?.value);
   if (!session) {
-    // redirect("/login");
-    return <UnderConstruction />;
+    redirect("/login");
   }
 
   if (!(await hasDashboardAccess(session.slackId))) {

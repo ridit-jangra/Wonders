@@ -19,8 +19,7 @@ export default async function DashLayout({
   const session = verifySessionCookie(cookieStore.get(SESSION_COOKIE)?.value);
 
   if (!session) {
-    // redirect("/login");
-    return <UnderConstruction />;
+    redirect("/login");
   }
 
   const profile = await getSessionProfile(session);

@@ -2,6 +2,7 @@ import "server-only";
 import { sql } from "@/lib/db";
 import { getStaffAccess, isStaffSlackId } from "@/lib/admin";
 import { canManagePlayers } from "@/lib/security/roles";
+import { YSWS } from "@/lib/ysws-config";
 
 export const SLACK_ID_PATTERN = /^[UW][A-Z0-9]{6,}$/;
 
@@ -13,6 +14,7 @@ export interface DashboardAccessRow {
 }
 
 export async function hasDashboardAccess(slackId: string): Promise<boolean> {
+  if (YSWS.access.dashboardOpen) return true;
   if (await isStaffSlackId(slackId)) return true;
   const [row] = await sql`select 1 from dashboard_access where slack_id = ${slackId}`;
   return Boolean(row);

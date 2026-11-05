@@ -9,6 +9,11 @@ export const YSWS = {
   hcbOrg: "wonders-ysws",
   hcbUrl: "https://hcb.hackclub.com/wonders-ysws",
 
+  access: {
+    dashboardOpen: true,
+    referralsOpen: true,
+  },
+
   rates: {
     hourlyCents: 400,
     grantMaxCents: 50_000,

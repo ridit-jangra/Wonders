@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 import { requireAccess } from "@/lib/admin";
 import { writeAudit } from "@/lib/audit";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { YSWS } from "@/lib/ysws-config";
 import { canManagePlayers } from "@/lib/security/roles";
 import {
   grantDashboardAccess,
@@ -59,7 +60,11 @@ export default async function AdminAccessPage() {
       <PageHeader
         title="Dashboard access"
         count={rows.length}
-        description="Who can use the player dashboard. Staff always can. Everyone else needs their Slack ID here."
+        description={
+          YSWS.access.dashboardOpen
+            ? "The dashboard is open to everyone right now (dashboardOpen in lib/ysws-config.ts). This list only matters if you close it again."
+            : "Who can use the player dashboard. Staff always can. Everyone else needs their Slack ID here."
+        }
       />
 
       <Card>

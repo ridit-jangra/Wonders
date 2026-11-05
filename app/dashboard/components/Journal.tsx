@@ -470,7 +470,7 @@ export default function Journal({ projectId, entries, locked, post, edit, remove
           href="/docs/why-journal"
           target="_blank"
           rel="noopener"
-          className="font-finger-paint text-[#5C4A2E] underline underline-offset-4 hover:text-[#3e7d7d] hover:zoom-110 transition-all"
+          className="font-finger-paint text-[#5C4A2E] underline hover:zoom-110 transition-all"
         >
           why should we journal?
         </a>

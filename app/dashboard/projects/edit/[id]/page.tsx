@@ -893,7 +893,7 @@ export default async function EditProjectPage({
             href="/docs/collaborators"
             target="_blank"
             rel="noopener"
-            className="font-finger-paint text-[#5C4A2E] underline underline-offset-4 hover:text-[#3e7d7d]"
+            className="font-finger-paint text-[#5C4A2E] underline hover:zoom-110 transition-all"
           >
             why collaborate?
           </a>

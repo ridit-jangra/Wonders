@@ -153,7 +153,7 @@ export default async function ProfilePage() {
               {hackatimeConnected ? "connected :D" : "not connected :("}{" "}
               <a
                 href="/api/hackatime/connect"
-                className="underline decoration-[#5C4A2E]/40 underline-offset-4 hover:decoration-[#5C4A2E]"
+                className="underline hover:zoom-110 transition-all"
               >
                 {hackatimeConnected ? "relink" : "connect"}
               </a>
@@ -245,7 +245,7 @@ export default async function ProfilePage() {
             href="https://auth.hackclub.com"
             target="_blank"
             rel="noreferrer"
-            className="underline underline-offset-4"
+            className="underline hover:zoom-110 transition-all"
           >
             edit it at Hack Club
           </a>

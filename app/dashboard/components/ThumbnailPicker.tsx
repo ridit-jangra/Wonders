@@ -104,7 +104,7 @@ export default function ThumbnailPicker({
             <button
               type="button"
               onClick={handleRemove}
-              className="pointer-events-auto absolute top-2 right-3 cursor-pointer font-finger-paint text-sm text-[#5C4A2E]/70 underline hover:text-[#5C4A2E]"
+              className="pointer-events-auto absolute top-2 right-3 cursor-pointer font-finger-paint text-sm text-[#5C4A2E]/70 underline hover:zoom-110 transition-all hover:text-[#5C4A2E]"
             >
               remove it :(
             </button>

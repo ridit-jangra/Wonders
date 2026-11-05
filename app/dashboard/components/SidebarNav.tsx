@@ -58,7 +58,7 @@ export default function SidebarNav({
           <Link
             href="/refers"
             onClick={onNavigateAction}
-            className="ml-6 self-start font-finger-paint text-xl max-md:text-2xl text-[#16213E] underline decoration-[#16213E]/40 underline-offset-4 hover:decoration-[#16213E]"
+            className="ml-6 self-start font-finger-paint text-xl max-md:text-2xl text-[#16213E] underline hover:zoom-110 transition-all"
           >
             refer friends, get a pin &lt;3
           </Link>
@@ -66,7 +66,7 @@ export default function SidebarNav({
       <Link
         href="/docs"
         onClick={onNavigateAction}
-        className="ml-6 self-start font-finger-paint text-xl max-md:text-2xl text-[#16213E] underline decoration-[#16213E]/40 underline-offset-4 hover:decoration-[#16213E]"
+        className="ml-6 self-start font-finger-paint text-xl max-md:text-2xl text-[#16213E] underline hover:zoom-110 transition-all"
       >
         need help? read the docs :3
       </Link>

@@ -42,7 +42,7 @@ export default async function ProjectsPage() {
           <h1 className="font-finger-paint text-3xl text-[#BFD8A8] sm:text-4xl">
             Your Wonders
           </h1>
-          <JoinWonderButton className="font-finger-paint text-base text-[#5C4A2E] underline hover:zoom-110 transition-all md:mr-36">
+          <JoinWonderButton className="font-finger-paint text-base text-[#5C4A2E] inline-block underline hover:zoom-110 transition-all md:mr-36">
             join a wonder
           </JoinWonderButton>
         </div>

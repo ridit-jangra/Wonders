@@ -103,7 +103,7 @@ export default function ShipDialogButton({
                 </p>
                 <p className="font-finger-paint text-xs text-[#5C4A2E]/70 sm:text-sm">
                   you can also update it anytime in your{" "}
-                  <a href="/dashboard/profile" target="_blank" rel="noopener" className="underline hover:zoom-110 transition-all">
+                  <a href="/dashboard/profile" target="_blank" rel="noopener" className="inline-block underline hover:zoom-110 transition-all">
                     account settings
                   </a>
                   .

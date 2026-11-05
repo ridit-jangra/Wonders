@@ -9,6 +9,11 @@ export const YSWS = {
   endsIso: "2027-01-15",
   tagline: "A Hack Club YSWS where you make something you have wanted to make, ship it, and get a surprise.",
 
+  reviewTool: {
+    name: "Ari",
+    urlTemplate: "",
+  },
+
   hcbOrg: "wonders-ysws",
   hcbUrl: "https://hcb.hackclub.com/wonders-ysws",
 
@@ -48,4 +53,10 @@ export function hoursValueCents(seconds: number, rateCents: number = YSWS.rates.
 export function dollars(cents: number): string {
   const whole = cents % 100 === 0;
   return `$${(cents / 100).toFixed(whole ? 0 : 2)}`;
+}
+
+export function reviewToolUrl(projectId: number | string): string | null {
+  const template = process.env.REVIEW_TOOL_URL?.trim() || YSWS.reviewTool.urlTemplate;
+  if (!template) return null;
+  return template.replace("{id}", String(projectId));
 }

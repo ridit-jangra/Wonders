@@ -2,6 +2,7 @@ import type { GlyphName } from "@hackclub/icons";
 
 export const NAV: { href: string; label: string; glyph: GlyphName; keywords: string }[] = [
   { href: "/admin", label: "Inbox", glyph: "dashboard-meter", keywords: "overview home dashboard" },
+  { href: "/admin/review", label: "Review", glyph: "view", keywords: "queue first pass second pass reviewed" },
   { href: "/admin/fulfillment", label: "Fulfillment", glyph: "package", keywords: "rewards orders ship" },
   { href: "/admin/referrals", label: "Referrals", glyph: "like", keywords: "refers pins stickers invites" },
   { href: "/admin/access", label: "Access", glyph: "door-enter", keywords: "dashboard slack ids allow invite" },

@@ -28,7 +28,7 @@ export default function PageList({
     <>
       <Tag className={className}>{visible}</Tag>
       {pages > 1 && (
-        <nav className="flex items-center justify-between gap-3" aria-label="pages">
+        <nav className="mt-3 flex items-center justify-between gap-3" aria-label="pages">
           <button type="button" className={button} disabled={page === 0} onClick={() => setChosen(page - 1)}>
             &lt;- prev
           </button>

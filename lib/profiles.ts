@@ -357,3 +357,15 @@ export async function getPhonePrefill(profileId: string): Promise<{ phone: strin
   }
   return { phone: decryptPII(row?.phone), fromAuth: true };
 }
+
+export async function saveShippingPhoneIfMissing(profileId: string, phone: string): Promise<boolean> {
+  const rows = await sql`
+    update profiles set
+      shipping_phone = ${encryptPII(phone)},
+      shipping_phone_at = now(),
+      updated_at = now()
+    where id = ${profileId} and shipping_phone is null
+    returning id
+  `;
+  return rows.length > 0;
+}

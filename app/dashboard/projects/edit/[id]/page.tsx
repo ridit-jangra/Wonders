@@ -6,7 +6,14 @@ import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
-import { getHackatimeToken, getPhonePrefill, getSessionProfile, getSlackActors, saveShippingPhone } from "@/lib/profiles";
+import {
+  getHackatimeToken,
+  getPhonePrefill,
+  getSessionProfile,
+  getSlackActors,
+  saveShippingPhone,
+  saveShippingPhoneIfMissing,
+} from "@/lib/profiles";
 import {
   computeTeamSeconds,
   computeWonderSeconds,
@@ -15,6 +22,7 @@ import {
   getInviteCode,
   getRole,
   listMembers,
+  listTeammatePhoneStatus,
   removeCollaborator,
   resetInviteCode,
   setCollaboratorLinks,
@@ -32,6 +40,7 @@ import ShipDialogButton from "@/app/dashboard/components/ShipDialogButton";
 import { normalizePhone, splitPhone } from "@/lib/phone";
 import { getProjectTimeline, hasBeenShipped, recordProjectHistory } from "@/lib/project-history";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { writeAudit } from "@/lib/audit";
 import { notifyTeam } from "@/lib/notifications";
 import { precheckEnabled, runPrecheck } from "@/lib/precheck/run";
 import { beginPrecheck } from "@/lib/precheck/store";
@@ -145,6 +154,7 @@ export default async function EditProjectPage({
   }
   const isCollaborator = role === "collaborator";
   const members = await listMembers(project.id);
+  const teammates = await listTeammatePhoneStatus(project.id, profile.id);
   const ownerMember = members.find((member) => member.role === "owner");
   const myLinks = isCollaborator
     ? await getCollaboratorLinks(project.id, profile.id)
@@ -387,6 +397,22 @@ export default async function EditProjectPage({
       return;
     }
     await saveShippingPhone(currentProfile.id, phone);
+
+    for (const mate of await listTeammatePhoneStatus(existing.id, currentProfile.id)) {
+      if (mate.hasPhone) continue;
+      const matePhone = normalizePhone(
+        String(formData.get(`mate_country_${mate.profileId}`) ?? ""),
+        String(formData.get(`mate_phone_${mate.profileId}`) ?? ""),
+      );
+      if (matePhone && (await saveShippingPhoneIfMissing(mate.profileId, matePhone))) {
+        await writeAudit({
+          actor: current.slackId,
+          action: "ship.teammate_phone",
+          target: mate.profileId,
+          detail: { project: existing.id },
+        });
+      }
+    }
 
     const team = await computeTeamSeconds(existing);
     const hackatimeSeconds = team?.total ?? null;
@@ -765,6 +791,7 @@ export default async function EditProjectPage({
                 initialIso={phoneStart?.iso ?? "US"}
                 initialNumber={phoneStart?.number ?? ""}
                 fromAuth={phonePrefill.fromAuth}
+                teammates={teammates}
                 className="w-full rounded-md bg-[#A8C7E0] px-4 py-2 font-finger-paint text-lg text-black/40 hover:zoom-110 transition-all sm:w-48"
               />
             </div>

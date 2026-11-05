@@ -233,3 +233,20 @@ export async function saveCollaboratorSeconds(
     `;
   }
 }
+
+export async function listTeammatePhoneStatus(
+  projectId: ProjectId,
+  viewerProfileId: string,
+): Promise<{ profileId: string; name: string; hasPhone: boolean }[]> {
+  const rows = await sql<{ profile_id: string; name: string; has_phone: boolean }[]>`
+    select o.id as profile_id, coalesce(nullif(o.slack_display_name, ''), o.name) as name,
+      (o.shipping_phone is not null) as has_phone
+    from projects p join profiles o on o.id = p.profile_id
+    where p.id = ${projectId} and o.id <> ${viewerProfileId}
+    union all
+    select o.id, coalesce(nullif(o.slack_display_name, ''), o.name), (o.shipping_phone is not null)
+    from project_collaborators c join profiles o on o.id = c.profile_id
+    where c.project_id = ${projectId} and o.id <> ${viewerProfileId}
+  `;
+  return rows.map((row) => ({ profileId: row.profile_id, name: row.name, hasPhone: row.has_phone }));
+}

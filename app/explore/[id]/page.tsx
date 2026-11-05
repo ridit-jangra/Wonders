@@ -239,7 +239,9 @@ export default async function ExploreWonderPage({ params }: { params: Promise<{ 
           )}
         </article>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+        <section className="flex flex-col gap-3 rounded-md bg-[#E7E2C9] p-3">
+          <h2 className="font-finger-paint text-xl text-[#5C4A2E]">admin actions</h2>
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           {canUnship && (
             <ReasonDialogButton
               action={unship}
@@ -272,7 +274,8 @@ export default async function ExploreWonderPage({ params }: { params: Promise<{ 
               className={`${BUTTON} bg-[#F2B3AD]`}
             />
           )}
-        </div>
+          </div>
+        </section>
       </div>
       </main>
       {session && <Profile />}

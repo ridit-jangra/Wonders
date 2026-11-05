@@ -23,7 +23,7 @@ export default function SidebarNav({
           key={link.href}
           href={link.href}
           onClick={onNavigateAction}
-          className="relative block self-start group"
+          className="relative block self-start group max-md:self-stretch"
         >
           <img
             src={link.src}

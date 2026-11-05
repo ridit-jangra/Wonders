@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import LinkButton from "@/app/components/LinkButton";
 import { AnimatePresence, motion } from "framer-motion";
 import { findCountry, normalizePhone, DEFAULT_COUNTRY } from "@/lib/phone";
 import CountrySelect from "./CountrySelect";
@@ -103,9 +104,9 @@ export default function ShipDialogButton({
                 </p>
                 <p className="font-finger-paint text-xs text-[#5C4A2E]/70 sm:text-sm">
                   you can also update it anytime in your{" "}
-                  <a href="/dashboard/profile" target="_blank" rel="noopener" className="inline-block underline hover:zoom-110 transition-all">
+                  <LinkButton href="/dashboard/profile" newTab>
                     account settings
-                  </a>
+                  </LinkButton>
                   .
                 </p>
                 <div className="flex w-full items-stretch gap-2">

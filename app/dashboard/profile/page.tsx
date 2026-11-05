@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { hasDashboardAccess } from "@/lib/dashboard-access";
+import LinkButton from "@/app/components/LinkButton";
 import UnderConstruction from "@/app/components/UnderConstruction";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -151,12 +152,7 @@ export default async function ProfilePage() {
             <Field label="joined">{joined}</Field>
             <Field label="hackatime">
               {hackatimeConnected ? "connected :D" : "not connected :("}{" "}
-              <a
-                href="/api/hackatime/connect"
-                className="inline-block underline hover:zoom-110 transition-all"
-              >
-                {hackatimeConnected ? "relink" : "connect"}
-              </a>
+              <LinkButton href="/api/hackatime/connect">{hackatimeConnected ? "relink" : "connect"}</LinkButton>
             </Field>
           </div>
           <div className="flex flex-col gap-2">
@@ -241,14 +237,9 @@ export default async function ProfilePage() {
         />
         <p className="mt-3 font-finger-paint text-sm text-[#5C4A2E]/70">
           wrong or out of date?{" "}
-          <a
-            href="https://auth.hackclub.com"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-block underline hover:zoom-110 transition-all"
-          >
+          <LinkButton href="https://auth.hackclub.com" newTab>
             edit it at Hack Club
-          </a>
+          </LinkButton>
           , then log in again to refresh it
         </p>
       </Section>

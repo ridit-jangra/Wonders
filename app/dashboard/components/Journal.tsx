@@ -1,6 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState, useSyncExternalStore, useTransition } from "react";
+import LinkButton from "@/app/components/LinkButton";
 import { useRouter } from "next/navigation";
 import {
   applyFormat,
@@ -466,14 +467,9 @@ export default function Journal({ projectId, entries, locked, post, edit, remove
     <section className="flex w-full flex-col gap-3 md:max-w-[90%]">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="font-finger-paint text-2xl text-[#5C4A2E]">journal</h2>
-        <a
-          href="/docs/why-journal"
-          target="_blank"
-          rel="noopener"
-          className="font-finger-paint text-[#5C4A2E] inline-block underline hover:zoom-110 transition-all"
-        >
+        <LinkButton href="/docs/why-journal" newTab className="font-finger-paint text-[#5C4A2E]">
           why should we journal?
-        </a>
+        </LinkButton>
       </div>
       <p className="font-finger-paint text-[#5C4A2E]/70">
         a private log of how it&apos;s going. only you, the reviewers and the automatic check can read it :3

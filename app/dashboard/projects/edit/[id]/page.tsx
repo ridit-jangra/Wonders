@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { hasDashboardAccess } from "@/lib/dashboard-access";
+import LinkButton from "@/app/components/LinkButton";
 import UnderConstruction from "@/app/components/UnderConstruction";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
@@ -889,14 +890,9 @@ export default async function EditProjectPage({
       <section className="w-full rounded-md bg-[#E7E2C9] p-4 md:max-w-[90%]">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="font-finger-paint text-xl text-[#5C4A2E]">the team :3</h2>
-          <a
-            href="/docs/collaborators"
-            target="_blank"
-            rel="noopener"
-            className="font-finger-paint text-[#5C4A2E] inline-block underline hover:zoom-110 transition-all"
-          >
+          <LinkButton href="/docs/collaborators" newTab className="font-finger-paint text-[#5C4A2E]">
             why collaborate?
-          </a>
+          </LinkButton>
         </div>
         <ul className="mt-3 flex flex-col gap-2">
           {members.map((member) => (

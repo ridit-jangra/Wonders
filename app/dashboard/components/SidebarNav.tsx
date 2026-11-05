@@ -20,7 +20,23 @@ export default function SidebarNav({
 } = {}) {
   return (
     <nav className="absolute inset-0 flex flex-col gap-4 pt-32 max-md:gap-5 max-md:pt-28">
-      {links.map((link) => (
+      {loggedOut && (
+        <a
+          href="/login"
+          onClick={onNavigateAction}
+          className="relative block self-start group max-md:self-stretch"
+        >
+          <img
+            src="/button-template-1.png"
+            alt=""
+            className="h-auto w-80 group-hover:w-85 transition-all max-md:w-[94%] max-md:group-hover:w-full"
+          />
+          <span className="absolute inset-0 flex items-center justify-center font-finger-paint text-3xl tracking-wide text-[#16213E] max-md:text-4xl">
+            Log in :D
+          </span>
+        </a>
+      )}
+      {!loggedOut && links.map((link) => (
         <Link
           key={link.href}
           href={link.href}
@@ -37,7 +53,7 @@ export default function SidebarNav({
           </span>
         </Link>
       ))}
-      <div className="mt-auto flex flex-col gap-2">
+      <div className={`mt-auto flex flex-col gap-2 ${loggedOut ? "pb-8" : ""}`}>
         {showRefers && (
           <Link
             href="/refers"
@@ -55,20 +71,22 @@ export default function SidebarNav({
         need help? read the docs :3
       </Link>
       </div>
-      <a
-        href={loggedOut ? "/login" : "/api/hc-auth/logout"}
-        onClick={onNavigateAction}
-        className="relative block self-start group"
-      >
-        <img
-          src="/logout-button-template.png"
-          alt=""
-          className="h-auto w-95 group-hover:w-100 transition-all"
-        />
-        <span className="absolute inset-0 flex items-center justify-center font-finger-paint text-lg tracking-wide text-white">
-          {loggedOut ? "Log in :D" : "Log out :("}
-        </span>
-      </a>
+      {!loggedOut && (
+        <a
+          href="/api/hc-auth/logout"
+          onClick={onNavigateAction}
+          className="relative block self-start group"
+        >
+          <img
+            src="/logout-button-template.png"
+            alt=""
+            className="h-auto w-95 group-hover:w-100 transition-all"
+          />
+          <span className="absolute inset-0 flex items-center justify-center font-finger-paint text-lg tracking-wide text-white">
+            Log out :(
+          </span>
+        </a>
+      )}
     </nav>
   );
 }

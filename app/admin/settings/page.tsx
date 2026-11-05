@@ -8,7 +8,7 @@ export default async function AdminSettingsPage() {
   const settings = await getStaffSettings(admin.slackId);
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div>
       <PageHeader title="Settings" description="Saved to your account, so they follow you to any browser." />
       <SettingsClient initial={settings} account={{ name: admin.name, slackId: admin.slackId }} />
     </div>

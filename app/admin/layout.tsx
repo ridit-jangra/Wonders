@@ -65,8 +65,8 @@ export default async function AdminLayout({
   return (
     <div className={`admin-shell ${adminFontVariables}`} {...staffSettingsAttributes(settings)}>
       <header className="hc-topbar sticky top-0 z-10">
-        <div className="hc-topbar-inner mx-auto flex h-14 max-w-[1840px] items-center gap-6 px-6">
-          <Link href="/admin" className="flex shrink-0 items-center gap-2">
+        <div className="hc-topbar-inner mx-auto grid h-14 max-w-[1840px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-6 px-6 lg:grid-cols-[1fr_minmax(0,34rem)_1fr]">
+          <Link href="/admin" className="flex shrink-0 items-center gap-2 justify-self-start">
             <img
               src="/favicon.png"
               alt="Wonders"
@@ -78,7 +78,7 @@ export default async function AdminLayout({
           <div className="min-w-0 flex-1">
             <CommandBar items={commandItems} />
           </div>
-          <div className="hidden shrink-0 items-center gap-3 lg:flex">
+          <div className="hidden shrink-0 items-center gap-3 justify-self-end lg:flex">
             <span className="text-sm">
               <span className="font-bold">{displayName}</span>{" "}
               <span className="hc-muted">

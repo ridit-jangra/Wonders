@@ -6,6 +6,12 @@
   A Hack Club YSWS where you build something only you could think of, ship it, and a real person reviews it. No hour counting.
 </p>
 
+<p align="center">
+  <a href="https://wonders.hackclub.com"><b>wonders.hackclub.com</b></a> ·
+  <a href="https://wonders.hackclub.com/docs">Docs</a> ·
+  <a href="https://wonders.hackclub.com/explore">Explore wonders</a>
+</p>
+
 ![landing](public/screenshots/landing.png)
 
 ## How it works

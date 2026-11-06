@@ -111,7 +111,7 @@ export default async function AdminOverviewPage() {
               <TextLink href="/admin/review">all</TextLink>
             </div>
             {review.projects.length === 0 ? (
-              <EmptyState title="Queue is empty" icon="checkmark">
+              <EmptyState title="Queue is empty" icon="view">
                 Nothing is waiting for review.
               </EmptyState>
             ) : (

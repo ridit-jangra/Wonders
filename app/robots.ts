@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: ["/", "/explore", "/docs", "/w/"],
-        disallow: ["/admin", "/api/", "/dashboard", "/login", "/onboarding", "/refers", "/r/"],
+        disallow: ["/admin", "/api/", "/dashboard", "/login", "/onboarding", "/refers", "/r/", "/wonders", "/delete-account"],
       },
     ],
     sitemap: `${YSWS.origin}/sitemap.xml`,

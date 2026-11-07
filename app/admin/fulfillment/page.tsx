@@ -595,7 +595,7 @@ export default async function AdminFulfillmentPage({
                           <Field label="HCB link" hint="the transfer or invoice" className="min-w-56 flex-1">
                             <Input name="hcb_url" defaultValue={unit.hcbUrl ?? ""} placeholder="https://hcb.hackclub.com/..." />
                           </Field>
-                          <Field label="Real cost ($)" className="w-32">
+                          <Field label="Real cost ($)" hint="what you paid" className="w-32">
                             <Input
                               name="cost"
                               inputMode="decimal"

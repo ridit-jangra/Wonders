@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 /* eslint-disable @next/next/no-img-element */
+import LinkButton from "@/app/components/LinkButton";
 import WonderImage from "@/app/explore/_components/WonderImage";
 import Link from "next/link";
 import { cookies } from "next/headers";
@@ -205,7 +206,13 @@ export default async function ExploreWonderPage({ params }: { params: Promise<{ 
               by {ownerName}
               {owner?.slack_display_name ? ` (@${owner.slack_display_name})` : ""}
             </p>
-            <p className="text-[#7A6B4A]">{owner?.slack_id}</p>
+            {owner?.slack_id && (
+              <p className="text-[#7A6B4A]">
+                <LinkButton href={`https://hackclub.slack.com/team/${owner.slack_id}`} newTab>
+                  {owner.slack_id}
+                </LinkButton>
+              </p>
+            )}
           </div>
 
           <p className="whitespace-pre-wrap wrap-break-word rounded-md bg-[#E7E2C9] p-3 font-finger-paint text-[#5C4A2E]">{project.description}</p>

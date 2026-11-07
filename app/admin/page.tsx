@@ -170,7 +170,7 @@ export default async function AdminOverviewPage() {
             {recent.entries.map((entry) => (
               <li key={entry.id}>
                 <TextLink href={`/admin/wonders/${entry.project_id}`}>
-                  wonder #{entry.project_id}
+                  {entry.project_title || `wonder #${entry.project_id}`}
                 </TextLink>
                 <StatusBadge status={entry.to_status} />
                 <Muted>

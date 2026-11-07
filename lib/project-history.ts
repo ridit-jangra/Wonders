@@ -69,11 +69,13 @@ export async function getProfileHistory(
 export async function listRecentHistory(opts: {
   limit: number;
   offset: number;
-}): Promise<{ entries: ProjectHistoryEntry[]; total: number }> {
+}): Promise<{ entries: (ProjectHistoryEntry & { project_title: string | null })[]; total: number }> {
   const [entries, [{ total }]] = await Promise.all([
-    sql<ProjectHistoryEntry[]>`
-      select ${COLUMNS()} from project_history
-      order by created_at desc
+    sql<(ProjectHistoryEntry & { project_title: string | null })[]>`
+      select h.id, h.project_id, h.profile_id, h.from_status, h.to_status, h.reviewer_note, h.reward,
+        h.reviewed_by, h.created_at, p.title as project_title
+      from project_history h left join projects p on p.id = h.project_id
+      order by h.created_at desc
       limit ${opts.limit} offset ${opts.offset}
     `,
     sql<{ total: number }[]>`

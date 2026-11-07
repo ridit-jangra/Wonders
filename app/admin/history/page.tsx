@@ -46,7 +46,7 @@ export default async function AdminHistoryPage({
               </td>
               <td className="whitespace-nowrap">
                 <TextLink href={`/admin/wonders/${entry.project_id}`} className="font-bold">
-                  #{entry.project_id}
+                  {entry.project_title || `wonder #${entry.project_id}`}
                 </TextLink>
               </td>
               <td>

@@ -69,12 +69,15 @@ export async function getProfileHistory(
 export async function listRecentHistory(opts: {
   limit: number;
   offset: number;
-}): Promise<{ entries: (ProjectHistoryEntry & { project_title: string | null })[]; total: number }> {
+}): Promise<{ entries: (ProjectHistoryEntry & { project_title: string | null; reviewer_name: string | null })[]; total: number }> {
   const [entries, [{ total }]] = await Promise.all([
-    sql<(ProjectHistoryEntry & { project_title: string | null })[]>`
+    sql<(ProjectHistoryEntry & { project_title: string | null; reviewer_name: string | null })[]>`
       select h.id, h.project_id, h.profile_id, h.from_status, h.to_status, h.reviewer_note, h.reward,
-        h.reviewed_by, h.created_at, p.title as project_title
-      from project_history h left join projects p on p.id = h.project_id
+        h.reviewed_by, h.created_at, p.title as project_title,
+        coalesce(nullif(r.slack_display_name, ''), r.name) as reviewer_name
+      from project_history h
+      left join projects p on p.id = h.project_id
+      left join profiles r on r.slack_id = h.reviewed_by
       order by h.created_at desc
       limit ${opts.limit} offset ${opts.offset}
     `,

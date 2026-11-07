@@ -57,7 +57,7 @@ export default async function AdminHistoryPage({
                 </span>
               </td>
               <td className="whitespace-nowrap">
-                <SlackId id={entry.reviewed_by} />
+                {entry.reviewer_name && <>{entry.reviewer_name} </>}<SlackId id={entry.reviewed_by} />
               </td>
               <td className="max-w-md">
                 {entry.reviewer_note ? <span className="line-clamp-2">&ldquo;{entry.reviewer_note}&rdquo;</span> : <Muted>—</Muted>}

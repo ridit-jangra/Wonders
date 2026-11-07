@@ -174,7 +174,7 @@ export default async function AdminOverviewPage() {
                 </TextLink>
                 <StatusBadge status={entry.to_status} />
                 <Muted>
-                  <SlackId id={entry.reviewed_by} />
+                  {entry.reviewer_name && <>{entry.reviewer_name} </>}<SlackId id={entry.reviewed_by} />
                 </Muted>
                 <Muted className="ml-auto">
                   <Mono><AdminTime iso={entry.created_at} /></Mono>

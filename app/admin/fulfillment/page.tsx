@@ -290,15 +290,6 @@ export default async function AdminFulfillmentPage({
 
     const existing = await getProjectWithOwner(id);
     if (!existing) return;
-    const units = (await listUnits([existing.id])).get(existing.id) ?? [];
-    let anyUnified = false;
-    for (const unit of units) {
-      if (await isUnitInUnified(unit.projectId, unit.profileId)) {
-        anyUnified = true;
-        break;
-      }
-    }
-    if (!anyUnified) return;
 
     const started = await startFulfillment(id);
     if (started) {
@@ -462,7 +453,7 @@ export default async function AdminFulfillmentPage({
                 {project.status === "shipped" && (
                   <form action={beginFulfillment}>
                     <input type="hidden" name="id" value={project.id} />
-                    <ActionButton pendingLabel="Starting…" icon="package" disabled={!anyUnified}>
+                    <ActionButton pendingLabel="Starting…" icon="package">
                       Start fulfillment
                     </ActionButton>
                   </form>
@@ -478,7 +469,7 @@ export default async function AdminFulfillmentPage({
               {project.status === "shipped" && !anyUnified && (
                 <p className="hc-caption mt-2 flex items-center gap-1 text-sm">
                   <Icon glyph="important" size={18} />
-                  Start fulfillment unlocks once someone on this wonder reaches the Unified YSWS database.
+                  Nobody on this wonder is in the Unified YSWS database yet. You can still start fulfillment, but ordering, grants and marking things done stay locked until someone gets there.
                 </p>
               )}
 

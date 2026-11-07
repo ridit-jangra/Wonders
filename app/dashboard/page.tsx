@@ -4,7 +4,6 @@ import { hasDashboardAccess } from "@/lib/dashboard-access";
 import UnderConstruction from "@/app/components/UnderConstruction";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import Link from "next/link";
 import LinkButton from "@/app/components/LinkButton";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
 import { getSessionProfile } from "@/lib/profiles";

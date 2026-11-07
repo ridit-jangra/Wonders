@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
+import WonderImage from "@/app/explore/_components/WonderImage";
 import Link from "next/link";
 import Sidebar from "@/app/dashboard/components/Sidebar";
 import { Profile } from "@/app/dashboard/components/Profile";
@@ -30,11 +31,7 @@ export default function PublicWonder({
       </Link>
 
       <article className="flex flex-col gap-4">
-        <img
-          src={wonder.image_url || "/project-image-fallback.png"}
-          alt=""
-          className="aspect-video w-full rounded-md object-cover"
-        />
+<WonderImage src={wonder.image_url} />
         <div className="flex flex-wrap items-start justify-between gap-3">
           <h1 className="min-w-0 wrap-break-word font-finger-paint text-3xl text-[#5C4A2E]">{wonder.title}</h1>
           <span className="rounded-full bg-[#E7E2C9] px-3 py-1 font-finger-paint text-sm text-[#7A6B4A]">

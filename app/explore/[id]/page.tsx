@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 /* eslint-disable @next/next/no-img-element */
+import WonderImage from "@/app/explore/_components/WonderImage";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
@@ -183,11 +184,7 @@ export default async function ExploreWonderPage({ params }: { params: Promise<{ 
         </Link>
 
         <article className="flex flex-col gap-4">
-          <img
-            src={project.image_url || "/project-image-fallback.png"}
-            alt=""
-            className="aspect-video w-full rounded-md object-cover"
-          />
+  <WonderImage src={project.image_url} />
           <div className="flex flex-wrap items-start justify-between gap-3">
             <h1 className="min-w-0 wrap-break-word font-finger-paint text-3xl text-[#5C4A2E]">{project.title}</h1>
             <span className="rounded-full bg-[#E7E2C9] px-3 py-1 font-finger-paint text-sm text-[#7A6B4A]">

@@ -8,7 +8,7 @@ export interface SharedWonder {
   image_url: string | null;
   link_url: string | null;
   github_url: string | null;
-  makers: { name: string; avatarUrl: string | null }[];
+  makers: { name: string; avatarUrl: string | null; slackId?: string }[];
 }
 
 export async function getSharedWonder(id: string): Promise<SharedWonder | null> {
@@ -73,17 +73,17 @@ export async function getExploreWonder(id: string): Promise<ExploreWonder | null
     where id = ${id} and banned_at is null
   `;
   if (!row) return null;
-  const makers = await sql<{ name: string; avatar_url: string | null }[]>`
-    select coalesce(nullif(o.slack_display_name, ''), 'a maker') as name, o.slack_avatar_url as avatar_url
+  const makers = await sql<{ name: string; avatar_url: string | null; slack_id: string }[]>`
+    select coalesce(nullif(o.slack_display_name, ''), 'a maker') as name, o.slack_avatar_url as avatar_url, o.slack_id
     from projects p join profiles o on o.id = p.profile_id
     where p.id = ${row.id}
     union all
-    select coalesce(nullif(o.slack_display_name, ''), 'a maker'), o.slack_avatar_url
+    select coalesce(nullif(o.slack_display_name, ''), 'a maker'), o.slack_avatar_url, o.slack_id
     from project_collaborators c join profiles o on o.id = c.profile_id
     where c.project_id = ${row.id}
   `;
   return {
     ...row,
-    makers: makers.map((maker) => ({ name: maker.name, avatarUrl: maker.avatar_url })),
+    makers: makers.map((maker) => ({ name: maker.name, avatarUrl: maker.avatar_url, slackId: maker.slack_id })),
   };
 }

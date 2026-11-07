@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
+import LinkButton from "@/app/components/LinkButton";
 import WonderImage from "@/app/explore/_components/WonderImage";
 import Link from "next/link";
 import Sidebar from "@/app/dashboard/components/Sidebar";
@@ -44,7 +45,13 @@ export default function PublicWonder({
           {wonder.makers.map((maker, index) => (
             <span key={index} className="flex items-center gap-2">
               {maker.avatarUrl && <img src={maker.avatarUrl} alt="" className="h-6 w-6 rounded-full" />}
-              {maker.name}
+              {maker.slackId ? (
+                <LinkButton href={`https://hackclub.slack.com/team/${maker.slackId}`} newTab>
+                  {maker.name}
+                </LinkButton>
+              ) : (
+                maker.name
+              )}
             </span>
           ))}
         </div>

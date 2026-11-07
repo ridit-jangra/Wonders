@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
+import PagedList from "./PagedList";
 import Link from "next/link";
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import HcIcon, { type GlyphName } from "@hackclub/icons";
@@ -513,7 +514,7 @@ export function HistoryTimeline({
   }
 
   return (
-    <ol className="hc-timeline">
+    <PagedList className="hc-timeline" perPage={8}>
       {entries.map((entry) => (
         <li key={entry.id}>
           <div className="flex flex-wrap items-center gap-2">
@@ -540,7 +541,7 @@ export function HistoryTimeline({
           )}
         </li>
       ))}
-    </ol>
+    </PagedList>
   );
 }
 

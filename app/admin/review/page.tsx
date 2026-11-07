@@ -13,7 +13,7 @@ import {
   PageHeader,
   Pagination,
   Table,
-  TextLink,
+  TextLink, SlackId,
 } from "../components/ui";
 import { requireAccess } from "@/lib/admin";
 import { canReview } from "@/lib/security/roles";
@@ -47,7 +47,7 @@ function Reviewer({
 }) {
   if (!slackId) return <Muted>-</Muted>;
   if (profileId) return <TextLink href={`/admin/users/${profileId}`}>@{name || slackId}</TextLink>;
-  return <Mono>{slackId}</Mono>;
+  return <SlackId id={slackId} />;
 }
 
 function WonderLink({ id, title }: { id: number; title: string }) {

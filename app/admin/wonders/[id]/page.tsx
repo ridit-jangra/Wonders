@@ -23,7 +23,7 @@ import {
   PageHeader,
   StatusBadge,
   Table,
-  TextLink,
+  TextLink, SlackId,
 } from "../../components/ui";
 import JournalMarkdown from "@/app/dashboard/components/JournalMarkdown";
 import AdminTime from "@/app/admin/components/AdminTime";
@@ -229,7 +229,7 @@ export default async function AdminWonderPage({ params }: { params: Promise<{ id
                     {review.verdict === "approved" ? "Approved" : "Changes requested"}
                   </Badge>
                   <Muted>
-                    <Mono>{review.reviewed_by}</Mono> · <Mono><AdminTime iso={review.created_at} /></Mono>
+                    <SlackId id={review.reviewed_by} /> · <Mono><AdminTime iso={review.created_at} /></Mono>
                   </Muted>
                 </div>
                 {review.feedback && <p className="whitespace-pre-wrap">&ldquo;{review.feedback}&rdquo;</p>}

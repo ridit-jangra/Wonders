@@ -10,7 +10,7 @@ import {
   Pagination,
   StatusBadge,
   Table,
-  TextLink,
+  TextLink, SlackId,
 } from "../components/ui";
 import { requireAdmin } from "@/lib/admin";
 import AdminTime from "@/app/admin/components/AdminTime";
@@ -57,7 +57,7 @@ export default async function AdminHistoryPage({
                 </span>
               </td>
               <td className="whitespace-nowrap">
-                <Mono>{entry.reviewed_by}</Mono>
+                <SlackId id={entry.reviewed_by} />
               </td>
               <td className="max-w-md">
                 {entry.reviewer_note ? <span className="line-clamp-2">&ldquo;{entry.reviewer_note}&rdquo;</span> : <Muted>—</Muted>}

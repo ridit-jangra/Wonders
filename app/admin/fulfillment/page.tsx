@@ -51,7 +51,7 @@ import {
   Pagination,
   Quote,
   StatusBadge,
-  TextLink,
+  TextLink, SlackId,
 } from "../components/ui";
 
 const PER_PAGE = 25;
@@ -423,7 +423,7 @@ export default async function AdminFulfillmentPage({
                 <p className="hc-caption mt-1 text-sm">
                   For{" "}
                   <TextLink href={`/admin/users/${pin.profile_id}`}>{pin.name || pin.slack_id}</TextLink> · {pin.email} ·{" "}
-                  <Mono>{pin.slack_id}</Mono>
+                  <SlackId id={pin.slack_id} />
                 </p>
                 <p className="hc-caption mt-1 text-sm">
                   Earned by bringing in {REFERRALS_FOR_PIN}+ verified players with their referral link.
@@ -514,7 +514,7 @@ export default async function AdminFulfillmentPage({
                       )}
                     </div>
                     <p className="hc-caption mt-1 text-sm">
-                      {unit.email} · <Mono>{unit.slackId}</Mono>
+                      {unit.email} · <SlackId id={unit.slackId} />
                     </p>
                     {unit.seconds !== null && (
                       <p className="hc-caption mt-1 text-sm">

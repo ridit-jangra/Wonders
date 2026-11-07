@@ -341,6 +341,14 @@ export function EmptyState({
   );
 }
 
+export function SlackId({ id }: { id: string }) {
+  return (
+    <TextLink href={`https://hackclub.slack.com/team/${id}`} external>
+      <Mono>{id}</Mono>
+    </TextLink>
+  );
+}
+
 export function Avatar({ src, size = 32 }: { src: string | null | undefined; size?: number }) {
   if (!src) {
     return (
@@ -520,7 +528,7 @@ export function HistoryTimeline({
           </div>
           <p className="hc-caption mt-1 text-xs">
             <Mono><AdminTime iso={entry.created_at} /></Mono> · by{" "}
-            <Mono>{entry.reviewed_by}</Mono>
+            <SlackId id={entry.reviewed_by} />
           </p>
           {entry.reviewer_note && <p className="mt-1">&ldquo;{entry.reviewer_note}&rdquo;</p>}
           {entry.reward && (

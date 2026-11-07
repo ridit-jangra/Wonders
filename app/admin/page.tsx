@@ -10,7 +10,7 @@ import {
   Muted,
   PageHeader,
   StatusBadge,
-  TextLink,
+  TextLink, SlackId,
 } from "./components/ui";
 import { requireAdmin } from "@/lib/admin";
 import { canFulfill, canReview } from "@/lib/security/roles";
@@ -174,7 +174,7 @@ export default async function AdminOverviewPage() {
                 </TextLink>
                 <StatusBadge status={entry.to_status} />
                 <Muted>
-                  <Mono>{entry.reviewed_by}</Mono>
+                  <SlackId id={entry.reviewed_by} />
                 </Muted>
                 <Muted className="ml-auto">
                   <Mono><AdminTime iso={entry.created_at} /></Mono>

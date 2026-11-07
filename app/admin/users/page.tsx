@@ -9,7 +9,7 @@ import {
   PageHeader,
   Pagination,
   Table,
-  TextLink,
+  TextLink, SlackId,
 } from "../components/ui";
 import { requireAccess } from "@/lib/admin";
 import { canManagePlayers } from "@/lib/security/roles";
@@ -54,7 +54,7 @@ export default async function AdminUsersPage({
               </td>
               <td>{profile.email}</td>
               <td>
-                <Mono>{profile.slack_id}</Mono>
+                <SlackId id={profile.slack_id} />
               </td>
               <td>{profile.interest ? profile.interest : <Muted>—</Muted>}</td>
               <td>

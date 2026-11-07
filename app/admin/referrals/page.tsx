@@ -16,12 +16,11 @@ import {
   Card,
   CardHeader,
   EmptyRow,
-  Mono,
   PageHeader,
   Stat,
   StatGrid,
   Table,
-  TextLink,
+  TextLink, SlackId,
 } from "../components/ui";
 
 export default async function AdminReferralsPage() {
@@ -77,7 +76,7 @@ export default async function AdminReferralsPage() {
                 </TextLink>
               </td>
               <td>
-                <Mono>{p.slack_id}</Mono>
+                <SlackId id={p.slack_id} />
               </td>
               <td>{p.qualified}</td>
               <td>
@@ -105,7 +104,7 @@ export default async function AdminReferralsPage() {
                 </TextLink>
               </td>
               <td>
-                <Mono>{s.slack_id}</Mono>
+                <SlackId id={s.slack_id} />
               </td>
               <td>{s.referrer_name}</td>
               <td>

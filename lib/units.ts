@@ -13,6 +13,9 @@ export interface FulfillmentUnit {
   reward: string | null;
   orderedAt: string | null;
   sentAt: string | null;
+  hcbUrl: string | null;
+  costCents: number | null;
+  sourceUrl: string | null;
   fulfilledAt: string | null;
   grantId: string | null;
   grantCents: number | null;
@@ -36,6 +39,9 @@ interface UnitRow {
   reward: string | null;
   reward_ordered_at: string | null;
   reward_sent_at: string | null;
+  reward_hcb_url: string | null;
+  reward_cost_cents: number | null;
+  reward_source_url: string | null;
   fulfilled_at: string | null;
   hcb_grant_id: string | null;
   hcb_grant_cents: number | null;
@@ -54,7 +60,8 @@ export async function listUnits(projectIds: number[]): Promise<Map<number, Fulfi
   const rows = await sql<UnitRow[]>`
     select 'owner' as kind, null::bigint as unit_id, p.id as project_id, o.id as profile_id,
       o.slack_id, coalesce(nullif(o.slack_display_name, ''), o.name) as name, o.email,
-      p.reward, p.reward_ordered_at, p.reward_sent_at, p.fulfilled_at,
+      p.reward, p.reward_ordered_at, p.reward_sent_at,
+      p.reward_hcb_url, p.reward_cost_cents, p.reward_source_url, p.fulfilled_at,
       p.hcb_grant_id, p.hcb_grant_cents, p.hcb_grant_sent_at,
       p.airtable_record_ids, p.airtable_record_id, p.airtable_error, p.airtable_pushed_at,
       coalesce(p.owner_seconds, p.hackatime_seconds) as seconds,
@@ -65,7 +72,8 @@ export async function listUnits(projectIds: number[]): Promise<Map<number, Fulfi
     union all
     select 'collaborator', c.id, c.project_id, o.id,
       o.slack_id, coalesce(nullif(o.slack_display_name, ''), o.name), o.email,
-      c.reward, c.reward_ordered_at, c.reward_sent_at, c.fulfilled_at,
+      c.reward, c.reward_ordered_at, c.reward_sent_at,
+      c.reward_hcb_url, c.reward_cost_cents, c.reward_source_url, c.fulfilled_at,
       c.hcb_grant_id, c.hcb_grant_cents, c.hcb_grant_sent_at,
       c.airtable_record_ids, c.airtable_record_id, c.airtable_error, c.airtable_pushed_at,
       c.hackatime_seconds, c.hackatime_seconds_prev,
@@ -86,6 +94,9 @@ export async function listUnits(projectIds: number[]): Promise<Map<number, Fulfi
       reward: row.reward,
       orderedAt: row.reward_ordered_at,
       sentAt: row.reward_sent_at,
+      hcbUrl: row.reward_hcb_url,
+      costCents: row.reward_cost_cents,
+      sourceUrl: row.reward_source_url,
       fulfilledAt: row.fulfilled_at,
       grantId: row.hcb_grant_id,
       grantCents: row.hcb_grant_cents,
@@ -119,6 +130,27 @@ export async function setUnitReward(unit: FulfillmentUnit, reward: string | null
   }
   await sql`
     update project_collaborators c set reward = ${reward}
+    from projects p
+    where c.project_id = p.id and p.id = ${unit.projectId} and c.profile_id = ${unit.profileId}
+      and p.status in ('shipped', 'fulfillment_started')
+  `;
+}
+
+export async function setUnitOrderDetails(
+  unit: FulfillmentUnit,
+  details: { hcbUrl: string | null; costCents: number | null; sourceUrl: string | null },
+) {
+  if (unit.kind === "owner") {
+    await sql`
+      update projects set reward_hcb_url = ${details.hcbUrl}, reward_cost_cents = ${details.costCents},
+        reward_source_url = ${details.sourceUrl}, updated_at = now()
+      where id = ${unit.projectId} and status in ('shipped', 'fulfillment_started')
+    `;
+    return;
+  }
+  await sql`
+    update project_collaborators c set reward_hcb_url = ${details.hcbUrl},
+      reward_cost_cents = ${details.costCents}, reward_source_url = ${details.sourceUrl}
     from projects p
     where c.project_id = p.id and p.id = ${unit.projectId} and c.profile_id = ${unit.profileId}
       and p.status in ('shipped', 'fulfillment_started')

@@ -65,6 +65,9 @@ create table if not exists projects (
   hold_reason text,
   reward_ordered_at timestamptz,
   reward_sent_at timestamptz,
+  reward_hcb_url text,
+  reward_cost_cents integer,
+  reward_source_url text,
   fulfilled_at timestamptz,
   fulfilled_by text,
   hackatime_projects text[] not null default '{}',
@@ -289,6 +292,9 @@ alter table project_collaborators add column if not exists hackatime_seconds_pre
 alter table project_collaborators add column if not exists reward text;
 alter table project_collaborators add column if not exists reward_ordered_at timestamptz;
 alter table project_collaborators add column if not exists reward_sent_at timestamptz;
+alter table project_collaborators add column if not exists reward_hcb_url text;
+alter table project_collaborators add column if not exists reward_cost_cents integer;
+alter table project_collaborators add column if not exists reward_source_url text;
 alter table project_collaborators add column if not exists fulfilled_at timestamptz;
 alter table project_collaborators add column if not exists fulfilled_by text;
 alter table project_collaborators add column if not exists hcb_grant_id text;

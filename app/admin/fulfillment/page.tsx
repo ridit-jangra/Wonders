@@ -14,6 +14,7 @@ import {
 import { createCardGrant, hcbMaxGrantCents, isHcbConfigured } from "@/lib/hcb";
 import { formatDollars, parseGrantInput } from "@/lib/hcb-grant";
 import { money } from "@/lib/budget-math";
+import { normalizeUrl } from "@/lib/url";
 import { YSWS, dollars, hoursValueCents } from "@/lib/ysws-config";
 import ShippingInfo, { type ShippingResult } from "../components/ShippingInfo";
 import { canFulfill } from "@/lib/security/roles";
@@ -29,6 +30,7 @@ import {
   markUnitOrdered,
   markUnitSent,
   releaseUnitGrant,
+  setUnitOrderDetails,
   setUnitReward,
   type FulfillmentUnit,
 } from "@/lib/units";
@@ -258,6 +260,27 @@ export default async function AdminFulfillmentPage({
     revalidatePath("/admin/fulfillment");
   }
 
+  async function saveOrderDetails(formData: FormData) {
+    "use server";
+
+    await requireAccess(canFulfill);
+    const resolved = await resolveUnit(
+      String(formData.get("id") ?? ""),
+      String(formData.get("member") ?? ""),
+    );
+    if (!resolved) return;
+
+    const costText = String(formData.get("cost") ?? "").trim().replace(/^\$/, "");
+    const cost = costText ? Math.round(Number(costText) * 100) : null;
+    await setUnitOrderDetails(resolved.unit, {
+      hcbUrl: normalizeUrl(String(formData.get("hcb_url") ?? "").trim()),
+      costCents: cost !== null && Number.isFinite(cost) && cost >= 0 && cost < 10_000_000 ? cost : null,
+      sourceUrl: normalizeUrl(String(formData.get("source_url") ?? "").trim()),
+    });
+
+    revalidatePath("/admin/fulfillment");
+  }
+
   async function beginFulfillment(formData: FormData) {
     "use server";
 
@@ -467,6 +490,7 @@ export default async function AdminFulfillmentPage({
                   : null;
                 const unitKey = `${project.id}:${unit.profileId}`;
                 const started = project.status === "fulfillment_started";
+                const isGrant = Boolean(unit.grantSentAt) || /grant/i.test(unit.reward ?? "");
                 return (
                   <section key={unit.profileId} className="mt-5 border-t border-[var(--border)] pt-5">
                     <div className="flex flex-wrap items-center gap-2">
@@ -511,9 +535,98 @@ export default async function AdminFulfillmentPage({
                       reauthHref={reauthUrl("/admin/fulfillment")}
                     />
 
+
+                    <div className="mt-5 flex flex-wrap items-end gap-3 border-t border-[var(--border)] pt-5">
+                      <form action={saveReward} className="flex flex-1 flex-wrap items-end gap-2">
+                        <input type="hidden" name="id" value={project.id} />
+                        <input type="hidden" name="member" value={unit.profileId} />
+                        <Field label="Reward" className="w-full max-w-sm">
+                          <Input
+                            name="reward"
+                            defaultValue={unit.reward ?? ""}
+                            placeholder="e.g. hoodie + stickers, or grant"
+                          />
+                        </Field>
+                        <ActionButton pendingLabel="Saving…" variant="outline">
+                          Save
+                        </ActionButton>
+                      </form>
+
+                      {started && !isGrant && !unit.fulfilledAt && !unit.orderedAt && (
+                        <form action={markOrdered}>
+                          <input type="hidden" name="id" value={project.id} />
+                          <input type="hidden" name="member" value={unit.profileId} />
+                          <ActionButton
+                            pendingLabel="Marking…"
+                            variant="outline"
+                            icon="package"
+                            disabled={!inUnified}
+                          >
+                            Mark ordered
+                          </ActionButton>
+                        </form>
+                      )}
+
+                      {started && !isGrant && !unit.fulfilledAt && unit.orderedAt && !unit.sentAt && (
+                        <form action={markSent}>
+                          <input type="hidden" name="id" value={project.id} />
+                          <input type="hidden" name="member" value={unit.profileId} />
+                          <ActionButton pendingLabel="Marking…" variant="outline" icon="send" disabled={!inUnified}>
+                            Mark on its way
+                          </ActionButton>
+                        </form>
+                      )}
+
+                      {started && !unit.fulfilledAt && (
+                        <form action={markFulfilled}>
+                          <input type="hidden" name="id" value={project.id} />
+                          <input type="hidden" name="member" value={unit.profileId} />
+                          <ActionButton
+                            pendingLabel="Marking…"
+                            variant="success"
+                            icon="check-circle"
+                            disabled={!unit.reward || !inUnified || (isGrant && !unit.grantSentAt)}
+                          >
+                            Mark fulfilled
+                          </ActionButton>
+                        </form>
+                      )}
+                    </div>
+
+                    {!isGrant && unit.reward && (
+                      <form
+                        action={saveOrderDetails}
+                        className="mt-5 flex flex-col gap-3 border-t border-[var(--border)] pt-5"
+                      >
+                        <input type="hidden" name="id" value={project.id} />
+                        <input type="hidden" name="member" value={unit.profileId} />
+                        <div className="flex flex-wrap gap-3">
+                          <Field label="HCB link" hint="the transfer or invoice" className="min-w-56 flex-1">
+                            <Input name="hcb_url" defaultValue={unit.hcbUrl ?? ""} placeholder="https://hcb.hackclub.com/..." />
+                          </Field>
+                          <Field label="Real cost ($)" className="w-32">
+                            <Input
+                              name="cost"
+                              inputMode="decimal"
+                              defaultValue={unit.costCents === null ? "" : (unit.costCents / 100).toFixed(2)}
+                              placeholder="24.99"
+                            />
+                          </Field>
+                          <Field label="Bought from" hint="link to the order or product" className="min-w-56 flex-1">
+                            <Input name="source_url" defaultValue={unit.sourceUrl ?? ""} placeholder="https://..." />
+                          </Field>
+                        </div>
+                        <div>
+                          <ActionButton pendingLabel="Saving…" variant="outline">
+                            Save order details
+                          </ActionButton>
+                        </div>
+                      </form>
+                    )}
+                    {isGrant && (
                     <details
-                      className="hc-details mt-4"
-                      open={Boolean(unit.grantSentAt) || /grant/i.test(unit.reward ?? "") || unitKey === grantWonder}
+                      className="hc-details mt-5"
+                      open
                     >
                       <summary>Send grant (surprise)</summary>
                       <div className="hc-details-body flex flex-col gap-3">
@@ -591,63 +704,7 @@ export default async function AdminFulfillmentPage({
                         )}
                       </div>
                     </details>
-
-                    <div className="mt-5 flex flex-wrap items-end gap-3 border-t border-[var(--border)] pt-5">
-                      <form action={saveReward} className="flex flex-1 flex-wrap items-end gap-2">
-                        <input type="hidden" name="id" value={project.id} />
-                        <input type="hidden" name="member" value={unit.profileId} />
-                        <Field label="Reward" className="w-full max-w-sm">
-                          <Input
-                            name="reward"
-                            defaultValue={unit.reward ?? ""}
-                            placeholder="e.g. hoodie + stickers"
-                          />
-                        </Field>
-                        <ActionButton pendingLabel="Saving…" variant="outline">
-                          Save
-                        </ActionButton>
-                      </form>
-
-                      {started && !unit.fulfilledAt && !unit.orderedAt && (
-                        <form action={markOrdered}>
-                          <input type="hidden" name="id" value={project.id} />
-                          <input type="hidden" name="member" value={unit.profileId} />
-                          <ActionButton
-                            pendingLabel="Marking…"
-                            variant="outline"
-                            icon="package"
-                            disabled={!inUnified}
-                          >
-                            Mark ordered
-                          </ActionButton>
-                        </form>
-                      )}
-
-                      {started && !unit.fulfilledAt && unit.orderedAt && !unit.sentAt && (
-                        <form action={markSent}>
-                          <input type="hidden" name="id" value={project.id} />
-                          <input type="hidden" name="member" value={unit.profileId} />
-                          <ActionButton pendingLabel="Marking…" variant="outline" icon="send" disabled={!inUnified}>
-                            Mark on its way
-                          </ActionButton>
-                        </form>
-                      )}
-
-                      {started && !unit.fulfilledAt && (
-                        <form action={markFulfilled}>
-                          <input type="hidden" name="id" value={project.id} />
-                          <input type="hidden" name="member" value={unit.profileId} />
-                          <ActionButton
-                            pendingLabel="Marking…"
-                            variant="success"
-                            icon="check-circle"
-                            disabled={!unit.reward || !inUnified}
-                          >
-                            Mark fulfilled
-                          </ActionButton>
-                        </form>
-                      )}
-                    </div>
+                    )}
 
                     {!inUnified && (
                       <p className="hc-caption mt-2 flex items-center gap-1 text-sm">

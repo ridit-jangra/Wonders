@@ -182,7 +182,7 @@ export default async function AdminOverviewPage() {
                         entry.reviewer_name
                       )}{" "}
                     </>
-                  )}<SlackId id={entry.reviewed_by} />
+                  )}(<SlackId id={entry.reviewed_by} />)
                 </Muted>
                 <Muted className="ml-auto">
                   <Mono><AdminTime iso={entry.created_at} /></Mono>

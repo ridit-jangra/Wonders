@@ -65,7 +65,7 @@ export default async function AdminHistoryPage({
                         entry.reviewer_name
                       )}{" "}
                     </>
-                  )}<SlackId id={entry.reviewed_by} />
+                  )}(<SlackId id={entry.reviewed_by} />)
               </td>
               <td className="max-w-md">
                 {entry.reviewer_note ? <span className="line-clamp-2">&ldquo;{entry.reviewer_note}&rdquo;</span> : <Muted>—</Muted>}

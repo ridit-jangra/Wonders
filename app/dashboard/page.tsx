@@ -5,6 +5,7 @@ import UnderConstruction from "@/app/components/UnderConstruction";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import Link from "next/link";
+import LinkButton from "@/app/components/LinkButton";
 import { SESSION_COOKIE, verifySessionCookie } from "@/lib/hc-auth";
 import { getSessionProfile } from "@/lib/profiles";
 import { getProjects } from "@/lib/projects";
@@ -45,12 +46,9 @@ export default async function DashPage() {
       <div className="flex w-full max-w-full flex-col gap-5 pt-6 lg:max-w-[min(100%,calc((100vh-16rem)/0.51))] lg:pt-8">
         <div className="flex w-full flex-wrap items-center justify-between gap-3">
           <h1 className="text-[#BFD8A8] font-finger-paint text-4xl">Wonders</h1>
-          <Link
-            href="/wonders"
-            className="font-finger-paint text-lg text-[#F2B3AD] hover:underline"
-          >
+          <LinkButton href="/wonders" className="font-finger-paint text-lg text-[#F2B3AD]">
             go to /wonders to see all &gt;
-          </Link>
+          </LinkButton>
         </div>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {projects.slice(0, 4).map((project) => (

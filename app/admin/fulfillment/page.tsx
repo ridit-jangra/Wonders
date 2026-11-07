@@ -593,7 +593,7 @@ export default async function AdminFulfillmentPage({
                       )}
                     </div>
 
-                    {!isGrant && unit.reward && (
+                    {started && !isGrant && unit.reward && (
                       <form
                         action={saveOrderDetails}
                         className="mt-5 flex flex-col gap-3 border-t border-[var(--border)] pt-5"
@@ -623,7 +623,7 @@ export default async function AdminFulfillmentPage({
                         </div>
                       </form>
                     )}
-                    {isGrant && (
+                    {started && isGrant && (
                     <details
                       className="hc-details mt-5"
                       open
